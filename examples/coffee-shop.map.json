@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "app": "freestyle",
+  "title": "Coffee shop order",
+  "lanes": [
+    {
+      "id": "Customer",
+      "name": "Customer"
+    },
+    {
+      "id": "Barista",
+      "name": "Barista"
+    },
+    {
+      "id": "Kitchen",
+      "name": "Kitchen"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "Phase 1 \u00b7 Order",
+      "subtitle": "From the counter to a paid ticket"
+    },
+    {
+      "id": "p2",
+      "title": "Phase 2 \u00b7 Make and serve",
+      "subtitle": "Drinks and food to the customer"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "lane": "Customer",
+      "type": "step",
+      "text": "Order at the counter",
+      "phase": "p1",
+      "sketch": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "n2",
+      "lane": "Barista",
+      "type": "step",
+      "text": "Enter the order",
+      "phase": "p1",
+      "sketch": {
+        "x": 280,
+        "y": 0
+      }
+    },
+    {
+      "id": "n3",
+      "lane": "Barista",
+      "type": "decision",
+      "text": "Is everything in stock?",
+      "phase": "p1",
+      "sketch": {
+        "x": 560,
+        "y": 0
+      }
+    },
+    {
+      "id": "n4",
+      "lane": "Barista",
+      "type": "step",
+      "text": "Offer an alternative",
+      "phase": "p1",
+      "sketch": {
+        "x": 560,
+        "y": 190
+      }
+    },
+    {
+      "id": "n6",
+      "lane": "Customer",
+      "type": "step",
+      "text": "Pay",
+      "phase": "p1",
+      "sketch": {
+        "x": 840,
+        "y": 0
+      }
+    },
+    {
+      "id": "n7",
+      "lane": "Barista",
+      "type": "decision",
+      "text": "Any food on the order?",
+      "phase": "p2",
+      "sketch": {
+        "x": 0,
+        "y": 400
+      }
+    },
+    {
+      "id": "n8",
+      "lane": "Kitchen",
+      "type": "step",
+      "text": "Prepare the food",
+      "phase": "p2",
+      "sketch": {
+        "x": 280,
+        "y": 590
+      }
+    },
+    {
+      "id": "n9",
+      "lane": "Barista",
+      "type": "step",
+      "text": "Make the drinks",
+      "phase": "p2",
+      "sketch": {
+        "x": 280,
+        "y": 400
+      }
+    },
+    {
+      "id": "n10",
+      "lane": "Barista",
+      "type": "step",
+      "text": "Call the name",
+      "phase": "p2",
+      "sketch": {
+        "x": 560,
+        "y": 400
+      }
+    },
+    {
+      "id": "n11",
+      "lane": "Customer",
+      "type": "step",
+      "text": "Collect the order",
+      "phase": "p2",
+      "sketch": {
+        "x": 840,
+        "y": 400
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "n1",
+      "to": "n2"
+    },
+    {
+      "from": "n2",
+      "to": "n3"
+    },
+    {
+      "from": "n3",
+      "to": "n6",
+      "label": "Yes"
+    },
+    {
+      "from": "n3",
+      "to": "n4",
+      "label": "No"
+    },
+    {
+      "from": "n4",
+      "to": "n2",
+      "label": "Customer picks something else"
+    },
+    {
+      "from": "n6",
+      "to": "n7"
+    },
+    {
+      "from": "n7",
+      "to": "n8",
+      "label": "Yes"
+    },
+    {
+      "from": "n7",
+      "to": "n9",
+      "label": "No"
+    },
+    {
+      "from": "n8",
+      "to": "n9"
+    },
+    {
+      "from": "n9",
+      "to": "n10"
+    },
+    {
+      "from": "n10",
+      "to": "n11"
+    }
+  ]
+}

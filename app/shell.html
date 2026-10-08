@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Freestyle: sketch a process, get a swimlane</title>
+  <meta name="description" content="Freestyle is a free swimlane diagram maker. Sketch a process on a free board and get a print-ready swimlane. Runs in your browser; your maps stay on your computer.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232d2a32'/%3E%3Cpath d='M6 21c4-9 7 5 11-4s5-6 9-7' fill='none' stroke='%23ffbf46' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{display:flex;flex-direction:column;overflow:hidden;background:var(--x-canvas);color:var(--x-ink);font:14px/1.4 var(--x-font);-webkit-font-smoothing:antialiased}
+    /* Freestyle palette: shadow grey #2d2a32, lavender grey #7c809b, mint cream #f1fffa, sunflower gold #ffbf46, golden pollen #fdca40 */
+    :root{--shadow-grey:#2d2a32;--lavender-grey:#7c809b;--mint-cream:#f1fffa;--sunflower-gold:#ffbf46;--golden-pollen:#fdca40;
+      --x-font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;--x-radius-small:8px;--x-radius-inner:10px;--x-radius-card:14px;
+      --x-brand:var(--sunflower-gold);--x-brand-hover:var(--golden-pollen);--x-on-brand:var(--shadow-grey);--x-select:var(--sunflower-gold)}
+    :root,:root[data-theme="light"]{color-scheme:light;--x-canvas:#f1fffa;--x-paper:#ffffff;--x-ink:#2d2a32;--x-muted:#5f637c;--x-line:rgba(45,42,50,.13);--x-line-strong:rgba(45,42,50,.3);
+      --x-soft:#e3f4ed;--x-board:#f7fffc;--x-dot:#c9d6d2;--x-tag:rgba(255,255,255,.88);--x-accent:#5a5e8c;--x-accent-soft:#fff3d6;--x-focus:0 0 0 3px rgba(255,191,70,.45);
+      --x-danger:#b3261e;--x-warning:#8a5a00;--x-success:#1b7a4b;--x-shadow-pop:0 10px 30px rgba(45,42,50,.18);--x-head:#2d2a32}
+    :root[data-theme="dark"]{color-scheme:dark;--x-canvas:#2d2a32;--x-paper:#38353f;--x-ink:#f1fffa;--x-muted:#a9adc6;--x-line:rgba(241,255,250,.13);--x-line-strong:rgba(241,255,250,.3);
+      --x-soft:#46424e;--x-board:#25222a;--x-dot:#48444f;--x-tag:rgba(45,42,50,.86);--x-accent:#b9bcda;--x-accent-soft:#4a4233;--x-focus:0 0 0 3px rgba(255,191,70,.4);
+      --x-danger:#ff9b92;--x-warning:#fdca40;--x-success:#86dcae;--x-shadow-pop:0 10px 30px rgba(0,0,0,.5);--x-head:#221f26}
+    /* Header */
+    .xh{background:var(--x-head);color:var(--mint-cream);border-bottom:3px solid var(--sunflower-gold)}
+    .xh-inner{display:flex;align-items:center;gap:14px;padding:10px 18px}
+    .xh-mark{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--mint-cream);text-decoration:none}
+    .xh-mark svg{width:30px;height:30px;flex:none}
+    .xh-mark b{color:var(--sunflower-gold);font-weight:800}
+    .xh-tag{color:var(--lavender-grey);font-size:13px;font-weight:600}
+    :root[data-theme="dark"] .xh-tag{color:#a9adc6}
+    .xh-grow{flex:1}
+    #bTheme{height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(241,255,250,.28);border-radius:999px;background:none;color:var(--mint-cream);font-size:13px;font-weight:600;cursor:pointer}
+    #bTheme:hover{border-color:var(--sunflower-gold);color:var(--sunflower-gold)}
+    #bTheme svg{width:15px;height:15px}
+    @media(max-width:640px){.xh-tag{display:none}}
+    button,input,select,textarea{font:inherit;color:inherit}
+    input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--sunflower-gold)}
+    [hidden]{display:none!important}
+    .xh{flex:none}
+
+    /* Toolbar */
+    #bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid var(--x-line);background:var(--x-paper)}
+    #bar button,#bar label.tool,.row button,#inspector button,.img-top button,.img-card button,.button-link,#help button,#jsonOv button,#ownersOv button{height:32px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font-size:13px;font-weight:500;white-space:nowrap;text-decoration:none;color:var(--x-ink);cursor:pointer}
+    #bar button:hover:not(:disabled),#inspector button:hover:not(:disabled),.img-card button:hover,.button-link:hover{border-color:var(--x-muted);background:var(--x-soft)}
+    #bar button:disabled,#inspector button:disabled{opacity:.45;cursor:default}
+    #bar button.primary{border-color:var(--x-brand);background:var(--x-brand);color:var(--x-on-brand);font-weight:700}
+    #bar button.primary:hover{background:var(--x-brand-hover)}
+    #bar .sep{width:1px;height:22px;background:var(--x-line);margin:0 3px}
+    #bar .grow{flex:1}
+    #bar label.tool{font-weight:500}
+    #viewTabs{display:flex;padding:2px;border-radius:var(--x-radius-small);background:var(--x-soft)}
+    #viewTabs button{height:28px;border:0;background:none;color:var(--x-muted)}
+    #viewTabs button[aria-pressed="true"]{background:var(--x-paper);color:var(--x-ink);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    #status{font-size:12.5px;color:var(--x-muted);max-width:44ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #status.bad{color:var(--x-danger);font-weight:700}
+    #status.warn{color:var(--x-warning)}
+
+    /* Panes */
+    #main{flex:1 1 auto;min-height:0;display:flex}
+    .pane{position:relative;flex:1 1 0;min-width:0;overflow:hidden}
+    #panes{flex:1 1 0;min-width:0;min-height:0;display:flex}
+    .pane + .pane{border-left:1px solid var(--x-line)}
+    /* Both views, one above the other */
+    body[data-stack="1"] #panes{flex-direction:column}
+    body[data-stack="1"] .pane{min-height:0}
+    body[data-stack="1"] .pane + .pane{border-left:0;border-top:1px solid var(--x-line)}
+    #bStack svg{width:16px;height:16px}
+    body[data-view="board"] #swimPane,body[data-view="swim"] #boardPane{display:none}
+    .pane-tag{position:absolute;left:10px;top:8px;z-index:3;padding:3px 8px;border-radius:6px;background:var(--x-tag);color:var(--x-muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
+    .pane-tools{position:absolute;right:14px;top:8px;z-index:3;display:flex;gap:6px}
+    .pane-tools button{height:26px;padding:0 9px;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper);font-size:12px;font-weight:500;cursor:pointer}
+    .pane-hint{position:absolute;left:10px;bottom:8px;z-index:3;max-width:calc(100% - 20px);padding:3px 8px;border-radius:6px;background:var(--x-tag);color:var(--x-muted);font-size:12px;pointer-events:none}
+
+    /* Board: a free canvas in the manner of Arcweave */
+    #board{position:absolute;inset:0;background-color:var(--x-board);background-image:radial-gradient(var(--x-dot) 1.1px,transparent 1.1px);cursor:default;user-select:none}
+    #board.can-pan{cursor:grab}#board.panning{cursor:grabbing}
+    #world{position:absolute;left:0;top:0;transform-origin:0 0}
+    #origin{position:absolute;left:-14px;top:-14px;width:28px;height:28px;pointer-events:none;background:linear-gradient(var(--x-muted),var(--x-muted)) center/100% 1.5px no-repeat,linear-gradient(var(--x-muted),var(--x-muted)) center/1.5px 100% no-repeat}
+    #origin::after{content:'0, 0';position:absolute;left:18px;top:16px;color:var(--x-muted);font:11px ui-monospace,Consolas,monospace;white-space:nowrap}
+    #inspector .xy{display:inline-flex;align-items:center;gap:6px}#inspector .xy input{width:74px}
+    #wires{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible}
+    #wires .hit{cursor:pointer;pointer-events:stroke}
+    #wires .pill{cursor:pointer}
+    #wires .hidden-line{opacity:.45}
+    #marquee{display:none;position:absolute;border:1.5px solid var(--sunflower-gold);background:rgba(255,191,70,.14);pointer-events:none}
+    .card{position:absolute;border:1.6px solid var(--lane);border-radius:8px;background:#fff;color:#2d2a32;box-shadow:0 1px 3px rgba(3,61,75,.12);cursor:grab}
+    .card.sel{box-shadow:0 0 0 2px var(--shadow-grey),0 0 0 5px var(--x-select),0 6px 16px rgba(0,0,0,.25)}
+    .card-head{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px 6px 0 0;background:var(--lane);color:#fff;font-size:12px;font-weight:700}
+    .card-head .badge{flex:none;min-width:20px;height:20px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;color:var(--lane);font-size:11px}
+    .card-head .owner{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card-head .kind{flex:none;padding:1px 6px;border-radius:9px;background:rgba(255,255,255,.24);font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+    .card-body{padding:8px 10px 10px;background:var(--tint);border-radius:0 0 6px 6px;font-size:13px;line-height:1.35;overflow-wrap:anywhere;min-height:38px}
+    .card-body i{color:#8a94a0}
+    .card.decision{border-color:#7a5c00}
+    .card.decision .card-head{background:#7a5c00}
+    .card.decision .card-head .badge{color:#7a5c00}
+    .card.decision .card-body{background:#fff6d6}
+    .card-note{margin:0;padding:6px 10px;border-top:1px dashed #6b7a8c;background:#eef3f8;color:#2b3b4d;font-size:12px;border-radius:0 0 6px 6px}
+    .card-edit{display:block;width:100%;min-height:54px;padding:8px 10px;border:0;outline:2px solid var(--sunflower-gold);border-radius:0 0 6px 6px;background:#fff;color:#2d2a32;font-size:13px;line-height:1.35;resize:none}
+    .card.face::before{content:'';position:absolute;z-index:2;border-radius:4px;background:var(--sunflower-gold);box-shadow:0 0 0 3px rgba(255,191,70,.35);pointer-events:none}
+    .card.face-T::before{left:-2px;right:-2px;top:-7px;height:7px}.card.face-B::before{left:-2px;right:-2px;bottom:-7px;height:7px}
+    .card.face-L::before{top:-2px;bottom:-2px;left:-7px;width:7px}.card.face-R::before{top:-2px;bottom:-2px;right:-7px;width:7px}
+    .card.face-all::before{inset:-6px;background:none;border:4px solid var(--sunflower-gold);border-radius:12px}
+    /* The selected arrow's dots sit above the cards, so the end dots on a card's edge can be seen and grabbed. */
+    #wireCtl{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+    #wireCtl .ctl{fill:#fff;stroke:#2d2a32;stroke-width:3;cursor:grab;pointer-events:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+    #wireCtl .ctl.mid{fill:var(--sunflower-gold);stroke:#2d2a32}
+    /* One thing selected: it is the only thing that responds, until you click off it. */
+    #world.focus .card:not(.sel),#world.focus #wires .wire:not(.sel){pointer-events:none}
+    #world.focus .card:not(.sel){opacity:.72}
+    #world.focus #wires .wire:not(.sel){opacity:.5}
+    #world.focus .card:not(.sel) .handle{display:none}
+    .owner-pick{flex:1;min-width:0;height:22px;border:0;border-radius:4px;background:#fff;color:#2d2a32;font-size:12px}
+    .card-head{cursor:pointer}
+    .handle{position:absolute;width:16px;height:16px;border:2.5px solid #2d2a32;border-radius:50%;background:var(--sunflower-gold);opacity:0;cursor:crosshair;transition:opacity .12s}
+    .card:hover .handle,.card.sel .handle{opacity:1}
+    .handle::after{content:'';position:absolute;inset:-7px}
+    .handle[data-side="T"]{left:calc(50% - 8px);top:-9px}.handle[data-side="B"]{left:calc(50% - 8px);bottom:-9px}
+    .handle[data-side="L"]{top:calc(50% - 8px);left:-9px}.handle[data-side="R"]{top:calc(50% - 8px);right:-9px}
+    #menu{position:fixed;z-index:40;min-width:190px;padding:5px;border:1px solid var(--x-line);border-radius:var(--x-radius-inner);background:var(--x-paper);box-shadow:var(--x-shadow-pop)}
+    #menu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font-size:13px;cursor:pointer}
+    #menu button:hover{background:var(--x-soft)}
+
+    /* Swimlane */
+    #swim{position:absolute;inset:0;background:var(--x-board);cursor:grab;overflow:hidden}
+    #swim.panning{cursor:grabbing}
+    #stage{position:absolute;left:0;top:0;transform-origin:0 0}
+
+    /* Inspector */
+    #inspector{flex:none;width:324px;overflow:hidden auto;padding:16px 20px 24px 18px;scrollbar-gutter:stable;border-left:1px solid var(--x-line);background:var(--x-paper);font-size:13px}
+    #inspector h3{margin:0 0 10px;font-size:16px;font-weight:700}
+    #inspector h4{margin:16px 0 7px;color:var(--x-muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+    #inspector .f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+    #inspector .f.col{display:block}
+    #inspector .f>span:first-child{color:var(--x-muted);font-weight:700;font-size:12px}
+    #inspector .f.col>span{display:block;margin-bottom:4px}
+    #inspector input[type=text],#inspector input[type=number],#inspector select,#inspector textarea{height:32px;padding:0 8px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper)}
+    #inspector .f.col input,#inspector textarea{width:100%}
+    #inspector textarea{height:auto;padding:7px 8px;resize:vertical}
+    #inspector input[type=number]{width:74px}
+    #inspector input[type=range]{width:104px;vertical-align:middle}
+    #inspector input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper);vertical-align:middle}
+    #inspector input:focus,#inspector select:focus,#inspector textarea:focus{outline:none;border-color:var(--x-accent);box-shadow:var(--x-focus)}
+    #inspector .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    #inspector button.danger{border-color:var(--x-danger);color:var(--x-danger)}
+    #inspector .muted,.muted{color:var(--x-muted)}
+    #inspector p{margin:8px 0;font-size:12.5px}
+    #inspector .sw{display:inline-block;width:18px;height:18px;margin-left:4px;border:1px solid rgba(0,0,0,.2);border-radius:50%;vertical-align:middle;cursor:pointer}
+    #inspector .list{display:grid;gap:6px;margin-bottom:8px}
+    #inspector .li{display:grid;grid-template-columns:34px minmax(0,1fr) repeat(3,28px);gap:4px;align-items:center}
+    #inspector .pi .li{grid-template-columns:34px minmax(0,1fr) 28px}
+    #inspector .li input[type=text]{width:100%;min-width:0}
+    #inspector .li button{width:28px;height:28px;padding:0;justify-content:center}
+    #inspector .pi{display:grid;gap:4px;padding-bottom:6px;border-bottom:1px solid var(--x-line)}
+    #inspector .pi>input{width:100%}
+    #inspector .warns{margin:0;padding-left:18px;color:var(--x-warning);font-size:12.5px}
+
+    /* Images and help overlays */
+    #imgOv,#help,#jsonOv,#ownersOv{position:fixed;inset:0;z-index:50;overflow:auto;padding:20px 26px;background:var(--x-canvas)}
+    .img-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+    .img-top b{font-size:17px}
+    .img-top label{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font-size:13px}
+    .img-card{margin:0 0 18px;padding:14px;border:1px solid var(--x-line);border-radius:var(--x-radius-card);background:var(--x-paper)}
+    .img-card img{display:block;max-width:100%;margin:10px 0 0;border:1px solid var(--x-line)}
+    .img-card .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+    .img-card .msg{color:var(--x-success);font-size:13px}
+    .bad{color:var(--x-danger)}
+    #jsonText{width:100%;height:calc(100vh - 290px);min-height:220px;padding:10px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font:12px/1.45 ui-monospace,Consolas,monospace;resize:vertical}
+    #jsonOv .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    #jsonOv h2{margin:0 0 4px;font-size:22px}
+    #ownersOv .sheet{max-width:640px}
+    #ownersOv h2{margin:0 0 4px;font-size:22px}
+    .owner-row{display:grid;grid-template-columns:38px minmax(0,1fr) 110px repeat(3,32px);gap:6px;align-items:center;margin-bottom:6px}
+    .owner-row input[type=text],#ownersNew{height:34px;padding:0 9px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);width:100%}
+    #ownersNew{height:74px;padding:8px 9px;resize:vertical}
+    .owner-row input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper)}
+    .owner-row button{width:32px;padding:0;justify-content:center}
+    .owner-row .muted{font-size:12.5px}
+    #ownersOv .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    #help .sheet,#jsonOv .sheet,#ownersOv .sheet{max-width:820px;margin:0 auto;padding:22px 26px;border:1px solid var(--x-line);border-radius:var(--x-radius-card);background:var(--x-paper)}
+    #help h2{margin:0 0 4px;font-size:22px}
+    #help h3{margin:18px 0 6px;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--x-muted)}
+    #help li{margin-bottom:5px}
+    #help kbd{padding:1px 6px;border:1px solid var(--x-line-strong);border-bottom-width:2px;border-radius:5px;background:var(--x-soft);font:12px ui-monospace,Consolas,monospace}
+
+    /* Printing: only the pages are shown */
+    #printRoot{display:none}
+    html.pp,body.pp{height:auto!important;overflow:visible!important;background:#fff!important;display:block!important}
+    body.pp>*:not(#printRoot){display:none!important}
+    body.pp #printRoot{display:block}
+    .pg{width:11in;height:8.48in;padding:.35in;display:flex;flex-direction:column;page-break-after:always;break-after:page;background:#fff;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif}
+    .pg:last-child{page-break-after:auto;break-after:auto}
+    .pgh{font-size:12pt;height:.3in;line-height:.3in;color:#222}
+    .pgs{flex:1;min-height:0}
+    .pgs svg{width:100%;height:100%;display:block}
+    .pgf{height:.3in;font-size:8pt;color:#444;display:flex;gap:16px;align-items:center}
+    .pgf i{display:inline-block;width:22px;border-top:3px solid;vertical-align:middle;margin-right:5px}
+    .wide{overflow:hidden}
+    @media print{.uionly{display:none!important}}
+    @media(max-width:900px){#inspector{width:270px}#status{display:none}}
+  </style>
+</head>
+<body data-view="split">
+  <header class="xh">
+    <div class="xh-inner">
+      <a class="xh-mark" href="#" aria-label="Freestyle">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#ffbf46"/><path d="M6 21c4-9 7 5 11-4s5-6 9-7" fill="none" stroke="#2d2a32" stroke-width="3.2" stroke-linecap="round"/></svg>
+        <span>Free<b>style</b></span></a>
+      <span class="xh-tag">Sketch a process. Get a swimlane.</span>
+      <span class="xh-grow"></span>
+      <button type="button" id="bTheme" title="Switch between light and dark"></button>
+    </div>
+  </header>
+
+  <div id="bar">
+    <button type="button" id="bNew">New</button>
+    <button type="button" id="bOpen" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file</button>
+    <button type="button" id="bSave" title="Save this map to your computer as a .map.json file (Ctrl+S)">Save file</button>
+    <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy / paste JSON</button>
+    <button type="button" id="bExample">Example</button>
+    <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners</button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+    <span class="sep"></span>
+    <button type="button" id="bStep" class="primary">+ Step</button>
+    <button type="button" id="bDecision">+ Decision</button>
+    <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
+    <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
+    <span class="sep"></span>
+    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
+    <button type="button" id="bStack" title="Switch between the two views side by side and one above the other"></button>
+    <span class="grow"></span>
+    <span id="status"></span>
+    <label class="tool"><input type="checkbox" id="hcChk"> High contrast</label>
+    <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print phases</button>
+    <button type="button" id="bPdf" title="The whole process on one wide page">One wide page</button>
+    <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
+    <button type="button" id="bImages">Images</button>
+    <button type="button" id="bHelp">Help</button>
+  </div>
+
+  <div id="main">
+   <div id="panes">
+    <section class="pane" id="boardPane">
+      <span class="pane-tag">Board</span>
+      <div class="pane-tools"><button type="button" id="bFitBoard">Fit</button></div>
+      <div id="board"><div id="world"><i id="origin" title="Origin: 0, 0"></i><svg id="wires" xmlns="http://www.w3.org/2000/svg"></svg><div id="cards"></div><svg id="wireCtl" xmlns="http://www.w3.org/2000/svg"></svg><div id="marquee"></div></div></div>
+      <span class="pane-hint">Double-click to add a card &middot; drag a gold dot to connect &middot; right-click for more &middot; Space + drag to move the board</span>
+    </section>
+    <section class="pane" id="swimPane">
+      <span class="pane-tag">Swimlane</span>
+      <div class="pane-tools"><button type="button" id="bFitSwim">Fit</button></div>
+      <div id="swim"><div id="stage"></div></div>
+      <span class="pane-hint">Click a box or line to adjust it &middot; drag to move &middot; scroll to zoom &middot; double-click to fit</span>
+    </section>
+   </div>
+    <aside id="inspector"></aside>
+  </div>
+
+  <div id="menu" hidden></div>
+  <div id="imgOv" hidden></div>
+  <div id="help" hidden>
+    <div class="sheet">
+      <h2>How this works</h2>
+      <p class="muted">Draw the process on the Board the way you would in Arcweave. The Swimlane beside it is the same map, arranged for you.</p>
+      <h3>On the board</h3>
+      <ul>
+        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision.</li>
+        <li><b>Write in it:</b> double-click the card. Enter finishes, Shift+Enter adds a line, Esc cancels.</li>
+        <li><b>Connect:</b> drag from a gold dot on a card to another card. Drop on empty space to make the next card. The arrow leaves from the dot you dragged.</li>
+        <li><b>Shape an arrow:</b> click it. Drag an end dot round its card to change the side it leaves or arrives on (or onto another card). Drag the middle dot to bend it; double-click that dot to straighten. While you drag, the side it will attach to lights up in gold.</li>
+        <li><b>Owners:</b> set them all up with the Owners button. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Label an arrow:</b> double-click it, or select it and type in the panel.</li>
+        <li><b>One at a time:</b> click a card or an arrow and it is the only thing that responds; the rest fade a little. Click empty space to let go of it.</li>
+        <li><b>Select several:</b> drag a box around them, or Shift-click. Drag one to move them all.</li>
+        <li><b>Both views:</b> with Both chosen, the button beside it switches between side by side and stacked (board above, swimlane below).</li>
+        <li><b>Move around:</b> hold Space and drag (or drag with the right mouse button). Scroll to zoom.</li>
+        <li><kbd>Delete</kbd> removes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, arrow keys nudge.</li>
+      </ul>
+      <h3>How a card becomes a swimlane box</h3>
+      <ul>
+        <li><b>The owner is the lane.</b> Pick who does the step in the panel on the right.</li>
+        <li><b>A question is a decision.</b> End the text with "?" or choose Decision; it becomes a diamond.</li>
+        <li><b>Start labels with Yes or No.</b> Yes arrows are green and No arrows red. An arrow that goes back to an earlier step is a loop, in yellow.</li>
+        <li><b>The ideal path</b> is the shortest way through over plain and Yes arrows. It gets the blue glow. You can force it on or off per arrow.</li>
+        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or right-click the first card of a phase and choose "Start a new phase here". Name phases in the Map panel (click empty space to see it).</li>
+        <li><b>Order in time</b> follows the arrows. Where two cards could go either way, the one further left on the board comes first.</li>
+      </ul>
+      <h3>From Arcweave</h3>
+      <ul>
+        <li>Export the project as JSON. If it arrives as a zip, unzip it and open <b>project_settings.json</b> with Open (or drop it on the board).</li>
+        <li>Card title = owner. Card text = the step. A card with "?" or a branch = a decision. "[P2]" at the start of a card starts phase 2.</li>
+        <li>Open a newer export of the same board later and this map is updated in place: your phases, pins, arrow sides, colours and box sizes are kept.</li>
+      </ul>
+      <h3>Getting it out</h3>
+      <ul>
+        <li><b>Print phases:</b> one letter-landscape page per phase. Choose "Save as PDF" in the print window.</li>
+        <li><b>Images:</b> a PNG of each phase and of the whole process, to copy or download.</li>
+        <li><b>Download PDF:</b> the same phase pages as a PDF file, with no print window.</li>
+        <li><b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy / paste JSON</b> shows the same thing as text, to send to someone.</li>
+        <li><b>Nothing is uploaded.</b> Freestyle runs in your browser. The map on screen is also remembered in this browser between visits, but the file you save is the copy to keep.</li>
+      </ul>
+      <p><button type="button" id="helpClose">Close</button></p>
+    </div>
+  </div>
+  <div id="ownersOv" hidden>
+    <div class="sheet">
+      <h2>Owners</h2>
+      <p class="muted">Everyone who owns a step. Each owner is a lane in the swimlane, in this order. Set them all up first, then just pick one on each card (double-click a card's coloured header).</p>
+      <div id="ownersList"></div>
+      <label for="ownersNew" style="display:block;margin:14px 0 5px;font-weight:700">Add owners</label>
+      <textarea id="ownersNew" placeholder="One name per line, or separated by commas. Press Enter to add."></textarea>
+      <p class="row"><button type="button" id="ownersAdd">Add</button><button type="button" id="ownersClose">Done</button></p>
+    </div>
+  </div>
+  <div id="jsonOv" hidden>
+    <div class="sheet">
+      <h2>The map as JSON</h2>
+      <p class="muted">This text is the whole map: cards, arrows, owners, phases and every adjustment. Copy it to keep it somewhere (an email, a note, a file), or paste a map here and load it.</p>
+      <textarea id="jsonText" spellcheck="false" aria-label="Map JSON"></textarea>
+      <p class="row"><button type="button" id="jsonCopy">Copy</button><button type="button" id="jsonDownload">Download as a file</button><button type="button" id="jsonLoad">Load what is in the box</button><button type="button" id="jsonClose">Close</button><span id="jsonMsg" class="muted"></span></p>
+    </div>
+  </div>
+  <div id="printRoot"></div>
+
+  <script>
+    /* Theme: follows the system until you choose, then remembers the choice in this browser. */
+    (function () {
+      var KEY = 'freestyle-theme', root = document.documentElement, button = document.getElementById('bTheme');
+      var SUN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>';
+      var MOON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg>';
+      var saved = null; try { saved = localStorage.getItem(KEY); } catch (ignored) {}
+      function apply(theme) { root.dataset.theme = theme; button.innerHTML = theme === 'dark' ? SUN + 'Light' : MOON + 'Dark'; button.setAttribute('aria-label', 'Switch to ' + (theme === 'dark' ? 'light' : 'dark') + ' mode'); }
+      apply(saved === 'dark' || saved === 'light' ? saved : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      button.addEventListener('click', function () { var next = root.dataset.theme === 'dark' ? 'light' : 'dark'; apply(next); try { localStorage.setItem(KEY, next); } catch (ignored) {} });
+    })();
+  </script>
+  <script>
+/*@@APP@@*/
+    try { window.FreestyleApp.start(); }
+    catch (error) { var status = document.getElementById('status'); status.className = 'bad'; status.textContent = 'The app could not start: ' + error.message; }
+  </script>
+</body>
+</html>

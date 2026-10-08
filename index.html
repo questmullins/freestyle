@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Freestyle: sketch a process, get a swimlane</title>
+  <meta name="description" content="Freestyle is a free swimlane diagram maker. Sketch a process on a free board and get a print-ready swimlane. Runs in your browser; your maps stay on your computer.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232d2a32'/%3E%3Cpath d='M6 21c4-9 7 5 11-4s5-6 9-7' fill='none' stroke='%23ffbf46' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{display:flex;flex-direction:column;overflow:hidden;background:var(--x-canvas);color:var(--x-ink);font:14px/1.4 var(--x-font);-webkit-font-smoothing:antialiased}
+    /* Freestyle palette: shadow grey #2d2a32, lavender grey #7c809b, mint cream #f1fffa, sunflower gold #ffbf46, golden pollen #fdca40 */
+    :root{--shadow-grey:#2d2a32;--lavender-grey:#7c809b;--mint-cream:#f1fffa;--sunflower-gold:#ffbf46;--golden-pollen:#fdca40;
+      --x-font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;--x-radius-small:8px;--x-radius-inner:10px;--x-radius-card:14px;
+      --x-brand:var(--sunflower-gold);--x-brand-hover:var(--golden-pollen);--x-on-brand:var(--shadow-grey);--x-select:var(--sunflower-gold)}
+    :root,:root[data-theme="light"]{color-scheme:light;--x-canvas:#f1fffa;--x-paper:#ffffff;--x-ink:#2d2a32;--x-muted:#5f637c;--x-line:rgba(45,42,50,.13);--x-line-strong:rgba(45,42,50,.3);
+      --x-soft:#e3f4ed;--x-board:#f7fffc;--x-dot:#c9d6d2;--x-tag:rgba(255,255,255,.88);--x-accent:#5a5e8c;--x-accent-soft:#fff3d6;--x-focus:0 0 0 3px rgba(255,191,70,.45);
+      --x-danger:#b3261e;--x-warning:#8a5a00;--x-success:#1b7a4b;--x-shadow-pop:0 10px 30px rgba(45,42,50,.18);--x-head:#2d2a32}
+    :root[data-theme="dark"]{color-scheme:dark;--x-canvas:#2d2a32;--x-paper:#38353f;--x-ink:#f1fffa;--x-muted:#a9adc6;--x-line:rgba(241,255,250,.13);--x-line-strong:rgba(241,255,250,.3);
+      --x-soft:#46424e;--x-board:#25222a;--x-dot:#48444f;--x-tag:rgba(45,42,50,.86);--x-accent:#b9bcda;--x-accent-soft:#4a4233;--x-focus:0 0 0 3px rgba(255,191,70,.4);
+      --x-danger:#ff9b92;--x-warning:#fdca40;--x-success:#86dcae;--x-shadow-pop:0 10px 30px rgba(0,0,0,.5);--x-head:#221f26}
+    /* Header */
+    .xh{background:var(--x-head);color:var(--mint-cream);border-bottom:3px solid var(--sunflower-gold)}
+    .xh-inner{display:flex;align-items:center;gap:14px;padding:10px 18px}
+    .xh-mark{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--mint-cream);text-decoration:none}
+    .xh-mark svg{width:30px;height:30px;flex:none}
+    .xh-mark b{color:var(--sunflower-gold);font-weight:800}
+    .xh-tag{color:var(--lavender-grey);font-size:13px;font-weight:600}
+    :root[data-theme="dark"] .xh-tag{color:#a9adc6}
+    .xh-grow{flex:1}
+    #bTheme{height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(241,255,250,.28);border-radius:999px;background:none;color:var(--mint-cream);font-size:13px;font-weight:600;cursor:pointer}
+    #bTheme:hover{border-color:var(--sunflower-gold);color:var(--sunflower-gold)}
+    #bTheme svg{width:15px;height:15px}
+    @media(max-width:640px){.xh-tag{display:none}}
+    button,input,select,textarea{font:inherit;color:inherit}
+    input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--sunflower-gold)}
+    [hidden]{display:none!important}
+    .xh{flex:none}
+
+    /* Toolbar */
+    #bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid var(--x-line);background:var(--x-paper)}
+    #bar button,#bar label.tool,.row button,#inspector button,.img-top button,.img-card button,.button-link,#help button,#jsonOv button,#ownersOv button{height:32px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font-size:13px;font-weight:500;white-space:nowrap;text-decoration:none;color:var(--x-ink);cursor:pointer}
+    #bar button:hover:not(:disabled),#inspector button:hover:not(:disabled),.img-card button:hover,.button-link:hover{border-color:var(--x-muted);background:var(--x-soft)}
+    #bar button:disabled,#inspector button:disabled{opacity:.45;cursor:default}
+    #bar button.primary{border-color:var(--x-brand);background:var(--x-brand);color:var(--x-on-brand);font-weight:700}
+    #bar button.primary:hover{background:var(--x-brand-hover)}
+    #bar .sep{width:1px;height:22px;background:var(--x-line);margin:0 3px}
+    #bar .grow{flex:1}
+    #bar label.tool{font-weight:500}
+    #viewTabs{display:flex;padding:2px;border-radius:var(--x-radius-small);background:var(--x-soft)}
+    #viewTabs button{height:28px;border:0;background:none;color:var(--x-muted)}
+    #viewTabs button[aria-pressed="true"]{background:var(--x-paper);color:var(--x-ink);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    #status{font-size:12.5px;color:var(--x-muted);max-width:44ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #status.bad{color:var(--x-danger);font-weight:700}
+    #status.warn{color:var(--x-warning)}
+
+    /* Panes */
+    #main{flex:1 1 auto;min-height:0;display:flex}
+    .pane{position:relative;flex:1 1 0;min-width:0;overflow:hidden}
+    #panes{flex:1 1 0;min-width:0;min-height:0;display:flex}
+    .pane + .pane{border-left:1px solid var(--x-line)}
+    /* Both views, one above the other */
+    body[data-stack="1"] #panes{flex-direction:column}
+    body[data-stack="1"] .pane{min-height:0}
+    body[data-stack="1"] .pane + .pane{border-left:0;border-top:1px solid var(--x-line)}
+    #bStack svg{width:16px;height:16px}
+    body[data-view="board"] #swimPane,body[data-view="swim"] #boardPane{display:none}
+    .pane-tag{position:absolute;left:10px;top:8px;z-index:3;padding:3px 8px;border-radius:6px;background:var(--x-tag);color:var(--x-muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
+    .pane-tools{position:absolute;right:14px;top:8px;z-index:3;display:flex;gap:6px}
+    .pane-tools button{height:26px;padding:0 9px;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper);font-size:12px;font-weight:500;cursor:pointer}
+    .pane-hint{position:absolute;left:10px;bottom:8px;z-index:3;max-width:calc(100% - 20px);padding:3px 8px;border-radius:6px;background:var(--x-tag);color:var(--x-muted);font-size:12px;pointer-events:none}
+
+    /* Board: a free canvas in the manner of Arcweave */
+    #board{position:absolute;inset:0;background-color:var(--x-board);background-image:radial-gradient(var(--x-dot) 1.1px,transparent 1.1px);cursor:default;user-select:none}
+    #board.can-pan{cursor:grab}#board.panning{cursor:grabbing}
+    #world{position:absolute;left:0;top:0;transform-origin:0 0}
+    #origin{position:absolute;left:-14px;top:-14px;width:28px;height:28px;pointer-events:none;background:linear-gradient(var(--x-muted),var(--x-muted)) center/100% 1.5px no-repeat,linear-gradient(var(--x-muted),var(--x-muted)) center/1.5px 100% no-repeat}
+    #origin::after{content:'0, 0';position:absolute;left:18px;top:16px;color:var(--x-muted);font:11px ui-monospace,Consolas,monospace;white-space:nowrap}
+    #inspector .xy{display:inline-flex;align-items:center;gap:6px}#inspector .xy input{width:74px}
+    #wires{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible}
+    #wires .hit{cursor:pointer;pointer-events:stroke}
+    #wires .pill{cursor:pointer}
+    #wires .hidden-line{opacity:.45}
+    #marquee{display:none;position:absolute;border:1.5px solid var(--sunflower-gold);background:rgba(255,191,70,.14);pointer-events:none}
+    .card{position:absolute;border:1.6px solid var(--lane);border-radius:8px;background:#fff;color:#2d2a32;box-shadow:0 1px 3px rgba(3,61,75,.12);cursor:grab}
+    .card.sel{box-shadow:0 0 0 2px var(--shadow-grey),0 0 0 5px var(--x-select),0 6px 16px rgba(0,0,0,.25)}
+    .card-head{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px 6px 0 0;background:var(--lane);color:#fff;font-size:12px;font-weight:700}
+    .card-head .badge{flex:none;min-width:20px;height:20px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;color:var(--lane);font-size:11px}
+    .card-head .owner{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card-head .kind{flex:none;padding:1px 6px;border-radius:9px;background:rgba(255,255,255,.24);font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+    .card-body{padding:8px 10px 10px;background:var(--tint);border-radius:0 0 6px 6px;font-size:13px;line-height:1.35;overflow-wrap:anywhere;min-height:38px}
+    .card-body i{color:#8a94a0}
+    .card.decision{border-color:#7a5c00}
+    .card.decision .card-head{background:#7a5c00}
+    .card.decision .card-head .badge{color:#7a5c00}
+    .card.decision .card-body{background:#fff6d6}
+    .card-note{margin:0;padding:6px 10px;border-top:1px dashed #6b7a8c;background:#eef3f8;color:#2b3b4d;font-size:12px;border-radius:0 0 6px 6px}
+    .card-edit{display:block;width:100%;min-height:54px;padding:8px 10px;border:0;outline:2px solid var(--sunflower-gold);border-radius:0 0 6px 6px;background:#fff;color:#2d2a32;font-size:13px;line-height:1.35;resize:none}
+    .card.face::before{content:'';position:absolute;z-index:2;border-radius:4px;background:var(--sunflower-gold);box-shadow:0 0 0 3px rgba(255,191,70,.35);pointer-events:none}
+    .card.face-T::before{left:-2px;right:-2px;top:-7px;height:7px}.card.face-B::before{left:-2px;right:-2px;bottom:-7px;height:7px}
+    .card.face-L::before{top:-2px;bottom:-2px;left:-7px;width:7px}.card.face-R::before{top:-2px;bottom:-2px;right:-7px;width:7px}
+    .card.face-all::before{inset:-6px;background:none;border:4px solid var(--sunflower-gold);border-radius:12px}
+    /* The selected arrow's dots sit above the cards, so the end dots on a card's edge can be seen and grabbed. */
+    #wireCtl{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+    #wireCtl .ctl{fill:#fff;stroke:#2d2a32;stroke-width:3;cursor:grab;pointer-events:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+    #wireCtl .ctl.mid{fill:var(--sunflower-gold);stroke:#2d2a32}
+    /* One thing selected: it is the only thing that responds, until you click off it. */
+    #world.focus .card:not(.sel),#world.focus #wires .wire:not(.sel){pointer-events:none}
+    #world.focus .card:not(.sel){opacity:.72}
+    #world.focus #wires .wire:not(.sel){opacity:.5}
+    #world.focus .card:not(.sel) .handle{display:none}
+    .owner-pick{flex:1;min-width:0;height:22px;border:0;border-radius:4px;background:#fff;color:#2d2a32;font-size:12px}
+    .card-head{cursor:pointer}
+    .handle{position:absolute;width:16px;height:16px;border:2.5px solid #2d2a32;border-radius:50%;background:var(--sunflower-gold);opacity:0;cursor:crosshair;transition:opacity .12s}
+    .card:hover .handle,.card.sel .handle{opacity:1}
+    .handle::after{content:'';position:absolute;inset:-7px}
+    .handle[data-side="T"]{left:calc(50% - 8px);top:-9px}.handle[data-side="B"]{left:calc(50% - 8px);bottom:-9px}
+    .handle[data-side="L"]{top:calc(50% - 8px);left:-9px}.handle[data-side="R"]{top:calc(50% - 8px);right:-9px}
+    #menu{position:fixed;z-index:40;min-width:190px;padding:5px;border:1px solid var(--x-line);border-radius:var(--x-radius-inner);background:var(--x-paper);box-shadow:var(--x-shadow-pop)}
+    #menu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font-size:13px;cursor:pointer}
+    #menu button:hover{background:var(--x-soft)}
+
+    /* Swimlane */
+    #swim{position:absolute;inset:0;background:var(--x-board);cursor:grab;overflow:hidden}
+    #swim.panning{cursor:grabbing}
+    #stage{position:absolute;left:0;top:0;transform-origin:0 0}
+
+    /* Inspector */
+    #inspector{flex:none;width:324px;overflow:hidden auto;padding:16px 20px 24px 18px;scrollbar-gutter:stable;border-left:1px solid var(--x-line);background:var(--x-paper);font-size:13px}
+    #inspector h3{margin:0 0 10px;font-size:16px;font-weight:700}
+    #inspector h4{margin:16px 0 7px;color:var(--x-muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+    #inspector .f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+    #inspector .f.col{display:block}
+    #inspector .f>span:first-child{color:var(--x-muted);font-weight:700;font-size:12px}
+    #inspector .f.col>span{display:block;margin-bottom:4px}
+    #inspector input[type=text],#inspector input[type=number],#inspector select,#inspector textarea{height:32px;padding:0 8px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper)}
+    #inspector .f.col input,#inspector textarea{width:100%}
+    #inspector textarea{height:auto;padding:7px 8px;resize:vertical}
+    #inspector input[type=number]{width:74px}
+    #inspector input[type=range]{width:104px;vertical-align:middle}
+    #inspector input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper);vertical-align:middle}
+    #inspector input:focus,#inspector select:focus,#inspector textarea:focus{outline:none;border-color:var(--x-accent);box-shadow:var(--x-focus)}
+    #inspector .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    #inspector button.danger{border-color:var(--x-danger);color:var(--x-danger)}
+    #inspector .muted,.muted{color:var(--x-muted)}
+    #inspector p{margin:8px 0;font-size:12.5px}
+    #inspector .sw{display:inline-block;width:18px;height:18px;margin-left:4px;border:1px solid rgba(0,0,0,.2);border-radius:50%;vertical-align:middle;cursor:pointer}
+    #inspector .list{display:grid;gap:6px;margin-bottom:8px}
+    #inspector .li{display:grid;grid-template-columns:34px minmax(0,1fr) repeat(3,28px);gap:4px;align-items:center}
+    #inspector .pi .li{grid-template-columns:34px minmax(0,1fr) 28px}
+    #inspector .li input[type=text]{width:100%;min-width:0}
+    #inspector .li button{width:28px;height:28px;padding:0;justify-content:center}
+    #inspector .pi{display:grid;gap:4px;padding-bottom:6px;border-bottom:1px solid var(--x-line)}
+    #inspector .pi>input{width:100%}
+    #inspector .warns{margin:0;padding-left:18px;color:var(--x-warning);font-size:12.5px}
+
+    /* Images and help overlays */
+    #imgOv,#help,#jsonOv,#ownersOv{position:fixed;inset:0;z-index:50;overflow:auto;padding:20px 26px;background:var(--x-canvas)}
+    .img-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+    .img-top b{font-size:17px}
+    .img-top label{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font-size:13px}
+    .img-card{margin:0 0 18px;padding:14px;border:1px solid var(--x-line);border-radius:var(--x-radius-card);background:var(--x-paper)}
+    .img-card img{display:block;max-width:100%;margin:10px 0 0;border:1px solid var(--x-line)}
+    .img-card .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+    .img-card .msg{color:var(--x-success);font-size:13px}
+    .bad{color:var(--x-danger)}
+    #jsonText{width:100%;height:calc(100vh - 290px);min-height:220px;padding:10px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);font:12px/1.45 ui-monospace,Consolas,monospace;resize:vertical}
+    #jsonOv .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    #jsonOv h2{margin:0 0 4px;font-size:22px}
+    #ownersOv .sheet{max-width:640px}
+    #ownersOv h2{margin:0 0 4px;font-size:22px}
+    .owner-row{display:grid;grid-template-columns:38px minmax(0,1fr) 110px repeat(3,32px);gap:6px;align-items:center;margin-bottom:6px}
+    .owner-row input[type=text],#ownersNew{height:34px;padding:0 9px;border:1px solid var(--x-line-strong);border-radius:var(--x-radius-small);background:var(--x-paper);width:100%}
+    #ownersNew{height:74px;padding:8px 9px;resize:vertical}
+    .owner-row input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--x-line-strong);border-radius:6px;background:var(--x-paper)}
+    .owner-row button{width:32px;padding:0;justify-content:center}
+    .owner-row .muted{font-size:12.5px}
+    #ownersOv .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    #help .sheet,#jsonOv .sheet,#ownersOv .sheet{max-width:820px;margin:0 auto;padding:22px 26px;border:1px solid var(--x-line);border-radius:var(--x-radius-card);background:var(--x-paper)}
+    #help h2{margin:0 0 4px;font-size:22px}
+    #help h3{margin:18px 0 6px;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--x-muted)}
+    #help li{margin-bottom:5px}
+    #help kbd{padding:1px 6px;border:1px solid var(--x-line-strong);border-bottom-width:2px;border-radius:5px;background:var(--x-soft);font:12px ui-monospace,Consolas,monospace}
+
+    /* Printing: only the pages are shown */
+    #printRoot{display:none}
+    html.pp,body.pp{height:auto!important;overflow:visible!important;background:#fff!important;display:block!important}
+    body.pp>*:not(#printRoot){display:none!important}
+    body.pp #printRoot{display:block}
+    .pg{width:11in;height:8.48in;padding:.35in;display:flex;flex-direction:column;page-break-after:always;break-after:page;background:#fff;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif}
+    .pg:last-child{page-break-after:auto;break-after:auto}
+    .pgh{font-size:12pt;height:.3in;line-height:.3in;color:#222}
+    .pgs{flex:1;min-height:0}
+    .pgs svg{width:100%;height:100%;display:block}
+    .pgf{height:.3in;font-size:8pt;color:#444;display:flex;gap:16px;align-items:center}
+    .pgf i{display:inline-block;width:22px;border-top:3px solid;vertical-align:middle;margin-right:5px}
+    .wide{overflow:hidden}
+    @media print{.uionly{display:none!important}}
+    @media(max-width:900px){#inspector{width:270px}#status{display:none}}
+  </style>
+</head>
+<body data-view="split">
+  <header class="xh">
+    <div class="xh-inner">
+      <a class="xh-mark" href="#" aria-label="Freestyle">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#ffbf46"/><path d="M6 21c4-9 7 5 11-4s5-6 9-7" fill="none" stroke="#2d2a32" stroke-width="3.2" stroke-linecap="round"/></svg>
+        <span>Free<b>style</b></span></a>
+      <span class="xh-tag">Sketch a process. Get a swimlane.</span>
+      <span class="xh-grow"></span>
+      <button type="button" id="bTheme" title="Switch between light and dark"></button>
+    </div>
+  </header>
+
+  <div id="bar">
+    <button type="button" id="bNew">New</button>
+    <button type="button" id="bOpen" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file</button>
+    <button type="button" id="bSave" title="Save this map to your computer as a .map.json file (Ctrl+S)">Save file</button>
+    <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy / paste JSON</button>
+    <button type="button" id="bExample">Example</button>
+    <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners</button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+    <span class="sep"></span>
+    <button type="button" id="bStep" class="primary">+ Step</button>
+    <button type="button" id="bDecision">+ Decision</button>
+    <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
+    <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
+    <span class="sep"></span>
+    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
+    <button type="button" id="bStack" title="Switch between the two views side by side and one above the other"></button>
+    <span class="grow"></span>
+    <span id="status"></span>
+    <label class="tool"><input type="checkbox" id="hcChk"> High contrast</label>
+    <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print phases</button>
+    <button type="button" id="bPdf" title="The whole process on one wide page">One wide page</button>
+    <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
+    <button type="button" id="bImages">Images</button>
+    <button type="button" id="bHelp">Help</button>
+  </div>
+
+  <div id="main">
+   <div id="panes">
+    <section class="pane" id="boardPane">
+      <span class="pane-tag">Board</span>
+      <div class="pane-tools"><button type="button" id="bFitBoard">Fit</button></div>
+      <div id="board"><div id="world"><i id="origin" title="Origin: 0, 0"></i><svg id="wires" xmlns="http://www.w3.org/2000/svg"></svg><div id="cards"></div><svg id="wireCtl" xmlns="http://www.w3.org/2000/svg"></svg><div id="marquee"></div></div></div>
+      <span class="pane-hint">Double-click to add a card &middot; drag a gold dot to connect &middot; right-click for more &middot; Space + drag to move the board</span>
+    </section>
+    <section class="pane" id="swimPane">
+      <span class="pane-tag">Swimlane</span>
+      <div class="pane-tools"><button type="button" id="bFitSwim">Fit</button></div>
+      <div id="swim"><div id="stage"></div></div>
+      <span class="pane-hint">Click a box or line to adjust it &middot; drag to move &middot; scroll to zoom &middot; double-click to fit</span>
+    </section>
+   </div>
+    <aside id="inspector"></aside>
+  </div>
+
+  <div id="menu" hidden></div>
+  <div id="imgOv" hidden></div>
+  <div id="help" hidden>
+    <div class="sheet">
+      <h2>How this works</h2>
+      <p class="muted">Draw the process on the Board the way you would in Arcweave. The Swimlane beside it is the same map, arranged for you.</p>
+      <h3>On the board</h3>
+      <ul>
+        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision.</li>
+        <li><b>Write in it:</b> double-click the card. Enter finishes, Shift+Enter adds a line, Esc cancels.</li>
+        <li><b>Connect:</b> drag from a gold dot on a card to another card. Drop on empty space to make the next card. The arrow leaves from the dot you dragged.</li>
+        <li><b>Shape an arrow:</b> click it. Drag an end dot round its card to change the side it leaves or arrives on (or onto another card). Drag the middle dot to bend it; double-click that dot to straighten. While you drag, the side it will attach to lights up in gold.</li>
+        <li><b>Owners:</b> set them all up with the Owners button. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Label an arrow:</b> double-click it, or select it and type in the panel.</li>
+        <li><b>One at a time:</b> click a card or an arrow and it is the only thing that responds; the rest fade a little. Click empty space to let go of it.</li>
+        <li><b>Select several:</b> drag a box around them, or Shift-click. Drag one to move them all.</li>
+        <li><b>Both views:</b> with Both chosen, the button beside it switches between side by side and stacked (board above, swimlane below).</li>
+        <li><b>Move around:</b> hold Space and drag (or drag with the right mouse button). Scroll to zoom.</li>
+        <li><kbd>Delete</kbd> removes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, arrow keys nudge.</li>
+      </ul>
+      <h3>How a card becomes a swimlane box</h3>
+      <ul>
+        <li><b>The owner is the lane.</b> Pick who does the step in the panel on the right.</li>
+        <li><b>A question is a decision.</b> End the text with "?" or choose Decision; it becomes a diamond.</li>
+        <li><b>Start labels with Yes or No.</b> Yes arrows are green and No arrows red. An arrow that goes back to an earlier step is a loop, in yellow.</li>
+        <li><b>The ideal path</b> is the shortest way through over plain and Yes arrows. It gets the blue glow. You can force it on or off per arrow.</li>
+        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or right-click the first card of a phase and choose "Start a new phase here". Name phases in the Map panel (click empty space to see it).</li>
+        <li><b>Order in time</b> follows the arrows. Where two cards could go either way, the one further left on the board comes first.</li>
+      </ul>
+      <h3>From Arcweave</h3>
+      <ul>
+        <li>Export the project as JSON. If it arrives as a zip, unzip it and open <b>project_settings.json</b> with Open (or drop it on the board).</li>
+        <li>Card title = owner. Card text = the step. A card with "?" or a branch = a decision. "[P2]" at the start of a card starts phase 2.</li>
+        <li>Open a newer export of the same board later and this map is updated in place: your phases, pins, arrow sides, colours and box sizes are kept.</li>
+      </ul>
+      <h3>Getting it out</h3>
+      <ul>
+        <li><b>Print phases:</b> one letter-landscape page per phase. Choose "Save as PDF" in the print window.</li>
+        <li><b>Images:</b> a PNG of each phase and of the whole process, to copy or download.</li>
+        <li><b>Download PDF:</b> the same phase pages as a PDF file, with no print window.</li>
+        <li><b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy / paste JSON</b> shows the same thing as text, to send to someone.</li>
+        <li><b>Nothing is uploaded.</b> Freestyle runs in your browser. The map on screen is also remembered in this browser between visits, but the file you save is the copy to keep.</li>
+      </ul>
+      <p><button type="button" id="helpClose">Close</button></p>
+    </div>
+  </div>
+  <div id="ownersOv" hidden>
+    <div class="sheet">
+      <h2>Owners</h2>
+      <p class="muted">Everyone who owns a step. Each owner is a lane in the swimlane, in this order. Set them all up first, then just pick one on each card (double-click a card's coloured header).</p>
+      <div id="ownersList"></div>
+      <label for="ownersNew" style="display:block;margin:14px 0 5px;font-weight:700">Add owners</label>
+      <textarea id="ownersNew" placeholder="One name per line, or separated by commas. Press Enter to add."></textarea>
+      <p class="row"><button type="button" id="ownersAdd">Add</button><button type="button" id="ownersClose">Done</button></p>
+    </div>
+  </div>
+  <div id="jsonOv" hidden>
+    <div class="sheet">
+      <h2>The map as JSON</h2>
+      <p class="muted">This text is the whole map: cards, arrows, owners, phases and every adjustment. Copy it to keep it somewhere (an email, a note, a file), or paste a map here and load it.</p>
+      <textarea id="jsonText" spellcheck="false" aria-label="Map JSON"></textarea>
+      <p class="row"><button type="button" id="jsonCopy">Copy</button><button type="button" id="jsonDownload">Download as a file</button><button type="button" id="jsonLoad">Load what is in the box</button><button type="button" id="jsonClose">Close</button><span id="jsonMsg" class="muted"></span></p>
+    </div>
+  </div>
+  <div id="printRoot"></div>
+
+  <script>
+    /* Theme: follows the system until you choose, then remembers the choice in this browser. */
+    (function () {
+      var KEY = 'freestyle-theme', root = document.documentElement, button = document.getElementById('bTheme');
+      var SUN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"/></svg>';
+      var MOON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg>';
+      var saved = null; try { saved = localStorage.getItem(KEY); } catch (ignored) {}
+      function apply(theme) { root.dataset.theme = theme; button.innerHTML = theme === 'dark' ? SUN + 'Light' : MOON + 'Dark'; button.setAttribute('aria-label', 'Switch to ' + (theme === 'dark' ? 'light' : 'dark') + ' mode'); }
+      apply(saved === 'dark' || saved === 'light' ? saved : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      button.addEventListener('click', function () { var next = root.dataset.theme === 'dark' ? 'light' : 'dark'; apply(next); try { localStorage.setItem(KEY, next); } catch (ignored) {} });
+    })();
+  </script>
+  <script>
+const SAMPLE_MAP = {"version":1,"app":"freestyle","title":"Coffee shop order","lanes":[{"id":"Customer","name":"Customer"},{"id":"Barista","name":"Barista"},{"id":"Kitchen","name":"Kitchen"}],"phases":[{"id":"p1","title":"Phase 1 \u00b7 Order","subtitle":"From the counter to a paid ticket"},{"id":"p2","title":"Phase 2 \u00b7 Make and serve","subtitle":"Drinks and food to the customer"}],"nodes":[{"id":"n1","lane":"Customer","type":"step","text":"Order at the counter","phase":"p1","sketch":{"x":0,"y":0}},{"id":"n2","lane":"Barista","type":"step","text":"Enter the order","phase":"p1","sketch":{"x":280,"y":0}},{"id":"n3","lane":"Barista","type":"decision","text":"Is everything in stock?","phase":"p1","sketch":{"x":560,"y":0}},{"id":"n4","lane":"Barista","type":"step","text":"Offer an alternative","phase":"p1","sketch":{"x":560,"y":190}},{"id":"n6","lane":"Customer","type":"step","text":"Pay","phase":"p1","sketch":{"x":840,"y":0}},{"id":"n7","lane":"Barista","type":"decision","text":"Any food on the order?","phase":"p2","sketch":{"x":0,"y":400}},{"id":"n8","lane":"Kitchen","type":"step","text":"Prepare the food","phase":"p2","sketch":{"x":280,"y":590}},{"id":"n9","lane":"Barista","type":"step","text":"Make the drinks","phase":"p2","sketch":{"x":280,"y":400}},{"id":"n10","lane":"Barista","type":"step","text":"Call the name","phase":"p2","sketch":{"x":560,"y":400}},{"id":"n11","lane":"Customer","type":"step","text":"Collect the order","phase":"p2","sketch":{"x":840,"y":400}}],"edges":[{"from":"n1","to":"n2"},{"from":"n2","to":"n3"},{"from":"n3","to":"n6","label":"Yes"},{"from":"n3","to":"n4","label":"No"},{"from":"n4","to":"n2","label":"Customer picks something else"},{"from":"n6","to":"n7"},{"from":"n7","to":"n8","label":"Yes"},{"from":"n7","to":"n9","label":"No"},{"from":"n8","to":"n9"},{"from":"n9","to":"n10"},{"from":"n10","to":"n11"}]};
+
+/*
+ * Freestyle: layout engine.
+ * Pure functions, no DOM. Adapted from the hand-off prototype (src/prototype/layout-engine.js).
+ *
+ *   importArcweave(json)  Arcweave project JSON -> map
+ *   normalize(map)        fills in whatever a map file leaves out, and recognises the older hand-tuned files
+ *   layout(map)           map -> a copy with everything the renderer needs worked out:
+ *                         column and slot per box, phase ranges, arrow kind, loop returns, ideal path, numbers
+ *
+ * What changed from the prototype:
+ *   - Pins. A box whose layout is pinned keeps its column and slot; everything else is arranged around it.
+ *   - An arrow's kind and ideal flag can be fixed by the author ("plain" means deliberately no colour).
+ *     Left unset, they are worked out here, so a label edited to "Yes" recolours the arrow by itself.
+ *   - Loop returns are found by distance from the start (inside a cycle, the arrow that leads back to an earlier
+ *     step), not by search order. The search-order rule mistook the main line for a loop return.
+ */
+const Engine = (() => {
+  'use strict';
+
+  const LANE_COLORS = [
+    ['#7b5cc4', '#efe9fb'], ['#1b8a6b', '#dff3ec'], ['#2f6fb5', '#e1ecfa'],
+    ['#b7791f', '#fcefd6'], ['#c4532d', '#fbe6de'], ['#b0396b', '#fbe4ee'],
+    ['#0f766e', '#d9f2ef'], ['#6d28d9', '#ede4fb']
+  ];
+  const KNOWN_LANE = {};
+  const PHASE_COLORS = ['#3b5b8c', '#8a4f9e', '#2f8a63', '#b4601a', '#8a3b3b', '#3b7a8a'];
+  const KINDS = ['yes', 'no', 'loop', 'plain'];
+
+  function htmlToText(html) {
+    if (html == null) return '';
+    return String(html)
+      .replace(/<br\s*\/?>/gi, ' ').replace(/<\/p>\s*<p>/gi, ' ').replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // Does an arrow label mean yes, no, or neither? Starting the label with "Yes" or "No" is the sure way.
+  function classifyLabel(label) {
+    const t = htmlToText(label).toLowerCase();
+    if (!t) return '';
+    if (/^yes\b/.test(t)) return 'yes';
+    if (/^no\b/.test(t)) return 'no';
+    if (/\b(not|missing|without|don't|do not|unknown|none|isn't|aren't)\b|n't\b/.test(t)) return 'no';
+    if (/\b(yes|all|have|known|complete|completed|approved|provided|gathered)\b/.test(t)) return 'yes';
+    return '';
+  }
+
+  const laneColors = (name, index) => LANE_COLORS[Object.prototype.hasOwnProperty.call(KNOWN_LANE, name) ? KNOWN_LANE[name] : index % LANE_COLORS.length];
+
+  // ------------------------------------------------------------------ Arcweave import
+  // Card title = owner (lane); card content = the step; a "?" makes it a decision; "[P2]" starts phase 2.
+  // A branch becomes a decision. Connections leaving a branch start at one of its conditions.
+  function importArcweave(json, opts) {
+    opts = opts || {};
+    const warnings = [];
+    const els = json.elements || {}, conns = json.connections || {}, branches = json.branches || {}, conds = json.conditions || {};
+    const nodes = [], laneNames = [], phaseTags = {};
+
+    Object.keys(els).forEach(id => {
+      const e = els[id];
+      const lane = htmlToText(e.title) || 'Unassigned';
+      let text = htmlToText(e.content), phase = null;
+      const tag = text.match(/^\[P(\d+)\]\s*/i);
+      if (tag) { phase = 'p' + tag[1]; phaseTags[phase] = true; text = text.slice(tag[0].length); }
+      if (laneNames.indexOf(lane) < 0) laneNames.push(lane);
+      nodes.push({ id, lane, type: /\?/.test(text) ? 'decision' : 'step', text, phase, sketch: { x: e.x || 0, y: e.y || 0 } });
+    });
+
+    const condToBranch = {};
+    Object.keys(branches).forEach(bid => {
+      const b = branches[bid], cs = b.conditions || {}, ids = [], scripts = [];
+      if (cs.ifCondition) ids.push(cs.ifCondition);
+      (cs.elseIfConditions || []).forEach(c => ids.push(c));
+      if (cs.elseCondition) ids.push(cs.elseCondition);
+      ids.forEach(cid => { condToBranch[cid] = bid; if (conds[cid] && conds[cid].script) scripts.push(htmlToText(conds[cid].script)); });
+      nodes.push({ id: bid, lane: null, type: 'decision', text: scripts.length ? scripts.join(' / ') : 'Branch', phase: null, sketch: { x: b.x || 0, y: b.y || 0 } });
+    });
+
+    const byId = {}; nodes.forEach(n => { byId[n.id] = n; });
+    const edges = [];
+    Object.keys(conns).forEach(cid => {
+      const c = conns[cid], from = condToBranch[c.sourceid] || c.sourceid, to = c.targetid;
+      if (!byId[from] || !byId[to]) { warnings.push('Skipped a connection whose end is not a card or branch (for example a jumper).'); return; }
+      let label = htmlToText(c.label);
+      if (!label && conds[c.sourceid] && conds[c.sourceid].script) label = htmlToText(conds[c.sourceid].script);
+      const edge = { id: cid, from, to };
+      if (label) edge.label = label;
+      edges.push(edge);
+    });
+
+    // A branch has no owner in Arcweave: it takes the lane of whatever feeds it, else of what it feeds.
+    nodes.forEach(n => {
+      if (n.lane) return;
+      const inc = edges.find(e => e.to === n.id), out = edges.find(e => e.from === n.id);
+      const src = (inc && byId[inc.from]) || (out && byId[out.to]);
+      n.lane = (src && src.lane) || laneNames[0] || 'Unassigned';
+      if (laneNames.indexOf(n.lane) < 0) laneNames.push(n.lane);
+    });
+
+    const lanes = laneNames.map((name, i) => { const c = laneColors(name, i); return { id: name, name, color: c[0], fill: c[1] }; });
+    const numbers = Object.keys(phaseTags).map(p => +p.slice(1)), phases = [];
+    for (let i = 1; i <= Math.max(1, ...numbers); i++) phases.push({ id: 'p' + i, title: 'Phase ' + i, subtitle: '', color: PHASE_COLORS[(i - 1) % PHASE_COLORS.length] });
+
+    // Arcweave cards are about 300 wide and sit thousands of pixels from the origin.
+    let mx = Infinity, my = Infinity;
+    nodes.forEach(n => { mx = Math.min(mx, n.sketch.x); my = Math.min(my, n.sketch.y); });
+    const scale = opts.sketchScale || 0.85;
+    nodes.forEach(n => { n.sketch = { x: Math.round((n.sketch.x - mx) * scale) + 60, y: Math.round((n.sketch.y - my) * scale) + 60 }; });
+
+    return normalize({ version: 1, app: 'freestyle', source: 'arcweave', title: opts.title || htmlToText(json.name) || 'Imported map', lanes, phases, nodes, edges, warnings });
+  }
+
+  // ------------------------------------------------------------------ normalize
+  function normalize(map) {
+    map = JSON.parse(JSON.stringify(map || {}));
+    map.version = 1;
+    map.title = map.title || 'Untitled process';
+    map.lanes = Array.isArray(map.lanes) ? map.lanes : [];
+    map.phases = Array.isArray(map.phases) ? map.phases : [];
+    map.nodes = Array.isArray(map.nodes) ? map.nodes : [];
+    map.edges = Array.isArray(map.edges) ? map.edges : [];
+
+    // Files written before this tool (hand-made maps) carry a finished layout and finished arrow kinds
+    // but no flag saying so. Everything in them is the author's choice, so it is all kept as it stands.
+    const handTuned = !map.app && map.nodes.length > 0 && map.nodes.every(n => n.layout && Number.isInteger(n.layout.col));
+    if (handTuned) {
+      map.nodes.forEach(n => { n.layout.pinned = true; });
+      map.edges.forEach(e => { if (!e.kind) e.kind = 'plain'; if (e.ideal === undefined) e.ideal = false; });
+    }
+    map.app = 'freestyle';
+
+    const byId = {};
+    map.nodes = map.nodes.filter(n => n && n.id && !byId[n.id] && (byId[n.id] = n));
+    map.nodes.forEach(n => {
+      n.type = n.type === 'decision' ? 'decision' : 'step';
+      n.text = n.text == null ? '' : String(n.text);
+      n.lane = n.lane || (map.lanes[0] && map.lanes[0].id) || 'Unassigned';
+      if (!map.lanes.some(l => l.id === n.lane)) { const c = laneColors(n.lane, map.lanes.length); map.lanes.push({ id: n.lane, name: n.lane, color: c[0], fill: c[1] }); }
+      if (n.phase && !map.phases.some(p => p.id === n.phase)) n.phase = null;
+    });
+    map.lanes.forEach((l, i) => { const c = laneColors(l.name || l.id, i); l.name = l.name || l.id; l.color = l.color || c[0]; l.fill = l.fill || c[1]; });
+    if (!map.lanes.length) { const c = LANE_COLORS[0]; map.lanes.push({ id: 'Lane 1', name: 'Lane 1', color: c[0], fill: c[1] }); }
+    if (!map.phases.length) map.phases.push({ id: 'p1', title: 'Phase 1', subtitle: '', color: PHASE_COLORS[0] });
+    map.phases.forEach((p, i) => { p.title = p.title || 'Phase ' + (i + 1); p.subtitle = p.subtitle || ''; p.color = p.color || PHASE_COLORS[i % PHASE_COLORS.length]; });
+
+    const seen = {};
+    map.edges = map.edges.filter(e => e && byId[e.from] && byId[e.to]);
+    map.edges.forEach(e => {
+      if (!e.id || seen[e.id]) { let k = 1; while (seen[e.from + '>' + e.to + (k > 1 ? '#' + k : '')]) k++; e.id = e.from + '>' + e.to + (k > 1 ? '#' + k : ''); }
+      seen[e.id] = true;
+      if (e.kind && KINDS.indexOf(e.kind) < 0) delete e.kind;
+    });
+
+    // A board position for every card. Maps that only have a swimlane layout are laid out along it.
+    const laneIndex = {}; map.lanes.forEach((l, i) => { laneIndex[l.id] = i; });
+    let free = 0;
+    map.nodes.forEach(n => {
+      if (n.sketch && isFinite(n.sketch.x) && isFinite(n.sketch.y)) return;
+      n.sketch = n.layout ? { x: 60 + n.layout.col * 270, y: 60 + laneIndex[n.lane] * 300 + (n.layout.slot || 0) * 140 } : { x: 60 + (free % 6) * 270, y: 60 + Math.floor(free++ / 6) * 170 };
+    });
+
+    // Board coordinates are measured from an origin (0, 0) in the middle of the board: x grows to the right,
+    // y grows downward, and a box is placed by its top-left corner. Maps saved before the origin existed are
+    // moved onto it once. The resolved arrow geometry (edge.board) is written on export and is never read back.
+    map.edges.forEach(e => { delete e.board; });
+    if (!(map.board && map.board.origin === 'center')) centerSketch(map);
+    map.nodes.forEach(n => { n.sketch = { x: n.sketch.x, y: n.sketch.y }; });   // sizes are measured, not stored
+    map.board = { origin: 'center', units: 'px', xAxis: 'right', yAxis: 'down', boxAnchor: 'top-left' };
+    return map;
+  }
+
+  // Moves every board position so the middle of the drawing sits on the origin. Positions stay on the 10 px grid.
+  function centerSketch(map) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    map.nodes.forEach(n => {
+      const s = n.sketch; if (!s) return;
+      x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x + (s.w || 220)); y1 = Math.max(y1, s.y + (s.h || 90));
+    });
+    if (!isFinite(x0)) return map;
+    const dx = Math.round((x0 + x1) / 20) * 10, dy = Math.round((y0 + y1) / 20) * 10;
+    map.nodes.forEach(n => { if (n.sketch) { n.sketch.x -= dx; n.sketch.y -= dy; } });
+    map.edges.forEach(e => { const m = e.sketch && e.sketch.mid; if (m) { m.x -= dx; m.y -= dy; } });
+    return map;
+  }
+
+  // ------------------------------------------------------------------ layout
+  function layout(map) {
+    const warnings = (map.warnings || []).slice();
+    const nodes = map.nodes.map((n, i) => Object.assign({}, n, { _i: i }));
+    const edges = map.edges.map(e => Object.assign({}, e));
+    const byId = {}; nodes.forEach(n => { byId[n.id] = n; });
+    const pin = n => (n.layout && n.layout.pinned && Number.isInteger(n.layout.col)) ? n.layout : null;
+    const sx = n => n.sketch ? n.sketch.x : n._i * 10;
+    const sy = n => n.sketch ? n.sketch.y : 0;
+
+    const out = {}, inc = {};
+    nodes.forEach(n => { out[n.id] = []; inc[n.id] = []; });
+    edges.forEach(e => { if (e.from !== e.to) { out[e.from].push(e); inc[e.to].push(e); } else e.selfLoop = true; });
+
+    // 1. Loop returns. Inside a cycle, the arrow that leads back to a step nearer the start is the return.
+    //    "Nearer the start" is counted in arrows from the first card, so it does not matter which way the
+    //    board happens to be drawn (Arcweave boards often run down the page, not across).
+    const scc = sccOf(nodes, edges), sccCount = {};
+    nodes.forEach(n => { sccCount[scc[n.id]] = (sccCount[scc[n.id]] || 0) + 1; });
+    const dist = {};
+    const reach = starts => {
+      const queue = starts.filter(n => dist[n.id] === undefined);
+      queue.forEach(n => { dist[n.id] = 0; });
+      while (queue.length) { const n = queue.shift(); out[n.id].forEach(e => { if (dist[e.to] === undefined) { dist[e.to] = dist[n.id] + 1; queue.push(byId[e.to]); } }); }
+    };
+    reach(nodes.filter(n => inc[n.id].length === 0).sort((a, b) => sx(a) - sx(b) || sy(a) - sy(b)));
+    nodes.slice().sort((a, b) => sy(a) - sy(b) || sx(a) - sx(b)).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    edges.forEach(e => {
+      if (e.selfLoop) { e.back = false; return; }
+      const a = byId[e.from], b = byId[e.to], pa = pin(a), pb = pin(b);
+      if (pa && pb) e.back = pb.col <= pa.col;                       // both placed by hand: the columns decide
+      else e.back = scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1 && dist[b.id] < dist[a.id];
+    });
+
+    // 2. Columns: one more than the furthest-right box feeding this one. Pinned boxes stay where they are.
+    const minCol = {};
+    function layer() {
+      const indeg = {}, col = {}, done = {};
+      nodes.forEach(n => { indeg[n.id] = 0; col[n.id] = pin(n) ? pin(n).col : (minCol[n.id] || 0); });
+      edges.forEach(e => { if (!e.selfLoop && !e.back) indeg[e.to]++; });
+      let queue = nodes.filter(n => indeg[n.id] === 0).sort((a, b) => sx(a) - sx(b)), left = nodes.length;
+      for (;;) {
+        while (queue.length) {
+          const n = queue.shift(); done[n.id] = true; left--;
+          out[n.id].forEach(e => {
+            if (e.back) return;
+            const t = byId[e.to];
+            if (!pin(t) && col[t.id] < col[n.id] + 1) col[t.id] = col[n.id] + 1;
+            if (--indeg[t.id] === 0) queue.push(t);
+          });
+        }
+        if (!left) break;
+        // A cycle the rule above did not break (its steps are equally far from the start): cut it at the earliest one.
+        const stuck = nodes.filter(n => !done[n.id]).sort((a, b) => dist[a.id] - dist[b.id] || sx(a) - sx(b))[0];
+        inc[stuck.id].forEach(e => { if (!done[e.from] && !e.back) { e.back = true; indeg[stuck.id]--; } });
+        if (indeg[stuck.id] <= 0) { indeg[stuck.id] = 0; queue = [stuck]; } else break;
+      }
+      return col;
+    }
+
+    // 3. Slots: two boxes at most per lane and column. A long arrow runs along its source row, so a box sitting
+    //    on that row between the two ends moves to the other half of the row, or one column to the right.
+    let col, slot, guard = 0, changed;
+    do {
+      changed = false;
+      col = layer(); slot = {};
+      const seats = {};
+      nodes.forEach(n => { if (pin(n)) { slot[n.id] = pin(n).slot ? 1 : 0; seats[n.lane + '|' + col[n.id] + '|' + slot[n.id]] = n.id; } });
+      const groups = {};
+      nodes.forEach(n => { if (!pin(n)) (groups[n.lane + '|' + col[n.id]] = groups[n.lane + '|' + col[n.id]] || []).push(n); });
+      Object.keys(groups).forEach(key => {
+        groups[key].sort((a, b) => sy(a) - sy(b) || a._i - b._i).forEach(n => {
+          const s = [0, 1].find(k => !seats[key + '|' + k]);
+          if (s === undefined) { minCol[n.id] = col[n.id] + 1; changed = true; } else { slot[n.id] = s; seats[key + '|' + s] = n.id; }
+        });
+      });
+      if (!changed) {
+        edges.forEach(e => {
+          if (changed || e.selfLoop || e.back) return;
+          const a = byId[e.from], b = byId[e.to];
+          if (col[b.id] - col[a.id] < 2) return;
+          nodes.forEach(c => {
+            if (changed || c === a || c === b || pin(c)) return;
+            if (c.lane === a.lane && slot[c.id] === slot[a.id] && col[c.id] > col[a.id] && col[c.id] < col[b.id]) {
+              const other = 1 - slot[a.id];
+              if (!nodes.some(d => d !== c && d.lane === c.lane && col[d.id] === col[c.id] && slot[d.id] === other)) slot[c.id] = other;
+              else { minCol[c.id] = col[c.id] + 1; changed = true; }
+            }
+          });
+        });
+      }
+      guard++;
+    } while (changed && guard < 300);
+    if (guard >= 300) warnings.push('The layout did not fully settle; a box may sit on a line.');
+
+    // 4. Lanes stay in the order the map lists them (the order the author chose).
+    const lanes = map.lanes.map(l => Object.assign({}, l));
+    const laneIndex = {}; lanes.forEach((l, i) => { laneIndex[l.id] = i; });
+
+    // 5. Phases: a tag on a box starts that phase at its column; later columns carry it forward.
+    let maxCol = 0; nodes.forEach(n => { maxCol = Math.max(maxCol, col[n.id]); });
+    const phaseDefs = map.phases.map(p => Object.assign({}, p)), phaseIndex = {};
+    phaseDefs.forEach((p, i) => { phaseIndex[p.id] = i; });
+    const colPhase = []; let carry = 0;
+    for (let c = 0; c <= maxCol; c++) {
+      let best = carry;
+      nodes.forEach(n => { if (col[n.id] === c && n.phase && phaseIndex[n.phase] > best) best = phaseIndex[n.phase]; });
+      colPhase[c] = best; carry = best;
+    }
+    phaseDefs.forEach((p, i) => {
+      const cs = []; colPhase.forEach((pi, c) => { if (pi === i) cs.push(c); });
+      p.s = cs.length ? cs[0] : null; p.e = cs.length ? cs[cs.length - 1] : null;
+    });
+    const phases = phaseDefs.filter(p => p.s !== null);
+
+    // 6. Arrow kind: the author's choice if there is one, else from the label, else "loop" inside a cycle.
+    edges.forEach(e => {
+      if (e.kind) { e.k = e.kind === 'plain' ? '' : e.kind; return; }
+      const fromLabel = classifyLabel(e.label);
+      if (e.selfLoop) e.k = 'loop';
+      else if (fromLabel) e.k = (fromLabel === 'yes' && e.back) ? 'loop' : fromLabel;
+      else e.k = (e.back || (scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1)) ? 'loop' : '';
+    });
+
+    // 7. Ideal path: the shortest way from a start to the right-most end over plain and Yes arrows.
+    const ideal = idealPath(nodes, edges, col, out);
+    edges.forEach(e => { e.isIdeal = e.ideal === undefined ? !!ideal[e.id] : !!e.ideal; });
+
+    // 8. Steps are numbered and decisions lettered in reading order.
+    let num = 0, letter = 0;
+    nodes.slice().sort((a, b) => col[a.id] - col[b.id] || laneIndex[a.lane] - laneIndex[b.lane] || slot[a.id] - slot[b.id]).forEach(n => {
+      if (n.type === 'decision') { n.letter = letterFor(letter++); delete n.number; } else { n.number = ++num; delete n.letter; }
+    });
+    nodes.forEach(n => {
+      n.layout = Object.assign({}, n.layout, { col: col[n.id], slot: slot[n.id] });
+      n.inPhase = phaseDefs[colPhase[col[n.id]]].id;
+      delete n._i;
+    });
+
+    return { title: map.title, lanes, phases, allPhases: phaseDefs, nodes, edges, ncols: maxCol + 1, layoutHints: map.layoutHints || null, warnings };
+  }
+
+  const letterFor = i => (i >= 26 ? String.fromCharCode(64 + Math.floor(i / 26)) : '') + String.fromCharCode(65 + i % 26);
+
+  // Strongly connected components (Tarjan). The graphs here are small enough for recursion.
+  function sccOf(nodes, edges) {
+    let index = 0, count = 0;
+    const stack = [], on = {}, idx = {}, low = {}, comp = {}, adj = {};
+    nodes.forEach(n => { adj[n.id] = []; });
+    edges.forEach(e => { if (e.from !== e.to) adj[e.from].push(e.to); });
+    function strong(v) {
+      idx[v] = low[v] = index++; stack.push(v); on[v] = true;
+      adj[v].forEach(w => {
+        if (idx[w] === undefined) { strong(w); low[v] = Math.min(low[v], low[w]); }
+        else if (on[w]) low[v] = Math.min(low[v], idx[w]);
+      });
+      if (low[v] === idx[v]) { let w; do { w = stack.pop(); on[w] = false; comp[w] = count; } while (w !== v); count++; }
+    }
+    nodes.forEach(n => { if (idx[n.id] === undefined) strong(n.id); });
+    return comp;
+  }
+
+  function idealPath(nodes, edges, col, out) {
+    const starts = nodes.filter(n => !edges.some(e => e.to === n.id && !e.back && !e.selfLoop));
+    const ends = nodes.filter(n => !out[n.id].some(e => !e.back));
+    if (!starts.length || !ends.length) return {};
+    const end = ends.slice().sort((a, b) => col[b.id] - col[a.id])[0];
+    const search = allowed => {
+      const prev = {}, seen = {}, queue = [];
+      starts.forEach(s => { seen[s.id] = true; queue.push(s.id); });
+      while (queue.length) {
+        const v = queue.shift();
+        if (v === end.id) break;
+        out[v].forEach(e => { if (e.back || !allowed(e) || seen[e.to]) return; seen[e.to] = true; prev[e.to] = e; queue.push(e.to); });
+      }
+      if (!seen[end.id]) return null;
+      const ids = {}; let cur = end.id;
+      while (prev[cur]) { ids[prev[cur].id] = true; cur = prev[cur].from; }
+      return ids;
+    };
+    return search(e => e.k !== 'no' && e.k !== 'loop') || search(() => true) || {};
+  }
+
+  return { importArcweave, normalize, centerSketch, layout, classifyLabel, htmlToText, laneColors, LANE_COLORS, PHASE_COLORS };
+})();
+
+/*
+ * Freestyle: the swimlane renderer.
+ * The sizing, routing, label placement,
+ * arrowheads, glow, phase tags and high-contrast rules are that tool's, line for line where possible; what changed
+ * is that nothing is hard-coded: lanes, columns, phases, notes and gaps all come from the laid-out map.
+ *
+ *   Render.build(L, options) -> { svg, w, h, warns, edges, P, nm }
+ *   L        the result of Engine.layout()
+ *   options  mode: 'screen' | 'full' | 'phase'     phase: index into L.phases (phase mode)
+ *            fs: font scale 0.7 to 1.4              hc: high contrast (exports only)
+ *            aligned: phase export keeps the full diagram's rows and positions
+ *            selNodes, selEdges: Sets of selected ids      onNode, onEdge, onLane: click handlers (screen mode)
+ *
+ * build() is a pure function of (L, options). Screen, print and images all call it.
+ */
+const Render = (() => {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 176, H = 64, DH = 100, LM = 150, GAP = 72, SH = 120, GW = 130, GP = 60;
+  const KC = { yes: '#1a9850', no: '#d73027', loop: '#e6a700' }, OTHER = '#8a94a0';
+  const DASH = { solid: '', dashed: '9 6', dotted: '2 6', dashdot: '11 5 2 5' };
+  const HCMAP = { '#1a9850': '#0a6a2c', '#d73027': '#a8140c', '#e6a700': '#a86f00', '#8a94a0': '#3f4854' };
+  const HCDARK = { '#222': 1, '#444': 1, '#333': 1, '#4a3a00': 1, '#2b3b4d': 1, '#555': 1 };
+  const HCLANE = { '#7b5cc4': '#34226d', '#1b8a6b': '#0a4a36', '#2f6fb5': '#123f73', '#b7791f': '#5f3a07', '#c4532d': '#701f0a', '#b0396b': '#621236' };
+  let BUILDN = 0;
+
+  // A darker version of a lane colour for high contrast, for lanes that are not one of the original six.
+  function darker(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return '#000';
+    const n = parseInt(m[1], 16);
+    return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * 0.45).toString(16).padStart(2, '0')).join('');
+  }
+
+  function build(L, O) {
+    O = O || {};
+    const FS = O.fs || 1, HC = !!O.hc;
+    const UID = 's' + (++BUILDN);
+    const UI = O.mode === 'screen' || !O.mode, PHASE = O.mode === 'phase';
+    const PH = L.phases, phs = PHASE ? PH[O.phase] : null, NCOL = L.ncols;
+    const selNodes = O.selNodes || new Set(), selEdges = O.selEdges || new Set();
+    const hcCol = c => HC ? (HCMAP[c] || c) : c;
+    const laneBy = {}; L.lanes.forEach(l => { laneBy[l.id] = { n: l.name || l.id, id: l.id, f: l.fill, s: l.color }; });
+    const ND = {}; L.nodes.forEach(n => { ND[n.id] = n; });
+    const colOf = id => ND[id].layout.col, slotOf = id => ND[id].layout.slot, isDia = id => ND[id].type === 'decision';
+
+    const add = (p, t, a, txt) => {
+      if (t === 'text' && a['font-size']) a['font-size'] = +(a['font-size'] * FS).toFixed(2);
+      if (HC) {
+        if (t === 'text') { const fw = +(a['font-weight'] || 400); a['font-weight'] = fw < 600 ? 600 : 700; if (HCDARK[a.fill]) a.fill = '#000'; else if (HCLANE[a.fill]) a.fill = HCLANE[a.fill]; else if (a['data-lane']) a.fill = darker(a.fill); }
+        else if (a['stroke-width'] && a.stroke !== 'transparent' && t !== 'circle') a['stroke-width'] = +(a['stroke-width'] * 1.6).toFixed(2);
+      }
+      delete a['data-lane'];
+      const e = document.createElementNS(NS, t);
+      for (const k in a) e.setAttribute(k, a[k]);
+      if (txt !== undefined) e.textContent = txt;
+      p.appendChild(e);
+      return e;
+    };
+    const wrap = (t, n) => { if (HC) n = Math.floor(n * 0.9); const ws = String(t).split(' '), ls = []; let c = ''; for (const x of ws) { if ((c + ' ' + x).trim().length > n && c) { ls.push(c); c = x; } else c = (c + ' ' + x).trim(); } ls.push(c); return ls; };
+    const eff = e => { const st = e.style || {}, rt = e.route || {}; return { hide: !!st.hidden, color: hcCol(st.color || (e.k ? KC[e.k] : OTHER)), dash: st.dash || 'solid', width: st.width || 2.8, sa: rt.exit || '', sb: rt.enter || '' }; };
+
+    const ids = L.nodes.map(n => n.id).filter(id => !phs || (colOf(id) >= phs.s && colOf(id) <= phs.e));
+    const CAPH = SH - 8;
+
+    // ---- sizing: a box that needs room gets wider first; only then taller. Row height never follows box height.
+    const HT = {}, TXT = {}, WD = {};
+    for (const id of ids) {
+      const o = ND[id].style || {}, d = isDia(id), t = o.text !== undefined ? o.text : ND[id].text; TXT[id] = t;
+      const need = (f, wN) => { const k = wrap(t, d ? Math.max(8, Math.floor(17 * wN / W / f)) : Math.max(10, Math.floor(27 * wN / W / f))).length; return d ? k * 19.5 * f : k * 14.5 * f + 14; };
+      const base = d ? DH : H; let wN = o.w || W, hh;
+      if (o.h) hh = o.h; else { if (!o.w) { while (need(FS, wN) > CAPH && wN < W * 2.6) wN += 20; } hh = Math.max(base, need(FS, wN)); }
+      WD[id] = wN; HT[id] = hh;
+    }
+
+    // ---- lanes and columns
+    const usedSlot1 = list => list.some(id => slotOf(id) === 1);
+    const SLOTS = (PHASE && !O.aligned) ? (usedSlot1(ids) ? 2 : 1) : 0;
+    const slotsOf = () => SLOTS || 2;
+    const HB = Math.round(84 * Math.max(1, FS)), TMv = 62 + HB + 6;
+    const lanes = L.lanes.map(l => Object.assign({}, laneBy[l.id])); let acc = TMv;
+    lanes.forEach(l => { l.top = acc; l.h = slotsOf() * SH; acc += l.h; });
+    const laneTop = {}; lanes.forEach(l => { laneTop[l.id] = l.top; });
+    const bottom = acc;
+    const colW = []; for (let c = 0; c < NCOL; c++) colW[c] = W;
+    for (const id of ids) { const c = colOf(id); colW[c] = Math.max(colW[c], WD[id]); }
+
+    // Space before each column. A hand-tuned map lists its own; otherwise it is worked out: a new phase gets
+    // breathing room, and an arrow with a label arriving from the column before gets room for the label.
+    const hints = L.layoutHints && L.layoutHints.columnGaps, defaultGap = (L.layoutHints && L.layoutHints.defaultGap) || GAP;
+    const colGap = {};
+    if (hints) for (const k in hints) colGap[k] = hints[k];
+    else {
+      PH.forEach(p => { if (p.s > 0) colGap[p.s] = 110; });
+      L.edges.forEach(e => {
+        if (!e.label || e.selfLoop || e.back || (e.style && e.style.hidden)) return;
+        const ca = colOf(e.from), cb = colOf(e.to);
+        if (cb - ca !== 1) return;
+        const ls = wrap(e.label, Math.max(10, Math.floor(20 / FS))), pw = Math.max(...ls.map(t => t.length)) * 6.4 * FS + 16;
+        colGap[cb] = Math.max(colGap[cb] || 0, Math.min(150, Math.max(GAP, Math.round(pw + 36))));
+      });
+    }
+    const gap = c => colGap[c] || defaultGap;
+
+    let CX = [], w = 0; const ghosts = {};
+    if (!PHASE) { let x = LM + 24; for (let c = 0; c < NCOL; c++) { if (c > 0) x += colW[c - 1] + gap(c); CX[c] = x; } w = CX[NCOL - 1] + colW[NCOL - 1] + 50; }
+    if (PHASE) {
+      const inS = new Set(ids); let hasIn = false, hasOut = false;
+      L.edges.forEach(e => { if (eff(e).hide) return; const ai = inS.has(e.from), bi = inS.has(e.to); if (ai && !bi) { hasOut = true; ghosts[e.id] = { dir: 'out', ref: e.to, e }; } else if (!ai && bi) { hasIn = true; ghosts[e.id] = { dir: 'in', ref: e.from, e }; } });
+      CX = []; let x = LM + 24 + (hasIn ? GW + GP : 0);
+      for (let c = phs.s; c <= phs.e; c++) { if (c > phs.s) x += colW[c - 1] + gap(c); CX[c] = x; }
+      CX[phs.s - 1] = LM + 24; CX[phs.e + 1] = CX[phs.e] + colW[phs.e] + GP; w = CX[phs.e] + colW[phs.e] + (hasOut ? GP + GW : 0) + 30;
+    }
+    const h = bottom + 30;
+    const usesS1 = {}; for (const id of (O.aligned ? L.nodes.map(n => n.id) : ids)) { if (slotOf(id) === 1) usesS1[ND[id].lane] = 1; }
+    const rowY = (ln, sl) => usesS1[ln] ? laneTop[ln] + sl * SH + SH / 2 : laneTop[ln] + slotsOf() * SH / 2;
+
+    const P = {};
+    for (const id of ids) { const n = ND[id], d = isDia(id), yc = rowY(n.lane, slotOf(id)), hh = HT[id], c = colOf(id); P[id] = { id, ln: n.lane, sl: slotOf(id), c, t: TXT[id], num: d ? null : n.number, letter: n.letter, dia: d, note: n.note || '', x: CX[c] + (colW[c] - WD[id]) / 2, yc, y: yc - hh / 2, w: WD[id], h: hh }; }
+    const label = id => isDia(id) ? ND[id].letter : ND[id].number;
+    for (const gid in ghosts) {
+      const g = ghosts[gid], r = ND[g.ref], yc = rowY(r.lane, slotOf(g.ref));
+      const phn = PH.findIndex(p => colOf(g.ref) >= p.s && colOf(g.ref) <= p.e) + 1, gc = g.dir === 'in' ? phs.s - 1 : phs.e + 1, gh = Math.max(52, 48 * FS);
+      P['g:' + gid] = { id: 'g:' + gid, ln: r.lane, sl: slotOf(g.ref), c: gc, t: '', ghost: true, gtext: [(g.dir === 'in' ? 'From' : 'To') + ' Phase ' + phn, 'step ' + label(g.ref) + (g.e.label ? ' · ' + g.e.label : '')], num: null, dia: false, x: CX[gc], yc, y: yc - gh / 2, w: GW, h: gh };
+    }
+
+    // ---- routing (orthogonal)
+    const R = n => [n.x + n.w, n.yc], Lf = n => [n.x, n.yc], T = n => [n.x + n.w / 2, n.y], B = n => [n.x + n.w / 2, n.y + n.h];
+    const nm = id => P[id] ? (P[id].dia ? P[id].letter : String(P[id].num)) : String(label(id));
+    const hit = (p1, p2, ex) => { const lx = Math.min(p1[0], p2[0]), hx = Math.max(p1[0], p2[0]), ly = Math.min(p1[1], p2[1]), hy = Math.max(p1[1], p2[1]); for (const id in P) { if (ex.includes(id)) continue; const n = P[id]; if (hx > n.x - 2 && lx < n.x + n.w + 2 && hy > n.y - 2 && ly < n.y + n.h + 2) return id; } return null; };
+    const pathHit = (pts, ex) => { for (let i = 0; i < pts.length - 1; i++) { const r = hit(pts[i], pts[i + 1], ex); if (r) return r; } return null; };
+    const len = pts => pts.reduce((a, p, i) => i ? a + Math.abs(p[0] - pts[i - 1][0]) + Math.abs(p[1] - pts[i - 1][1]) : 0, 0);
+    const NV = { L: [-1, 0], R: [1, 0], T: [0, -1], B: [0, 1] };
+    const pt = (n, sd) => ({ L: Lf(n), R: R(n), T: T(n), B: B(n) })[sd];
+    const autoExit = (A, Bn) => { if (Bn.x > A.x + A.w) return 'R'; if (Bn.x + Bn.w < A.x) return 'L'; return Bn.yc < A.yc ? 'T' : 'B'; };
+    const autoEntry = (A, Bn) => { if (Bn.x > A.x + A.w) return 'L'; if (Bn.x + Bn.w < A.x) return 'R'; return A.yc < Bn.yc ? 'T' : 'B'; };
+    function routeSides(A, Bn, sa, sb, swing) {
+      sa = sa || autoExit(A, Bn); sb = sb || autoEntry(A, Bn);
+      const p0 = pt(A, sa), p1 = pt(Bn, sb), d0 = NV[sa], d1 = NV[sb], m = 24;
+      const s0 = [p0[0] + d0[0] * m, p0[1] + d0[1] * m], s1 = [p1[0] + d1[0] * m, p1[1] + d1[1] * m]; const h0 = d0[1] === 0, h1 = d1[1] === 0;
+      if (h0 && h1) {
+        if (d0[0] !== d1[0] && ((d0[0] > 0 && s1[0] >= s0[0]) || (d0[0] < 0 && s1[0] <= s0[0]))) { if (Math.abs(p0[1] - p1[1]) < 1) return [p0, p1]; const xm = (s0[0] + s1[0]) / 2; return [p0, [xm, p0[1]], [xm, p1[1]], p1]; }
+        if (d0[0] === d1[0]) { const xc = d0[0] > 0 ? Math.max(s0[0], s1[0]) : Math.min(s0[0], s1[0]); return [p0, [xc, p0[1]], [xc, p1[1]], p1]; }
+        const ym = (p0[1] + p1[1]) / 2 + (Math.abs(p0[1] - p1[1]) < 40 ? 70 : 0); return [p0, s0, [s0[0], ym], [s1[0], ym], s1, p1];
+      }
+      if (!h0 && !h1) {
+        if (d0[1] !== d1[1] && ((d0[1] > 0 && s1[1] >= s0[1]) || (d0[1] < 0 && s1[1] <= s0[1]))) { if (Math.abs(p0[0] - p1[0]) < 1) return [p0, p1]; const ym = (s0[1] + s1[1]) / 2; return [p0, [p0[0], ym], [p1[0], ym], p1]; }
+        if (d0[1] === d1[1]) { const yc = d0[1] > 0 ? Math.max(s0[1], s1[1]) : Math.min(s0[1], s1[1]); if (swing) { const y1 = p0[1] + d0[1] * 28, sxx = p0[0] + swing; return [p0, [p0[0], y1], [sxx, y1], [sxx, yc], [p1[0], yc], p1]; } return [p0, [p0[0], yc], [p1[0], yc], p1]; }
+        const xm = (p0[0] + p1[0]) / 2 + (Math.abs(p0[0] - p1[0]) < 40 ? 90 : 0); return [p0, s0, [xm, s0[1]], [xm, s1[1]], s1, p1];
+      }
+      if (h0) { const C = [p1[0], p0[1]]; if ((C[0] - p0[0]) * d0[0] > 8 && (p1[1] - C[1]) * d1[1] < -8) return [p0, C, p1]; return [p0, s0, [s0[0], s1[1]], s1, p1]; }
+      const C = [p0[0], p1[1]]; if ((C[1] - p0[1]) * d0[1] > 8 && (p1[0] - C[0]) * d1[0] < -8) return [p0, C, p1]; return [p0, s0, [s1[0], s0[1]], s1, p1];
+    }
+    const mapId = (e, key) => { const g = ghosts[e.id]; if (!g) return e[key]; const outside = g.dir === 'in' ? e.from : e.to; return e[key] === outside ? 'g:' + e.id : e[key]; };
+    const edges = L.edges.map(e => { const a = mapId(e, 'from'), b = mapId(e, 'to'); return { raw: e, id: e.id, a, b, k: e.k, lab: ghosts[e.id] ? '' : (e.label || ''), ideal: e.isIdeal, back: e.back, A: P[a], Bn: P[b], f: eff(e) }; }).filter(e => e.A && e.Bn);
+    const warns = [], vis = edges.filter(e => !e.f.hide), fwd = [];
+    for (const e of vis) {
+      const A = e.A, Bn = e.Bn, rt = e.raw.route || {};
+      if (e.a === e.b) { const x1 = A.x + A.w * 0.30, x2 = A.x + A.w * 0.70, yb = A.y + A.h; e.pts = [[x1, yb], [x1, yb + 32], [x2, yb + 32], [x2, yb]]; continue; }
+      if (e.f.sa || e.f.sb) { e.pts = routeSides(A, Bn, e.f.sa, e.f.sb, rt.swing); continue; }
+      if (e.back) {
+        let best = null; const ys = []; lanes.forEach(l => { ys.push(l.top - 14, l.top + 14); }); ys.push(bottom + 14);
+        for (const ex of ['T', 'B']) for (const en of ['T', 'B']) for (const yc of ys) {
+          const exP = ex === 'T' ? T(A) : B(A); let enP = en === 'T' ? T(Bn) : B(Bn);
+          if (Bn.dia) { const dx = 32, off = (Bn.h / 2) * (dx / (Bn.w / 2)); enP = [enP[0] + dx, en === 'T' ? Bn.y + off : Bn.y + Bn.h - off]; }
+          if ((ex === 'T' && yc >= exP[1] - 4) || (ex === 'B' && yc <= exP[1] + 4)) continue;
+          if ((en === 'T' && yc > enP[1] - 24) || (en === 'B' && yc < enP[1] + 24)) continue;
+          const pts = [exP, [exP[0], yc], [enP[0], yc], enP]; if (pathHit(pts, [A.id, Bn.id])) continue;
+          const c = len(pts); if (!best || c < best.c) best = { c, pts };
+        }
+        if (best) e.pts = best.pts; else { warns.push('No clear channel for the loop ' + nm(e.raw.from) + ' to ' + nm(e.raw.to)); e.pts = routeSides(A, Bn, '', ''); }
+        continue;
+      }
+      if (A.dia && e.k === 'no') { const v = Bn.yc < A.yc ? T(A) : B(A); const pts = [v, [v[0], Bn.yc], Lf(Bn)]; if (Bn.yc !== A.yc && Bn.x > v[0] + 24 && !pathHit(pts, [A.id, Bn.id])) { e.pts = pts; continue; } }
+      if (Bn.x < A.x + A.w) { e.pts = routeSides(A, Bn, '', ''); continue; }      // a forward arrow never has a target to its left; anything else is routed by sides
+      if (Math.abs(A.yc - Bn.yc) < 1) { e.pts = [R(A), Lf(Bn)]; continue; }
+      fwd.push(e);
+    }
+    const groups = {}; fwd.forEach(e => { (groups[e.Bn.c] = groups[e.Bn.c] || []).push(e); e.ymin = Math.min(e.A.yc, e.Bn.yc); e.ymax = Math.max(e.A.yc, e.Bn.yc); });
+    for (const g in groups) { const tr = []; groups[g].sort((p, q) => p.ymin - q.ymin).forEach(e => { let t = 0; for (; ; t++) { tr[t] = tr[t] || []; if (tr[t].every(o => o.b === e.b || o.ymax + 12 < e.ymin || e.ymax + 12 < o.ymin)) break; } tr[t].push(e); const mx = CX[g] - 36 - 14 * t; e.pts = [R(e.A), [mx, e.A.yc], [mx, e.Bn.yc], Lf(e.Bn)]; }); }
+    // ---- keeping lines apart. Two lines may only lie on top of each other when they lead to the same box.
+    // 1. Where they touch a box: arrows arriving on a side all lead to that box, so they may share a spot. Each
+    //    arrow leaving from that side gets a spot of its own, side by side along it.
+    const sideAt = (n, q) => Math.abs(q[0] - n.x) < 1.5 ? 'L' : Math.abs(q[0] - n.x - n.w) < 1.5 ? 'R' : (q[1] <= n.yc ? 'T' : 'B');
+    const settle = (n, q, side) => {      // a moved end on a diamond slides along its slanted edge
+      if (!n.dia) return;
+      if (side === 'T' || side === 'B') { const off = Math.abs(q[0] - n.x - n.w / 2) * (n.h / 2) / (n.w / 2); q[1] = side === 'T' ? n.y + off : n.y + n.h - off; }
+      else { const off = Math.abs(q[1] - n.yc) * (n.w / 2) / (n.h / 2); q[0] = side === 'L' ? n.x + off : n.x + n.w - off; }
+    };
+    const shiftEnd = (it, d) => {
+      const e = it.e, ax = (it.side === 'T' || it.side === 'B') ? 0 : 1;
+      if (e.pts.length === 2) {            // a straight line steps sideways halfway along
+        const o = 1 - ax, m = (e.pts[0][o] + e.pts[1][o]) / 2, a = e.pts[0].slice(), b = e.pts[1].slice(), c1 = a.slice(), c2 = b.slice();
+        if (Math.abs(a[ax] - b[ax]) > 0.5) return;
+        c1[o] = m; c2[o] = m; e.pts = [a, c1, c2, b];
+      }
+      const last = e.pts.length - 1, i = it.end ? last : 0, j = it.end ? last - 1 : 1;
+      if (Math.abs(e.pts[i][ax] - e.pts[j][ax]) > 0.5) return;   // the piece next to the box is not square to the side: leave it
+      e.pts[i] = e.pts[i].slice(); e.pts[j] = e.pts[j].slice(); e.pts[i][ax] += d; e.pts[j][ax] += d;
+      settle(it.n, e.pts[i], it.side);
+    };
+    const faces = {};
+    for (const e of vis) {
+      if (e.a === e.b || !e.pts || e.pts.length < 2) continue;
+      [[e.A, 0, e.Bn], [e.Bn, e.pts.length - 1, e.A]].forEach(([n, i, far], end) => {
+        if (n.ghost) return;
+        const side = sideAt(n, e.pts[i]);
+        (faces[n.id + '|' + side] = faces[n.id + '|' + side] || []).push({ e, end, n, side, far });
+      });
+    }
+    for (const key in faces) {
+      const list = faces[key], n = list[0].n, side = list[0].side, vert = side === 'T' || side === 'B', bundles = {};
+      list.forEach(it => { const k = it.end ? 'in' : 'out:' + it.e.id; (bundles[k] = bundles[k] || []).push(it); });
+      const keys = Object.keys(bundles); if (keys.length < 2) continue;
+      const where = k => bundles[k].reduce((sum, it) => sum + (vert ? it.far.x + it.far.w / 2 : it.far.yc), 0) / bundles[k].length;
+      keys.sort((u, v) => where(u) - where(v));
+      const room = (vert ? n.w : n.h) * (n.dia ? 0.45 : 1) - 28, step = Math.max(9, Math.min(20, room / (keys.length - 1)));
+      keys.forEach((k, i) => { const d = (i - (keys.length - 1) / 2) * step; if (Math.abs(d) > 0.5) bundles[k].forEach(it => shiftEnd(it, d)); });
+    }
+    // 2. Along the way: a run that would lie on another line's run (same level, overlapping stretch, different
+    //    destination) is moved to a parallel track beside it.
+    const runs = [];
+    for (const e of vis) {
+      if (e.a === e.b) continue;
+      for (let i = 0; i < e.pts.length - 1; i++) {
+        const a = e.pts[i], b = e.pts[i + 1], hz = Math.abs(a[1] - b[1]) < 0.5;
+        if (!hz && Math.abs(a[0] - b[0]) > 0.5) continue;
+        runs.push({ e, i, hz, fixed: i === 0 || i === e.pts.length - 2 });
+      }
+    }
+    const span = r => { const a = r.e.pts[r.i], b = r.e.pts[r.i + 1]; return r.hz ? [Math.min(a[0], b[0]), Math.max(a[0], b[0]), a[1]] : [Math.min(a[1], b[1]), Math.max(a[1], b[1]), a[0]]; };
+    const clash = (r, o) => { if (r.e === o.e || r.hz !== o.hz || r.e.b === o.e.b) return false; const u = span(r), v = span(o); return Math.abs(u[2] - v[2]) < 8 && Math.min(u[1], v[1]) - Math.max(u[0], v[0]) > 10; };
+    const settled = runs.filter(r => r.fixed);
+    runs.filter(r => !r.fixed).sort((u, v) => (span(v)[1] - span(v)[0]) - (span(u)[1] - span(u)[0])).forEach(r => {
+      const ax = r.hz ? 1 : 0, e = r.e, home = e.pts[r.i][ax];
+      const tryAt = off => {
+        const a = e.pts[r.i].slice(), b = e.pts[r.i + 1].slice(), before = e.pts[r.i - 1], after = e.pts[r.i + 2]; a[ax] = home + off; b[ax] = home + off;
+        // the pieces on either side must keep their direction, and the last one its run-up to the arrowhead
+        const keeps = (from, to, was, min) => Math.sign(to[ax] - from[ax]) === Math.sign(was) && Math.abs(to[ax] - from[ax]) >= min;
+        if (before && !keeps(before, a, e.pts[r.i][ax] - before[ax], 12)) return false;
+        if (after && !keeps(b, after, after[ax] - e.pts[r.i + 1][ax], r.i + 2 === e.pts.length - 1 ? 26 : 12)) return false;
+        if (off && hit(a, b, [e.a, e.b])) return false;
+        const keepA = e.pts[r.i], keepB = e.pts[r.i + 1]; e.pts[r.i] = a; e.pts[r.i + 1] = b;
+        if (settled.some(o => clash(r, o))) { e.pts[r.i] = keepA; e.pts[r.i + 1] = keepB; return false; }
+        return true;
+      };
+      if (settled.some(o => clash(r, o))) [11, -11, 22, -22, 33, -33, 44, -44].some(tryAt);
+      settled.push(r);
+    });
+
+    // 3. By hand: any piece of a line can be slid sideways (edge.route.nudge = { n, s: { piece: px } }). A piece
+    //    only ever moves square to itself, so the line stays in right angles. Sliding the first or last piece
+    //    moves where the line leaves or arrives along that side of the box; a middle piece sets how far out the
+    //    line runs. The offsets belong to a line of n points: when the route changes shape they are ignored.
+    for (const e of vis) {
+      const nd = e.raw.route && e.raw.route.nudge; e.nudged = {};
+      if (!nd || !nd.s || nd.n !== e.pts.length || e.a === e.b || ghosts[e.id]) continue;
+      e.pts = e.pts.map(q => q.slice());
+      const last = e.pts.length - 2;
+      Object.keys(nd.s).map(Number).sort((u, v) => u - v).forEach(i => {
+        if (!(i >= 0 && i <= last)) return;
+        const a = e.pts[i], b = e.pts[i + 1], hz = Math.abs(a[1] - b[1]) < 0.5; if (!hz && Math.abs(a[0] - b[0]) > 0.5) return;
+        const ax = hz ? 1 : 0, ends = []; let d = +nd.s[i] || 0;
+        if (i === 0) ends.push([e.A, a]); if (i === last) ends.push([e.Bn, b]);
+        for (const [n, q] of ends) {       // an end stays on the side of the box it is on
+          const side = sideAt(n, q), vert = side === 'T' || side === 'B'; if (vert !== (ax === 0)) return;
+          const mid = ax ? n.yc : n.x + n.w / 2, half = Math.max(0, (ax ? n.h : n.w) / 2 * (n.dia ? 0.8 : 1) - 6);
+          d = Math.max(mid - half - q[ax], Math.min(mid + half - q[ax], d));
+        }
+        a[ax] += d; b[ax] += d; e.nudged[i] = Math.round(d);
+        for (const [n, q] of ends) settle(n, q, sideAt(n, q));
+      });
+    }
+
+    for (const e of vis) { const r = pathHit(e.pts, [e.a, e.b]); if (r && P[r] && !P[r].ghost) warns.push('The arrow ' + nm(e.raw.from) + ' to ' + nm(e.raw.to) + ' crosses box ' + nm(r)); }
+
+    // ---- drawing
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('xmlns', NS); svg.setAttribute('font-family', 'Segoe UI, Arial, sans-serif');
+    const defs = add(svg, 'defs', {}), mk = {};
+    const marker = c => { const id = 'm' + UID + '_' + c.replace(/[^0-9a-z]/gi, ''); if (!mk[id]) { mk[id] = 1; const m = add(defs, 'marker', { id, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: HC ? 20 : 14, markerHeight: HC ? 20 : 14, markerUnits: 'userSpaceOnUse', orient: 'auto' }); add(m, 'path', { d: 'M0 0L10 5L0 10z', fill: c }); } return id; };
+    add(svg, 'rect', { x: 0, y: 0, width: w, height: h, fill: '#fafaf8' });
+    if (!PHASE) {
+      add(svg, 'text', { x: 20, y: 26, 'font-size': 18, 'font-weight': 700, fill: '#222' }, L.title || 'Process swimlane');
+      let lx = 20;
+      [['yes', 'Yes path'], ['no', 'No path'], ['loop', 'Loop'], ['ideal', 'Ideal path (blue glow)'], ['other', 'Other flow']].forEach(([k, t]) => {
+        if (k === 'ideal') [[18, .10], [12, .17], [7, .28]].forEach(([x, op]) => add(svg, 'line', { x1: lx, x2: lx + 28, y1: 48, y2: 48, stroke: '#2f7cf6', 'stroke-opacity': op, 'stroke-width': 2.8 + x, 'stroke-linecap': 'round' }));
+        add(svg, 'line', { x1: lx, x2: lx + 28, y1: 48, y2: 48, stroke: KC[k] || OTHER, 'stroke-width': 2.8 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, t); lx += 34 + t.length * 6.6 * FS + 22;
+      });
+      add(svg, 'path', { d: `M${lx + 9} 48 l9 -8 l9 8 l-9 8 z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 1.5 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, 'Decision');
+    }
+    lanes.forEach((l, i) => {
+      add(svg, 'rect', { x: 0, y: l.top, width: w, height: l.h, fill: i % 2 ? '#fff' : '#f6f6f2', 'data-lane-row': l.id });
+      add(svg, 'rect', { x: 0, y: l.top, width: LM - 30, height: l.h, fill: l.f, stroke: l.s });
+      const cxL = 44, cyL = l.top + l.h / 2; add(svg, 'text', { x: cxL, y: cyL, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.min(28, 0.85 * l.h / (Math.max(1, l.n.length) * 0.6 * FS)), 'font-weight': 600, fill: l.s, 'data-lane': 1, transform: `rotate(-90 ${cxL} ${cyL})` }, l.n);
+      add(svg, 'line', { x1: 0, x2: w, y1: l.top, y2: l.top, stroke: '#cfcfc8' });
+      if (UI && O.onLane) [['▲', -1, l.top + 20], ['▼', 1, l.top + l.h - 20]].forEach(([glyph, d, yy]) => {
+        const j = i + d; if (j < 0 || j >= lanes.length) return;
+        const gg = add(svg, 'g', { style: 'cursor:pointer', 'class': 'uionly' }); add(gg, 'circle', { cx: 92, cy: yy, r: 11, fill: '#fff', stroke: l.s }); add(gg, 'text', { x: 92, y: yy + 1, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, fill: l.s, style: 'pointer-events:none' }, glyph);
+        gg.addEventListener('click', ev => { ev.stopPropagation(); O.onLane(i, j); }); gg.addEventListener('mousedown', ev => ev.stopPropagation());
+      });
+    });
+    add(svg, 'line', { x1: 0, x2: w, y1: bottom, y2: bottom, stroke: '#cfcfc8' });
+    (PHASE ? [phs] : PH).forEach(ph => {
+      const x0 = (ph.s === 0 || PHASE) ? LM - 30 : CX[ph.s] - 45, x1 = (ph.e === NCOL - 1 || PHASE) ? w : CX[ph.e] + colW[ph.e] + 45;
+      add(svg, 'rect', { x: x0, y: TMv, width: x1 - x0, height: bottom - TMv, fill: ph.color, 'fill-opacity': .07 });
+      add(svg, 'rect', { x: x0, y: 62, width: x1 - x0, height: HB, fill: ph.color });
+      add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.41, 'font-size': 36, 'font-weight': 700, 'dominant-baseline': 'central', fill: '#fff' }, ph.title);
+      add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.80, 'font-size': 17, 'dominant-baseline': 'central', fill: '#fff', 'fill-opacity': .95 }, ph.subtitle || '');
+      if (ph.s > 0 && !PHASE) add(svg, 'line', { x1: x0, x2: x0, y1: 62, y2: bottom, stroke: ph.color, 'stroke-width': 3, 'stroke-dasharray': '10 6' });
+    });
+    const glowG = add(svg, 'g', {}), sub = add(svg, 'g', {});
+    for (const e of vis) {
+      const f = e.f, pp = e.pts.map(q => q.slice());
+      { const a = pp[pp.length - 2], b = pp[pp.length - 1], dx = b[0] - a[0], dy = b[1] - a[1], L2 = Math.hypot(dx, dy) || 1; b[0] -= dx / L2 * (HC ? 6 : 4.2); b[1] -= dy / L2 * (HC ? 6 : 4.2); }
+      const d = pp.map((q, i) => (i ? 'L' : 'M') + q[0] + ' ' + q[1]).join(' ');
+      if (e.ideal) [[18, .10], [12, .17], [7, .28]].forEach(([x, op]) => add(glowG, 'path', { d, fill: 'none', stroke: '#2f7cf6', 'stroke-opacity': op, 'stroke-width': f.width + x, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      if (UI && selEdges.has(e.id)) add(sub, 'path', { 'class': 'uionly', d, fill: 'none', stroke: '#a855f7', 'stroke-opacity': .45, 'stroke-width': f.width + 10, 'stroke-linejoin': 'round' });
+      add(sub, 'path', { d, fill: 'none', stroke: f.color, 'stroke-width': f.width, 'stroke-dasharray': DASH[f.dash] || '', 'marker-end': `url(#${marker(f.color)})`, 'stroke-linejoin': 'round', 'data-edge': e.id });
+      if (UI && O.onEdge) { const hp = add(sub, 'path', { 'class': 'uionly', d, fill: 'none', stroke: 'transparent', 'stroke-width': 16, style: 'cursor:pointer;pointer-events:stroke' }); hp.addEventListener('mousedown', ev => ev.stopPropagation()); hp.addEventListener('click', ev => { ev.stopPropagation(); O.onEdge(e.id, ev); }); }
+    }
+    for (const id in P) {
+      const n = P[id], l = laneBy[n.ln];
+      if (n.ghost) { add(svg, 'rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 8, fill: '#fff', stroke: '#8a94a0', 'stroke-dasharray': '4 3' }); const gl = [n.gtext[0], ...wrap(n.gtext[1], 20).slice(0, 2)]; gl.forEach((t, i) => add(svg, 'text', { x: n.x + n.w / 2, y: n.yc - (gl.length - 1) * 6.5 * FS + i * 13 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': i ? 10 : 11, 'font-weight': i ? 400 : 700, fill: '#555' }, t)); continue; }
+      const box = add(svg, 'g', { 'data-node': id });
+      if (n.dia) {
+        const cxn = n.x + n.w / 2; add(box, 'path', { d: `M${n.x} ${n.yc} L${cxn} ${n.y} L${n.x + n.w} ${n.yc} L${cxn} ${n.y + n.h} Z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 2 });
+        const ls = wrap(n.t, Math.max(8, Math.floor(17 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: cxn, y: n.yc - (ls.length - 1) * 7 * FS + i * 14 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, fill: '#4a3a00' }, t));
+        add(box, 'circle', { cx: n.x + 14, cy: n.y + 10, r: 10, fill: '#7a5c00' }); add(box, 'text', { x: n.x + 14, y: n.y + 11, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, n.letter);
+      } else {
+        add(box, 'rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 6, fill: l.f, stroke: l.s, 'stroke-width': 1.6 });
+        const ls = wrap(n.t, Math.max(10, Math.floor(27 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: n.x + n.w / 2, y: n.yc - (ls.length - 1) * 7.25 * FS + i * 14.5 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12.5, fill: '#222' }, t));
+        add(box, 'circle', { cx: n.x + 4, cy: n.y + 2, r: 11, fill: '#fff', stroke: l.s, 'stroke-width': 1.6 }); add(box, 'text', { x: n.x + 4, y: n.y + 3, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, 'font-weight': 700, fill: l.s, 'data-lane': 1 }, String(n.num));
+      }
+      if (UI && O.onNode) {
+        const ov = add(svg, 'rect', { 'class': 'uionly', x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent', style: 'cursor:pointer' }); ov.addEventListener('mousedown', ev => ev.stopPropagation()); ov.addEventListener('click', ev => { ev.stopPropagation(); O.onNode(id, ev); });
+        if (selNodes.has(id)) add(svg, 'rect', { 'class': 'uionly', x: n.x - 6, y: n.y - 6, width: n.w + 12, height: n.h + 12, rx: 9, fill: 'none', stroke: '#a855f7', 'stroke-width': 3, 'stroke-dasharray': '8 5', 'pointer-events': 'none' });
+      }
+    }
+
+    // ---- labels: try places along the arrow until one touches no box, no other label and (first pass) no arrow
+    const placed = [];
+    for (const e of vis) {
+      if (!e.lab) continue;
+      const ls = wrap(e.lab, Math.max(10, Math.floor(20 / FS))), pw = Math.max(...ls.map(t => t.length)) * 6.4 * FS * (HC ? 1.15 : 1) + 16, ph = ls.length * 14 * FS + 10;
+      const segs = []; for (let i = 0; i < e.pts.length - 1; i++) { const p = e.pts[i], q = e.pts[i + 1]; segs.push({ p, q, l: Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]), hz: Math.abs(p[1] - q[1]) < 1 }); }
+      segs.forEach((g, ix) => { g.ix = ix; }); segs.sort((u, v) => v.l - u.l);
+      const pref = e.raw.route && e.raw.route.labelSegment; if (pref !== undefined && pref !== null) { const k = segs.findIndex(g => g.ix === pref); if (k > 0) segs.unshift(segs.splice(k, 1)[0]); }
+      let pos = null; if (e.a === e.b) pos = { x: e.A.x + e.A.w / 2 - pw / 2, y: e.A.y + e.A.h + 32 + 8, w: pw, h: ph };
+      const others = []; for (const o of vis) { if (o === e) continue; for (let i = 0; i < o.pts.length - 1; i++) others.push([o.pts[i], o.pts[i + 1]]); }
+      const hitsOther = r => others.some(([p1, p2]) => { const lx = Math.min(p1[0], p2[0]), hx = Math.max(p1[0], p2[0]), ly = Math.min(p1[1], p2[1]), hy = Math.max(p1[1], p2[1]); return hx > r.x - 3 && lx < r.x + r.w + 3 && hy > r.y - 3 && ly < r.y + r.h + 3; });
+      const fits = r => !(Object.values(P).some(n => r.x < n.x + n.w + 2 && r.x + r.w > n.x - 2 && r.y < n.y + n.h + 2 && r.y + r.h > n.y - 2) || placed.some(o => r.x < o.x + o.w && r.x + r.w > o.x && r.y < o.y + o.h && r.y + r.h > o.y));
+      const fracs = [.5, .38, .62, .28, .72, .18, .82];
+      for (const allowCross of [false, true]) {
+        if (pos) break;
+        for (const sg of segs) {
+          if (pos) break; if (sg.hz ? sg.l < pw + 4 : sg.l < ph + 4) continue;
+          for (const fr of fracs) {
+            const mx = sg.p[0] + (sg.q[0] - sg.p[0]) * fr, my = sg.p[1] + (sg.q[1] - sg.p[1]) * fr, r = { x: mx - pw / 2, y: my - ph / 2, w: pw, h: ph };
+            if (sg.hz && (r.x < Math.min(sg.p[0], sg.q[0]) + 2 || r.x + r.w > Math.max(sg.p[0], sg.q[0]) - 2)) continue;
+            if (!sg.hz && (r.y < Math.min(sg.p[1], sg.q[1]) + 2 || r.y + r.h > Math.max(sg.p[1], sg.q[1]) - 2)) continue;
+            if (!fits(r)) continue; if (!allowCross && hitsOther(r)) continue; pos = r; break;
+          }
+        }
+      }
+      if (!pos) { const sg = segs[0]; pos = { x: (sg.p[0] + sg.q[0]) / 2 - pw / 2, y: (sg.p[1] + sg.q[1]) / 2 - ph / 2, w: pw, h: ph }; warns.push('The label "' + e.lab + '" overlaps something'); }
+      placed.push(pos);
+      const g = add(svg, 'g', { style: UI ? 'cursor:pointer' : '', 'data-label': e.id });
+      add(g, 'rect', { x: pos.x, y: pos.y, width: pw, height: ph, rx: 5, fill: '#fff', stroke: e.f.color, 'stroke-width': 1.6 });
+      ls.forEach((t, i) => add(g, 'text', { x: pos.x + pw / 2, y: pos.y + ph / 2 - (ls.length - 1) * 7 * FS + i * 14 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, 'font-family': 'ui-monospace,Consolas,monospace', fill: '#333' }, t));
+      if (UI && O.onEdge) { g.addEventListener('mousedown', ev => ev.stopPropagation()); g.addEventListener('click', ev => { ev.stopPropagation(); O.onEdge(e.id, ev); }); }
+    }
+
+    // ---- the selected line shows a grip on each piece: drag it to slide that piece (see "By hand" above)
+    if (UI && O.onSeg && selEdges.size === 1 && !selNodes.size) {
+      const e = vis.find(x => selEdges.has(x.id));
+      if (e && e.a !== e.b && !ghosts[e.id]) for (let i = 0; i < e.pts.length - 1; i++) {
+        const a = e.pts[i], b = e.pts[i + 1], hz = Math.abs(a[1] - b[1]) < 0.5; if (!hz && Math.abs(a[0] - b[0]) > 0.5) continue;
+        const cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
+        const grip = add(svg, 'g', { 'class': 'uionly seg-grip', 'data-seg': i, 'data-cx': cx, 'data-cy': cy, transform: `translate(${cx} ${cy})`, style: 'cursor:' + (hz ? 'ns-resize' : 'ew-resize') });
+        add(grip, 'rect', { x: hz ? -11 : -6, y: hz ? -6 : -11, width: hz ? 22 : 12, height: hz ? 12 : 22, rx: 4, fill: '#fff', stroke: '#a855f7', 'stroke-width': 2.2 });
+        add(grip, 'path', { d: hz ? 'M-4 -1.5H4M-4 1.5H4' : 'M-1.5 -4V4M1.5 -4V4', stroke: '#a855f7', 'stroke-width': 1.2, fill: 'none' });
+        grip.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); O.onSeg({ id: e.id, seg: i, axis: hz ? 1 : 0, n: e.pts.length }, ev); });
+        grip.addEventListener('click', ev => ev.stopPropagation());
+      }
+    }
+
+    // ---- notes: a dashed card above its box
+    for (const id in P) {
+      const n = P[id]; if (!n.note) continue;
+      const lines = wrap(n.note, HC ? 38 : 34), nw = 210 * FS, nh = (lines.length * 15 + 19) * FS, nx = n.x - 14, ny = n.y - nh - 26;
+      add(svg, 'line', { x1: n.x + n.w / 2, y1: ny + nh, x2: n.x + n.w / 2, y2: n.y - 2, stroke: '#6b7a8c', 'stroke-dasharray': '3 3', 'stroke-width': 1.5 });
+      add(svg, 'rect', { x: nx, y: ny, width: nw, height: nh, rx: 6, fill: '#eef3f8', stroke: '#6b7a8c', 'stroke-dasharray': '5 3' });
+      lines.forEach((t, i) => add(svg, 'text', { x: nx + 10, y: ny + 18 * FS + i * 15 * FS, 'font-size': 11.5, fill: '#2b3b4d' }, t));
+    }
+    return { svg, warns, edges, nm, w, h, bottom, P };
+  }
+
+  return { build, KC, OTHER, DASH };
+})();
+
+/*
+ * Freestyle: outputs.
+ *   Print phases   one US Letter landscape page per phase, through the browser's print dialog (Save as PDF)
+ *   One wide page  the whole process on a single page sized to the diagram
+ *   Images         a PNG per phase and one of the whole process, to copy or download
+ * Two ways to size the phase pages and images:
+ *   fit    each phase picks the text size (100 to 140 percent) that best fills a letter page
+ *   match  every phase uses the on-screen text size, rows and positions, so the images line up side by side
+ * High contrast applies to outputs only, never to the screen.
+ * Every output is drawn by Render.build(); nothing here redraws the diagram its own way.
+ */
+const Exporter = (() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  let ctx = null, phaseSvgs = [];
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function setPage(css) { let st = $('#pgdyn'); if (!st) { st = document.createElement('style'); st.id = 'pgdyn'; document.head.appendChild(st); } st.textContent = css; }
+
+  function buildPhasePages() {
+    const L = ctx.L, ui = ctx.ui, root = $('#printRoot'), AW = 10.3 * 96, AH = (8.5 - .7 - .62) * 96, info = [];
+    root.innerHTML = ''; phaseSvgs = [];
+    L.phases.forEach((ph, i) => {
+      let best = null;
+      if (ui.exportMode === 'match') {
+        const r = Render.build(L, { mode: 'phase', phase: i, fs: ui.fs, hc: ui.hc, aligned: true }), bw = r.w, bh = r.h - 56;
+        best = { f: ui.fs, r, bw, bh, sc: Math.min(AW / bw, AH / bh) };
+      } else for (let f = 1; f <= 1.401; f += .05) {
+        const r = Render.build(L, { mode: 'phase', phase: i, fs: f, hc: ui.hc }), bw = r.w, bh = r.h - 56, sc = Math.min(AW / bw, AH / bh), score = f * sc;
+        if (!best || score > best.score + 1e-6) best = { score, f, r, bw, bh, sc };
+      }
+      const sec = document.createElement('section'); sec.className = 'pg';
+      sec.innerHTML = `<div class="pgh"><b>${esc(L.title)}</b> &nbsp;·&nbsp; Phase ${i + 1} of ${L.phases.length}</div><div class="pgs"></div><div class="pgf"><span><i style="border-color:${Render.KC.yes}"></i>Yes path</span><span><i style="border-color:${Render.KC.no}"></i>No path</span><span><i style="border-color:${Render.KC.loop}"></i>Loop</span><span><i style="border-color:#8a94a0;box-shadow:0 0 5px 3px rgba(47,124,246,.45)"></i>Ideal path (blue glow)</span><span><i style="border-color:#8a94a0"></i>Other flow</span><span>◇ Decision</span><span style="margin-left:auto">Dashed tags = line continues in another phase</span></div>`;
+      const svg = best.r.svg; svg.setAttribute('viewBox', `0 56 ${best.bw} ${best.bh}`); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
+      phaseSvgs[i] = { svg: svg.cloneNode(true), bw: best.bw, bh: best.bh, title: ph.title };
+      sec.querySelector('.pgs').appendChild(svg); root.appendChild(sec);
+      info.push({ phase: i + 1, fontScale: +best.f.toFixed(2), textPt: +(12.5 * best.f * best.sc * 72 / 96).toFixed(1), warns: best.r.warns });
+    });
+    window.__phaseInfo = info; window.__phSvgs = phaseSvgs;
+    return info;
+  }
+  function buildFullEntry() {
+    const r = Render.build(ctx.L, { mode: 'full', fs: ctx.ui.fs, hc: ctx.ui.hc }), svg = r.svg;
+    svg.setAttribute('viewBox', `0 0 ${r.w} ${r.h}`); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
+    return { svg, bw: r.w, bh: r.h, title: 'Entire process' };
+  }
+  function svgToPng(entry, width) {
+    return new Promise((res, rej) => {
+      const sc = width / entry.bw, w = Math.round(entry.bw * sc), h = Math.round(entry.bh * sc), sv = entry.svg.cloneNode(true);
+      sv.setAttribute('width', w); sv.setAttribute('height', h);
+      const img = new Image();
+      img.onload = () => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c2 = cv.getContext('2d'); c2.fillStyle = '#fff'; c2.fillRect(0, 0, w, h); c2.drawImage(img, 0, 0, w, h); cv.toBlob(b => b ? res({ blob: b, w, h }) : rej(new Error('the browser could not make the image')), 'image/png'); };
+      img.onerror = () => rej(new Error('the image did not load'));
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(sv));
+    });
+  }
+
+  async function openImages() {
+    const ov = $('#imgOv'), ui = ctx.ui; ov.hidden = false;
+    ov.innerHTML = `<div class="img-top"><b>Process images</b><button type="button" id="imgClose">Close</button><span class="muted">Copy an image, then paste it into Word, Outlook or Teams. Or download the PNG.</span>
+      <label><input type="checkbox" id="imgHc"${ui.hc ? ' checked' : ''}> High contrast</label>
+      <label>Phase size <select id="imgMode"><option value="fit"${ui.exportMode === 'fit' ? ' selected' : ''}>Fit each phase to a page</option><option value="match"${ui.exportMode === 'match' ? ' selected' : ''}>Match the screen (phases line up)</option></select></label></div><div id="imgList">Rendering…</div>`;
+    $('#imgClose').onclick = () => { ov.hidden = true; };
+    $('#imgHc').onchange = ev => { ui.hc = ev.target.checked; $('#hcChk').checked = ui.hc; ctx.save(); openImages(); };
+    $('#imgMode').onchange = ev => { ui.exportMode = ev.target.value; ctx.save(); openImages(); };
+    buildPhasePages();
+    const list = $('#imgList'); list.innerHTML = '';
+    const items = [buildFullEntry(), ...phaseSvgs], base = phaseSvgs[0] ? 3600 / phaseSvgs[0].bw : 1;
+    for (let i = 0; i < items.length; i++) {
+      const e = items[i], card = document.createElement('div'); card.className = 'img-card'; card.innerHTML = `<b>${esc(e.title)}</b><div class="row"></div>`; list.appendChild(card);
+      try {
+        // Matching mode gives every phase the same scale, so their heights agree and they sit side by side.
+        const r = await svgToPng(e, i === 0 ? 6000 : (ui.exportMode === 'match' ? Math.round(e.bw * base) : 3600)), url = URL.createObjectURL(r.blob);
+        const im = document.createElement('img'); im.src = url; card.appendChild(im);
+        const row = card.querySelector('.row'), cp = document.createElement('button'), msg = document.createElement('span'); cp.type = 'button'; cp.textContent = 'Copy image'; msg.className = 'msg';
+        cp.onclick = async () => { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': r.blob })]); msg.textContent = 'Copied'; } catch (err) { msg.textContent = 'Copying is blocked here: use Download, or right-click the image and choose Copy image'; } setTimeout(() => { msg.textContent = ''; }, 4000); };
+        const dl = document.createElement('a'); dl.href = url; dl.download = i === 0 ? 'Entire-Process.png' : 'Phase-' + i + '.png'; dl.className = 'button-link'; dl.textContent = `Download PNG (${r.w} × ${r.h})`;
+        row.append(cp, dl, msg);
+      } catch (err) { card.insertAdjacentHTML('beforeend', `<div class="bad">This one could not be rendered: ${esc(err.message)}</div>`); }
+    }
+  }
+
+  function printPhases() { buildPhasePages(); document.body.classList.add('pp'); document.documentElement.classList.add('pp'); setPage('@page{size:11in 8.5in;margin:0}'); setTimeout(() => window.print(), 80); }
+  function printWide() {
+    const entry = buildFullEntry(), root = $('#printRoot');
+    root.innerHTML = ''; const holder = document.createElement('div'); holder.className = 'wide'; holder.style.cssText = `width:${entry.bw}px;height:${entry.bh}px`; holder.appendChild(entry.svg); root.appendChild(holder);
+    document.body.classList.add('pp'); document.documentElement.classList.add('pp'); setPage(`@page{size:${entry.bw + 8}px ${entry.bh + 8}px;margin:0}`); setTimeout(() => window.print(), 80);
+  }
+
+  function start(context) {
+    ctx = context;
+    $('#bPrintPhases').addEventListener('click', printPhases);
+    $('#bPdf').addEventListener('click', printWide);
+    $('#bImages').addEventListener('click', openImages);
+    const hc = $('#hcChk'); hc.checked = !!ctx.ui.hc; hc.addEventListener('change', () => { ctx.ui.hc = hc.checked; ctx.save(); });
+    addEventListener('afterprint', () => { document.body.classList.remove('pp'); document.documentElement.classList.remove('pp'); $('#printRoot').innerHTML = ''; });
+    // For scripted exports: add &phases=1, &pdf=1 or &img=N (0 = whole process) to the address, and &hc=1 for high contrast.
+    const q = location.search;
+    if (/[?&]hc=1/.test(q)) ctx.ui.hc = true;
+    if (/[?&]phases=1/.test(q)) setTimeout(() => { buildPhasePages(); document.body.classList.add('pp'); document.documentElement.classList.add('pp'); setPage('@page{size:11in 8.5in;margin:0}'); }, 0);
+    else if (/[?&]pdf=1/.test(q)) setTimeout(() => { const e = buildFullEntry(), root = $('#printRoot'); root.innerHTML = ''; root.appendChild(e.svg); e.svg.setAttribute('width', e.bw); e.svg.setAttribute('height', e.bh); document.body.classList.add('pp'); document.documentElement.classList.add('pp'); setPage(`@page{size:${e.bw + 8}px ${e.bh + 8}px;margin:0}`); }, 0);
+    else { const m = q.match(/[?&]img=(\d)/); if (m) setTimeout(() => { buildPhasePages(); const e = m[1] === '0' ? buildFullEntry() : phaseSvgs[+m[1] - 1]; if (!e) return; const W2 = m[1] === '0' ? 6000 : 3600, sc = W2 / e.bw, sv = e.svg.cloneNode(true); sv.setAttribute('width', Math.round(e.bw * sc)); sv.setAttribute('height', Math.round(e.bh * sc)); document.body.innerHTML = ''; document.body.style.cssText = 'margin:0;background:#fff;overflow:hidden'; document.body.appendChild(sv); document.title = 'SIZE ' + Math.round(e.bw * sc) + 'x' + Math.round(e.bh * sc); }, 0); }
+  }
+
+  return { start, buildPhasePages, buildFullEntry, svgToPng };
+})();
+
+/*
+ * Freestyle: a PDF of the phase pages, made in the browser with no print dialog.
+ * Each phase page is drawn to an image and the images are wrapped in a small hand-written PDF
+ * (US Letter landscape, one phase per page). Nothing is uploaded anywhere.
+ */
+const Pdf = (() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  let ctx = null;
+
+  // ------------------------------------------------------------------ PDF (US Letter landscape, one phase per page)
+  const PAGE = { w: 2640, h: 2040, margin: 84 };   // 240 dots per inch
+  const imageOf = svg => new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('a page could not be drawn')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg)); });
+  async function pageJpeg(entry, title, index, total) {
+    const cv = document.createElement('canvas'); cv.width = PAGE.w; cv.height = PAGE.h;
+    const g = cv.getContext('2d'), m = PAGE.margin;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, PAGE.w, PAGE.h);
+    g.fillStyle = '#222'; g.textBaseline = 'middle'; g.font = '700 40px "Segoe UI", Arial, sans-serif'; g.fillText(title, m, m + 30);
+    const titleWidth = g.measureText(title).width; g.font = '40px "Segoe UI", Arial, sans-serif'; g.fillText(`  ·  Phase ${index + 1} of ${total}`, m + titleWidth, m + 30);
+    // the phase itself, as large as the space allows
+    const top = m + 78, bottom = PAGE.h - m - 74, areaW = PAGE.w - 2 * m, areaH = bottom - top, scale = Math.min(areaW / entry.bw, areaH / entry.bh);
+    const sv = entry.svg.cloneNode(true), w = Math.round(entry.bw * scale), h = Math.round(entry.bh * scale); sv.setAttribute('width', w); sv.setAttribute('height', h);
+    g.drawImage(await imageOf(sv), m + (areaW - w) / 2, top + (areaH - h) / 2, w, h);
+    // legend
+    let x = m; const y = PAGE.h - m - 26; g.font = '26px "Segoe UI", Arial, sans-serif'; g.lineWidth = 8;
+    [['Yes path', Render.KC.yes], ['No path', Render.KC.no], ['Loop', Render.KC.loop], ['Ideal path (blue glow)', Render.OTHER, true], ['Other flow', Render.OTHER]].forEach(([label, color, glow]) => {
+      if (glow) { g.strokeStyle = 'rgba(47,124,246,.35)'; g.lineWidth = 26; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 60, y); g.stroke(); g.lineWidth = 8; }
+      g.strokeStyle = color; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 60, y); g.stroke(); g.fillStyle = '#444'; g.fillText(label, x + 74, y); x += 74 + g.measureText(label).width + 44;
+    });
+    g.fillText('◇ Decision', x, y);
+    const note = 'Dashed tags = line continues in another phase'; g.fillText(note, PAGE.w - m - g.measureText(note).width, y);
+    const blob = await new Promise((resolve, reject) => cv.toBlob(b => b ? resolve(b) : reject(new Error('a page could not be saved')), 'image/jpeg', 0.9));
+    return new Uint8Array(await blob.arrayBuffer());
+  }
+  // A minimal PDF: a catalogue, the page list, and for each page its content stream and its JPEG image.
+  function pdfOf(jpegs) {
+    const enc = new TextEncoder(), parts = [], offsets = []; let size = 0;
+    const put = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); size += b.length; };
+    const obj = (id, head, stream) => { offsets[id] = size; put(`${id} 0 obj\n${head}\n`); if (stream) { put('stream\n'); put(stream); put('\nendstream\n'); } put('endobj\n'); };
+    put('%PDF-1.4\n%âãÏÓ\n');
+    const n = jpegs.length, kids = jpegs.map((_, i) => `${3 + i * 3} 0 R`).join(' ');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, `<< /Type /Pages /Count ${n} /Kids [${kids}] >>`);
+    jpegs.forEach((jpeg, i) => {
+      const page = 3 + i * 3, content = enc.encode('q 792 0 0 612 0 0 cm /Im0 Do Q');
+      obj(page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 792 612] /Resources << /XObject << /Im0 ${page + 2} 0 R >> >> /Contents ${page + 1} 0 R >>`);
+      obj(page + 1, `<< /Length ${content.length} >>`, content);
+      obj(page + 2, `<< /Type /XObject /Subtype /Image /Width ${PAGE.w} /Height ${PAGE.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>`, jpeg);
+    });
+    const count = 3 + n * 3, xref = size;
+    put(`xref\n0 ${count}\n0000000000 65535 f \n`);
+    for (let id = 1; id < count; id++) put(String(offsets[id]).padStart(10, '0') + ' 00000 n \n');
+    put(`trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+    const out = new Uint8Array(size); let at = 0; parts.forEach(b => { out.set(b, at); at += b.length; });
+    return out;
+  }
+  async function makePdf() {
+    Exporter.buildPhasePages(); $('#printRoot').innerHTML = '';
+    const pages = window.__phSvgs || [], title = ctx.title(), jpegs = [];
+    for (let i = 0; i < pages.length; i++) jpegs.push(await pageJpeg(pages[i], title, i, pages.length));
+    return pdfOf(jpegs);
+  }
+
+  function start(context) {
+    ctx = context;
+    $('#bPdfFile').addEventListener('click', async () => {
+      const button = $('#bPdfFile'); button.disabled = true; ctx.status('Drawing the PDF…');
+      try {
+        const bytes = await makePdf(), a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })); a.download = ctx.fileName(); document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000); ctx.status(`Saved ${ctx.fileName()} (${Math.round(bytes.length / 1024)} KB) to your downloads.`);
+      } catch (error) { ctx.status('The PDF could not be made: ' + error.message, true); }
+      finally { button.disabled = false; }
+    });
+  }
+
+  return { start, makePdf, pdfOf };
+})();
+
+/*
+ * Freestyle: the app. One document (the map), two live views of it:
+ *   Board     a free canvas in the manner of Arcweave: cards with an owner and text, decisions, arrows with labels
+ *   Swimlane  the same map arranged into lanes, columns and phases by Engine.layout() and drawn by Render.build()
+ * plus the inspector (properties of whatever is selected), file handling and undo.
+ * Nothing leaves the browser: the map is kept in localStorage and saved or opened as a file.
+ */
+const App = (() => {
+  'use strict';
+  const $ = s => document.querySelector(s), NS = 'http://www.w3.org/2000/svg';
+  const STORE = 'freestyle-map-v1';
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const CARD_W = 220;
+
+  let doc = null, L = null, built = null;
+  const sel = { nodes: new Set(), edges: new Set() };
+  let undoStack = [], redoStack = [];
+  const ui = { fs: 1, hc: false, view: 'split', stack: false, exportMode: 'fit' };
+  const bv = { s: 1, x: 30, y: 30 };              // board view (zoom and pan)
+  const sv = { s: 1, x: 0, y: 0, fitted: false };  // swimlane view
+  const dims = {};                                 // measured card sizes on the board
+
+  // ------------------------------------------------------------------ document, undo, storage
+  function save() { try { localStorage.setItem(STORE, JSON.stringify({ doc, ui })); } catch (ignored) {} }
+  function load() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORE));
+      if (stored && stored.doc && Array.isArray(stored.doc.nodes)) { doc = Engine.normalize(stored.doc); Object.assign(ui, stored.ui || {}); return; }
+    } catch (ignored) {}
+    doc = Engine.normalize(SAMPLE_MAP);
+  }
+  function recompute() {
+    try { L = Engine.layout(doc); } catch (error) { console.error(error); status('Layout problem: ' + error.message, true); }
+  }
+  // Every edit goes through change(): it records an undo step, applies the edit and redraws both views.
+  function change(edit, opts) {
+    undoStack.push(JSON.stringify(doc)); if (undoStack.length > 120) undoStack.shift(); redoStack = [];
+    edit();
+    refresh(opts);
+  }
+  function refresh(opts) {
+    for (const id of [...sel.nodes]) if (!doc.nodes.some(n => n.id === id)) sel.nodes.delete(id);
+    for (const id of [...sel.edges]) if (!doc.edges.some(e => e.id === id)) sel.edges.delete(id);
+    recompute(); save(); drawBoard(); drawSwimlane();
+    if (!(opts && opts.keepInspector)) drawInspector();
+    $('#bUndo').disabled = !undoStack.length; $('#bRedo').disabled = !redoStack.length;
+  }
+  function undo() { if (!undoStack.length) return; redoStack.push(JSON.stringify(doc)); doc = JSON.parse(undoStack.pop()); refresh(); }
+  function redo() { if (!redoStack.length) return; undoStack.push(JSON.stringify(doc)); doc = JSON.parse(redoStack.pop()); refresh(); }
+  function setDoc(next, note) {
+    undoStack.push(JSON.stringify(doc)); redoStack = [];
+    doc = Engine.normalize(next); sel.nodes.clear(); sel.edges.clear(); sv.fitted = false;
+    refresh(); fitBoard(); if (note) status(note);
+  }
+  const node = id => doc.nodes.find(n => n.id === id), edge = id => doc.edges.find(e => e.id === id);
+  const lane = id => doc.lanes.find(l => l.id === id) || { id, name: id, color: '#666', fill: '#eee' };
+  const laid = id => L && L.nodes.find(n => n.id === id), laidEdge = id => L && L.edges.find(e => e.id === id);
+  function newId(prefix) { let id; do { id = prefix + Math.random().toString(36).slice(2, 7); } while (node(id) || edge(id)); return id; }
+  let statusTimer = 0;
+  function status(text, bad) { const el = $('#status'); el.textContent = text || ''; el.className = bad ? 'bad' : ''; clearTimeout(statusTimer); if (text && !bad) statusTimer = setTimeout(showCounts, 5000); }
+  function showCounts() {
+    if (!L) return;
+    const warns = (built && built.warns || []).concat(L.warnings || []);
+    const el = $('#status'); el.className = warns.length ? 'warn' : '';
+    const many = (n, word) => `${n} ${word}${n === 1 ? '' : (word === 'box' ? 'es' : 's')}`;
+    el.textContent = [many(L.nodes.length, 'box'), many(L.edges.length, 'arrow'), many(L.lanes.length, 'lane'), many(L.phases.length, 'phase')].join(' · ') + (warns.length ? ` · ${warns.length} thing${warns.length === 1 ? '' : 's'} to check (see the Map panel)` : '');
+  }
+
+  // ------------------------------------------------------------------ selection
+  function select(kind, id, additive) {
+    if (!additive) { sel.nodes.clear(); sel.edges.clear(); }
+    if (id) { const set = sel[kind]; if (additive && set.has(id)) set.delete(id); else set.add(id); }
+    drawBoard(); drawSwimlane(); drawInspector();
+  }
+  function clearSelection() { if (!sel.nodes.size && !sel.edges.size) return; sel.nodes.clear(); sel.edges.clear(); drawBoard(); drawSwimlane(); drawInspector(); }
+
+  // ------------------------------------------------------------------ editing actions
+  function addNode(type, x, y, fromId, fromSide) {
+    const source = fromId && node(fromId), id = newId('n');
+    change(() => {
+      const owner = source ? source.lane : (sel.nodes.size ? node([...sel.nodes][0]).lane : doc.lanes[0].id);
+      doc.nodes.push({ id, lane: owner, type, text: type === 'decision' ? 'Question?' : 'New step', sketch: { x: Math.round(x / 10) * 10, y: Math.round(y / 10) * 10 } });
+      if (source) { const e = newEdge(source, id); if (fromSide) e.sketch = { a: fromSide }; doc.edges.push(e); }
+      sel.nodes.clear(); sel.edges.clear(); sel.nodes.add(id);
+    });
+    editCardText(id, true);
+    return id;
+  }
+  // A new arrow out of a decision is labelled Yes, then No, so it is coloured from the start.
+  function newEdge(source, toId) {
+    const e = { id: newId('e'), from: source.id, to: toId };
+    if (source.type === 'decision') {
+      const labels = doc.edges.filter(x => x.from === source.id).map(x => Engine.classifyLabel(x.label));
+      if (!labels.includes('yes')) e.label = 'Yes'; else if (!labels.includes('no')) e.label = 'No';
+    }
+    return e;
+  }
+  function connect(fromId, toId, faces) {
+    if (doc.edges.some(e => e.from === fromId && e.to === toId)) { status('Those two are already connected.'); return; }
+    const e = newEdge(node(fromId), toId);
+    if (faces) { e.sketch = {}; if (faces.a) e.sketch.a = faces.a; if (faces.b) e.sketch.b = faces.b; if (!Object.keys(e.sketch).length) delete e.sketch; }
+    change(() => { doc.edges.push(e); sel.nodes.clear(); sel.edges.clear(); sel.edges.add(e.id); });
+  }
+  function removeSelected() {
+    if (!sel.nodes.size && !sel.edges.size) return;
+    change(() => {
+      doc.edges = doc.edges.filter(e => !sel.edges.has(e.id) && !sel.nodes.has(e.from) && !sel.nodes.has(e.to));
+      doc.nodes = doc.nodes.filter(n => !sel.nodes.has(n.id));
+      sel.nodes.clear(); sel.edges.clear();
+    });
+  }
+  function duplicateSelected() {
+    if (!sel.nodes.size) return;
+    change(() => {
+      const copies = {};
+      [...sel.nodes].forEach(id => { const n = node(id), c = JSON.parse(JSON.stringify(n)); c.id = newId('n'); c.sketch = { x: n.sketch.x + 30, y: n.sketch.y + 30 }; delete c.layout; delete c.phase; copies[id] = c.id; doc.nodes.push(c); });
+      doc.edges.filter(e => copies[e.from] && copies[e.to]).forEach(e => { const c = JSON.parse(JSON.stringify(e)); c.id = newId('e'); c.from = copies[e.from]; c.to = copies[e.to]; doc.edges.push(c); });
+      sel.nodes.clear(); sel.edges.clear(); Object.values(copies).forEach(id => sel.nodes.add(id));
+    });
+  }
+
+  // ------------------------------------------------------------------ board (free canvas)
+  const boardEl = () => $('#board'), world = () => $('#world');
+  function applyBoardView() { world().style.transform = `translate(${bv.x}px,${bv.y}px) scale(${bv.s})`; boardEl().style.backgroundSize = `${22 * bv.s}px ${22 * bv.s}px`; boardEl().style.backgroundPosition = `${bv.x}px ${bv.y}px`; }
+  const toWorld = (cx, cy) => { const r = boardEl().getBoundingClientRect(); return { x: (cx - r.left - bv.x) / bv.s, y: (cy - r.top - bv.y) / bv.s }; };
+  function fitBoard() {
+    const r = boardEl().getBoundingClientRect(); if (!doc.nodes.length || !r.width) { bv.s = 1; bv.x = (r.width || 60) / 2; bv.y = (r.height || 60) / 2; applyBoardView(); return; }
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    doc.nodes.forEach(n => { const d = dims[n.id] || { w: CARD_W, h: 90 }; x0 = Math.min(x0, n.sketch.x); y0 = Math.min(y0, n.sketch.y); x1 = Math.max(x1, n.sketch.x + d.w); y1 = Math.max(y1, n.sketch.y + d.h); });
+    bv.s = Math.max(0.03, Math.min(1.2, (r.width - 60) / (x1 - x0), (r.height - 60) / (y1 - y0)));
+    bv.x = (r.width - (x1 - x0) * bv.s) / 2 - x0 * bv.s; bv.y = (r.height - (y1 - y0) * bv.s) / 2 - y0 * bv.s; applyBoardView();
+  }
+
+  function drawBoard() {
+    if (!L) return;
+    const cards = $('#cards');
+    // The first tagged card of each phase carries the "Phase start" flag.
+    const phaseStart = {};
+    L.phases.forEach((p, i) => { if (!i) return; const first = L.nodes.filter(n => node(n.id).phase === p.id && n.layout.col === p.s)[0]; if (first) phaseStart[first.id] = true; });
+    cards.innerHTML = L.nodes.map(n => {
+      const ln = lane(n.lane), decision = n.type === 'decision', picked = sel.nodes.has(n.id);
+      return `<div class="card ${decision ? 'decision' : 'step'}${picked ? ' sel' : ''}" data-id="${esc(n.id)}" style="left:${n.sketch.x}px;top:${n.sketch.y}px;width:${CARD_W}px;--lane:${esc(ln.color)};--tint:${esc(ln.fill)}">
+        <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}</div>
+        <div class="card-body">${esc(n.text) || '<i>Double-click to write</i>'}</div>
+        ${n.note ? `<div class="card-note">${esc(n.note)}</div>` : ''}
+        <i class="handle" data-side="T"></i><i class="handle" data-side="R"></i><i class="handle" data-side="B"></i><i class="handle" data-side="L"></i></div>`;
+    }).join('');
+    cards.querySelectorAll('.card').forEach(el => { if (el.offsetWidth) dims[el.dataset.id] = { w: el.offsetWidth, h: el.offsetHeight }; });
+    world().classList.toggle('focus', sel.nodes.size + sel.edges.size === 1);
+    drawBoardEdges();
+    applyBoardView();
+  }
+
+  const svgEl = (parent, tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; parent.appendChild(e); return e; };
+  const rectOf = id => { const n = node(id), d = dims[id] || { w: CARD_W, h: 90 }; return { x: n.sketch.x, y: n.sketch.y, w: d.w, h: d.h, cx: n.sketch.x + d.w / 2, cy: n.sketch.y + d.h / 2 }; };
+  // Arrows on the board. Each end attaches to a face of its card: the nearest one, unless the author chose
+  // (edge.sketch.a / .b). Arrows sharing a face sit side by side. A middle node (edge.sketch.mid) bends the curve.
+  const DIR = { L: [-1, 0], R: [1, 0], T: [0, -1], B: [0, 1] };
+  function autoSides(a, b) { const dx = b.cx - a.cx, dy = b.cy - a.cy; return Math.abs(dx) >= Math.abs(dy) * 0.8 ? (dx >= 0 ? ['R', 'L'] : ['L', 'R']) : (dy >= 0 ? ['B', 'T'] : ['T', 'B']); }
+  function nearestSide(r, pt) { const d = { L: Math.abs(pt.x - r.x), R: Math.abs(pt.x - r.x - r.w), T: Math.abs(pt.y - r.y), B: Math.abs(pt.y - r.y - r.h) }; return Object.keys(d).sort((u, v) => d[u] - d[v])[0]; }
+  const facePoint = (r, side, off) => side === 'L' ? [r.x, r.cy + off] : side === 'R' ? [r.x + r.w, r.cy + off] : side === 'T' ? [r.cx + off, r.y] : [r.cx + off, r.y + r.h];
+  function boardGeometry() {
+    const geo = {}, faces = {};
+    L.edges.forEach(e => {
+      if (e.from === e.to) return;
+      const a = rectOf(e.from), b = rectOf(e.to), auto = autoSides(a, b), sk = e.sketch || {};
+      const g = geo[e.id] = { a, b, sa: sk.a || auto[0], sb: sk.b || auto[1], mid: sk.mid || null };
+      (faces[e.from + '|' + g.sa] = faces[e.from + '|' + g.sa] || []).push({ g, end: 'a', rect: a, side: g.sa, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : b });
+      (faces[e.to + '|' + g.sb] = faces[e.to + '|' + g.sb] || []).push({ g, end: 'b', rect: b, side: g.sb, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : a });
+    });
+    Object.values(faces).forEach(list => {
+      const along = list[0].side === 'T' || list[0].side === 'B' ? 'cx' : 'cy', length = along === 'cx' ? list[0].rect.w : list[0].rect.h;
+      const gap = Math.min(26, (length - 24) / Math.max(1, list.length - 1));
+      list.sort((u, v) => u.other[along] - v.other[along]).forEach((item, i) => { item.g['p' + item.end] = facePoint(item.rect, item.side, (i - (list.length - 1) / 2) * gap); });
+    });
+    return geo;
+  }
+  const bez = (p0, c0, c1, p1, t) => { const u = 1 - t; return [u * u * u * p0[0] + 3 * u * u * t * c0[0] + 3 * u * t * t * c1[0] + t * t * t * p1[0], u * u * u * p0[1] + 3 * u * u * t * c0[1] + 3 * u * t * t * c1[1] + t * t * t * p1[1]]; };
+  function curveOf(g) {
+    const p0 = g.pa, p1 = g.pb, d0 = DIR[g.sa], d1 = DIR[g.sb];
+    if (g.mid) {   // two smooth pieces that meet at the middle node
+      const m = [g.mid.x, g.mid.y], tx = p1[0] - p0[0], ty = p1[1] - p0[1], tl = Math.hypot(tx, ty) || 1, t = [tx / tl, ty / tl];
+      const k0 = Math.max(30, Math.hypot(m[0] - p0[0], m[1] - p0[1]) * 0.42), k1 = Math.max(30, Math.hypot(p1[0] - m[0], p1[1] - m[1]) * 0.42);
+      const c0 = [p0[0] + d0[0] * k0, p0[1] + d0[1] * k0], ca = [m[0] - t[0] * k0 * 0.6, m[1] - t[1] * k0 * 0.6], cb = [m[0] + t[0] * k1 * 0.6, m[1] + t[1] * k1 * 0.6], c1 = [p1[0] + d1[0] * k1, p1[1] + d1[1] * k1];
+      return { d: `M${p0[0]} ${p0[1]} C${c0[0]} ${c0[1]} ${ca[0]} ${ca[1]} ${m[0]} ${m[1]} C${cb[0]} ${cb[1]} ${c1[0]} ${c1[1]} ${p1[0]} ${p1[1]}`, mid: m };
+    }
+    const k = Math.max(36, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) * 0.42), c0 = [p0[0] + d0[0] * k, p0[1] + d0[1] * k], c1 = [p1[0] + d1[0] * k, p1[1] + d1[1] * k];
+    return { d: `M${p0[0]} ${p0[1]} C${c0[0]} ${c0[1]} ${c1[0]} ${c1[1]} ${p1[0]} ${p1[1]}`, mid: bez(p0, c0, c1, p1, 0.5) };
+  }
+  // The dashed line that follows the mouse while a new arrow is being dragged out of a card.
+  function dragCurve(fromId, side, pt) { const r = rectOf(fromId), p0 = facePoint(r, side, 0), d = DIR[side], k = Math.max(36, Math.hypot(pt.x - p0[0], pt.y - p0[1]) * 0.42); return `M${p0[0]} ${p0[1]} C${p0[0] + d[0] * k} ${p0[1] + d[1] * k} ${pt.x} ${pt.y} ${pt.x} ${pt.y}`; }
+  let boardGeo = {};
+  function drawBoardEdges() {
+    const svg = $('#wires'), top = $('#wireCtl'); svg.innerHTML = ''; top.innerHTML = '';
+    const defs = svgEl(svg, 'defs', {}), made = {};
+    const marker = color => { const id = 'bm_' + color.replace(/[^0-9a-z]/gi, ''); if (!made[id]) { made[id] = 1; const m = svgEl(defs, 'marker', { id, viewBox: '0 0 10 10', refX: 8.5, refY: 5, markerWidth: 13, markerHeight: 13, markerUnits: 'userSpaceOnUse', orient: 'auto' }); svgEl(m, 'path', { d: 'M0 0L10 5L0 10z', fill: color }); } return id; };
+    boardGeo = boardGeometry();
+    const only = sel.edges.size === 1 && !sel.nodes.size ? [...sel.edges][0] : null;
+    L.edges.forEach(e => {
+      const style = e.style || {}, color = style.color || (e.k ? Render.KC[e.k] : Render.OTHER), picked = sel.edges.has(e.id), g = boardGeo[e.id];
+      let path;
+      if (!g) { const a = rectOf(e.from), x1 = a.x + a.w * 0.3, x2 = a.x + a.w * 0.7, y = a.y + a.h; path = { d: `M${x1} ${y} C${x1 - 20} ${y + 56} ${x2 + 20} ${y + 56} ${x2} ${y}`, mid: [a.cx, y + 42] }; } else path = curveOf(g);
+      const group = svgEl(svg, 'g', { 'data-edge': e.id, class: 'wire' + (picked ? ' sel' : '') + (style.hidden ? ' hidden-line' : '') });
+      if (e.isIdeal) svgEl(group, 'path', { d: path.d, fill: 'none', stroke: '#2f7cf6', 'stroke-opacity': .22, 'stroke-width': 13, 'stroke-linecap': 'round' });
+      if (picked) svgEl(group, 'path', { d: path.d, fill: 'none', stroke: '#a855f7', 'stroke-opacity': .45, 'stroke-width': 11 });
+      svgEl(group, 'path', { d: path.d, fill: 'none', stroke: color, 'stroke-width': 2.6, 'stroke-dasharray': style.hidden ? '3 5' : '', 'marker-end': `url(#${marker(color)})` });
+      svgEl(group, 'path', { d: path.d, fill: 'none', stroke: 'transparent', 'stroke-width': 16, class: 'hit' });
+      if (e.label) {
+        const lines = wrapText(e.label, 22), w = Math.max(...lines.map(t => t.length)) * 6.3 + 14, h = lines.length * 14 + 8, ly = path.mid[1] - (g && g.mid && only === e.id ? 24 : 0);
+        svgEl(group, 'rect', { x: path.mid[0] - w / 2, y: ly - h / 2, width: w, height: h, rx: 5, fill: '#fff', stroke: color, 'stroke-width': 1.4, class: 'pill' });
+        lines.forEach((t, i) => svgEl(group, 'text', { x: path.mid[0], y: ly - (lines.length - 1) * 7 + i * 14, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, 'font-family': 'ui-monospace,Consolas,monospace', fill: '#333', class: 'pill' }, t));
+      }
+      // The selected arrow shows its three nodes: drag an end to another face (or card), drag the middle to bend it.
+      if (only === e.id && g) {
+        svgEl(top, 'circle', { cx: path.mid[0], cy: path.mid[1], r: 8, class: 'ctl mid', 'data-ctl': 'mid', 'data-edge': e.id });
+        svgEl(top, 'circle', { cx: g.pa[0], cy: g.pa[1], r: 8, class: 'ctl end', 'data-ctl': 'a', 'data-edge': e.id });
+        svgEl(top, 'circle', { cx: g.pb[0], cy: g.pb[1], r: 8, class: 'ctl end', 'data-ctl': 'b', 'data-edge': e.id });
+      }
+    });
+  }
+  const wrapText = (t, n) => { const ws = String(t).split(' '), ls = []; let c = ''; for (const x of ws) { if ((c + ' ' + x).trim().length > n && c) { ls.push(c); c = x; } else c = (c + ' ' + x).trim(); } ls.push(c); return ls; };
+
+  // Typing straight into a card, as on an Arcweave board.
+  function editCardText(id, selectAll) {
+    const card = $(`#cards .card[data-id="${CSS.escape(id)}"]`); if (!card) return;
+    const body = card.querySelector('.card-body'), n = node(id), area = document.createElement('textarea');
+    area.value = n.text; area.className = 'card-edit'; body.replaceWith(area); area.style.height = Math.max(54, area.scrollHeight) + 'px';
+    area.focus(); if (selectAll) area.select();
+    let done = false;
+    const finish = keep => { if (done) return; done = true; const text = area.value.replace(/\s+/g, ' ').trim(); if (keep && text !== n.text) change(() => { n.text = text; if (/\?\s*$/.test(text) && n.type === 'step') n.type = 'decision'; }); else drawBoard(); };   // a card that ends in a question mark is a decision
+    area.addEventListener('blur', () => finish(true));
+    area.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Escape') finish(false); else if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); area.blur(); } });
+    area.addEventListener('mousedown', ev => ev.stopPropagation());
+    area.addEventListener('input', () => { area.style.height = 'auto'; area.style.height = Math.max(54, area.scrollHeight) + 'px'; });
+  }
+
+  // Picking the owner straight on the card: double-click its coloured header.
+  function editCardOwner(id) {
+    const card = $(`#cards .card[data-id="${CSS.escape(id)}"]`); if (!card) return;
+    const span = card.querySelector('.owner'), pick = document.createElement('select'); pick.className = 'owner-pick';
+    pick.innerHTML = options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner\u2026']]), node(id).lane);
+    span.replaceWith(pick); pick.focus();
+    let done = false;
+    const finish = () => { if (done) return; done = true; let v = pick.value; if (v === '+') v = addLanePrompt(); if (v && v !== node(id).lane) change(() => { node(id).lane = v; }); else drawBoard(); };
+    pick.addEventListener('change', finish); pick.addEventListener('blur', finish);
+    pick.addEventListener('mousedown', ev => ev.stopPropagation()); pick.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Escape') { done = true; drawBoard(); } });
+  }
+
+  // While an arrow is dragged, the side of the card it will attach to lights up ('all' = the card picks the side).
+  function showFace(id, side) {
+    document.querySelectorAll('#cards .card.face').forEach(el => el.classList.remove('face', 'face-L', 'face-R', 'face-T', 'face-B', 'face-all'));
+    const el = id && $(`#cards .card[data-id="${CSS.escape(id)}"]`); if (el) el.classList.add('face', 'face-' + side);
+  }
+  const cardAt = (pt, pad) => doc.nodes.find(n => { const r = rectOf(n.id); return pt.x >= r.x - pad && pt.x <= r.x + r.w + pad && pt.y >= r.y - pad && pt.y <= r.y + r.h + pad; });
+  const edgeDistance = (r, pt) => Math.min(Math.abs(pt.x - r.x), Math.abs(pt.x - r.x - r.w), Math.abs(pt.y - r.y), Math.abs(pt.y - r.y - r.h));
+
+  let spaceDown = false, drag = null;
+  function boardEvents() {
+    const board = boardEl();
+    board.addEventListener('wheel', ev => { ev.preventDefault(); const r = board.getBoundingClientRect(), f = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = Math.max(0.03, Math.min(2.5, bv.s * f)), mx = ev.clientX - r.left, my = ev.clientY - r.top; bv.x = mx - (mx - bv.x) * ns / bv.s; bv.y = my - (my - bv.y) * ns / bv.s; bv.s = ns; applyBoardView(); }, { passive: false });
+    board.addEventListener('contextmenu', ev => { ev.preventDefault(); openMenu(ev); });
+    board.addEventListener('dblclick', ev => {
+      const card = ev.target.closest('.card'), wire = ev.target.closest('.wire');
+      if (ev.target.closest('.card-edit')) return;
+      if (ev.target.closest('.ctl')) { const w = ev.target; if (ev.target.dataset.ctl === 'mid' && edge(w.dataset.edge).sketch) change(() => { const e = edge(w.dataset.edge); delete e.sketch.mid; if (!Object.keys(e.sketch).length) delete e.sketch; }); return; }
+      if (card && ev.target.closest('.card-head')) { editCardOwner(card.dataset.id); return; }
+      if (card) { editCardText(card.dataset.id); return; }
+      if (wire) { select('edges', wire.dataset.edge); const input = $('#i_label'); if (input) { input.focus(); input.select(); } return; }
+      const p = toWorld(ev.clientX, ev.clientY), under = cardAt(p, 0);
+      if (under) { select('nodes', under.id); return; }   // a card that was not responding: pick it, do not drop a new one on it
+      addNode('step', p.x - CARD_W / 2, p.y - 30);
+    });
+    board.addEventListener('mousedown', ev => {
+      closeMenu();
+      if (ev.target.closest('.card-edit') || ev.target.closest('.owner-pick')) return;
+      const p = toWorld(ev.clientX, ev.clientY), handle = ev.target.closest('.handle'), card = ev.target.closest('.card'), wire = ev.target.closest('.wire');
+      if (ev.button === 1 || ev.button === 2 || spaceDown) { drag = { type: 'pan', sx: ev.clientX - bv.x, sy: ev.clientY - bv.y }; board.classList.add('panning'); ev.preventDefault(); return; }
+      const ctl = ev.target.closest('.ctl');
+      if (ctl && ev.button === 0) { drag = { type: 'ctl', which: ctl.dataset.ctl, id: ctl.dataset.edge, before: JSON.stringify(doc), moved: false }; if (ctl.dataset.ctl !== 'mid') { const e = edge(drag.id), g = boardGeo[drag.id]; if (g) showFace(ctl.dataset.ctl === 'a' ? e.from : e.to, ctl.dataset.ctl === 'a' ? g.sa : g.sb); } ev.preventDefault(); return; }
+      if (handle) { drag = { type: 'connect', from: card.dataset.id, side: handle.dataset.side, start: p, line: svgEl($('#wires'), 'path', { fill: 'none', stroke: '#2f7cf6', 'stroke-width': 2.4, 'stroke-dasharray': '6 5', 'pointer-events': 'none' }) }; ev.preventDefault(); return; }
+      if (card) {
+        const id = card.dataset.id;
+        if (ev.shiftKey || ev.ctrlKey || ev.metaKey) { select('nodes', id, true); return; }
+        if (!sel.nodes.has(id)) select('nodes', id);
+        drag = { type: 'move', start: p, before: JSON.stringify(doc), moved: false, origin: [...sel.nodes].map(nid => ({ n: node(nid), x: node(nid).sketch.x, y: node(nid).sketch.y })) };
+        ev.preventDefault(); return;
+      }
+      if (wire) { select('edges', wire.dataset.edge, ev.shiftKey || ev.ctrlKey || ev.metaKey); return; }
+      const under = cardAt(p, 0);
+      if (under && (ev.shiftKey || ev.ctrlKey || ev.metaKey)) { select('nodes', under.id, true); return; }
+      drag = { type: 'marquee', start: p, box: $('#marquee'), additive: ev.shiftKey, cx: ev.clientX, cy: ev.clientY };
+    });
+    addEventListener('mousemove', ev => {
+      if (!drag) return;
+      const p = toWorld(ev.clientX, ev.clientY);
+      if (drag.type === 'pan') { bv.x = ev.clientX - drag.sx; bv.y = ev.clientY - drag.sy; applyBoardView(); }
+      else if (drag.type === 'move') {
+        const dx = p.x - drag.start.x, dy = p.y - drag.start.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+        drag.origin.forEach(o => { o.n.sketch.x = Math.round((o.x + dx) / 10) * 10; o.n.sketch.y = Math.round((o.y + dy) / 10) * 10; const el = $(`#cards .card[data-id="${CSS.escape(o.n.id)}"]`); if (el) { el.style.left = o.n.sketch.x + 'px'; el.style.top = o.n.sketch.y + 'px'; } });
+        drawBoardEdges();
+      }
+      else if (drag.type === 'connect') {
+        drag.line.setAttribute('d', dragCurve(drag.from, drag.side, p));
+        const over = cardAt(p, 8);
+        if (over && over.id !== drag.from) { const r = rectOf(over.id); showFace(over.id, edgeDistance(r, p) < 22 ? nearestSide(r, p) : 'all'); } else showFace(null);
+      }
+      else if (drag.type === 'ctl') {
+        const e = edge(drag.id); drag.moved = true; e.sketch = e.sketch || {};
+        if (drag.which === 'mid') e.sketch.mid = { x: Math.round(p.x), y: Math.round(p.y) };
+        else {
+          // the end follows the mouse round its own card; over another card, that card's side lights up instead
+          const own = drag.which === 'a' ? e.from : e.to, other = drag.which === 'a' ? e.to : e.from, over = cardAt(p, 0);
+          if (over && over.id !== own && over.id !== other) showFace(over.id, nearestSide(rectOf(over.id), p));
+          else { e.sketch[drag.which] = nearestSide(rectOf(own), p); showFace(own, e.sketch[drag.which]); }
+        }
+        drawBoardEdges();
+      }
+      else if (drag.type === 'marquee') { const x = Math.min(p.x, drag.start.x), y = Math.min(p.y, drag.start.y), w = Math.abs(p.x - drag.start.x), h = Math.abs(p.y - drag.start.y); Object.assign(drag.box.style, { display: 'block', left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); drag.rect = { x, y, w, h }; }
+    });
+    addEventListener('mouseup', ev => {
+      if (!drag) return; const d = drag; drag = null; boardEl().classList.remove('panning'); showFace(null);
+      // A single card lets go once it has been moved, so the next one can be grabbed straight away. A group stays selected.
+      if (d.type === 'move' && d.moved) { undoStack.push(d.before); redoStack = []; if (sel.nodes.size === 1 && !sel.edges.size) sel.nodes.clear(); refresh(); }
+      else if (d.type === 'connect') {
+        // Where the mouse was let go decides it, not what happened to be under it (a hint label, the pane's edge).
+        d.line.remove(); const p = toWorld(ev.clientX, ev.clientY), pane = boardEl().getBoundingClientRect();
+        const over = doc.nodes.find(n => { const r = rectOf(n.id); return p.x >= r.x - 8 && p.x <= r.x + r.w + 8 && p.y >= r.y - 8 && p.y <= r.y + r.h + 8; });
+        const far = Math.hypot(p.x - d.start.x, p.y - d.start.y) > 30 / bv.s;
+        if (over && over.id !== d.from) { const r = rectOf(over.id), near = nearestSide(r, p), edgeDist = Math.min(Math.abs(p.x - r.x), Math.abs(p.x - r.x - r.w), Math.abs(p.y - r.y), Math.abs(p.y - r.y - r.h)); connect(d.from, over.id, { a: d.side, b: edgeDist < 22 ? near : undefined }); }
+        else if (!over && far && ev.clientX >= pane.left && ev.clientX <= pane.right && ev.clientY >= pane.top && ev.clientY <= pane.bottom) addNode('step', p.x - CARD_W / 2, p.y - 30, d.from, d.side);   // dropping on empty space makes the next card
+      }
+      else if (d.type === 'ctl') {
+        if (!d.moved) return;
+        const e = edge(d.id), p = toWorld(ev.clientX, ev.clientY);
+        if (d.which !== 'mid') {   // an end let go over a different card moves the arrow to that card
+          const over = doc.nodes.find(n => { const r = rectOf(n.id); return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; });
+          const key = d.which === 'a' ? 'from' : 'to';
+          if (over && over.id !== e[key] && over.id !== e[d.which === 'a' ? 'to' : 'from']) { e[key] = over.id; e.sketch[d.which] = nearestSide(rectOf(over.id), p); delete e.route; }
+        }
+        undoStack.push(d.before); redoStack = []; refresh();
+      }
+      else if (d.type === 'marquee') {
+        d.box.style.display = 'none';
+        if (!d.rect || d.rect.w + d.rect.h < 6) { if (!d.additive) clearSelection(); return; }
+        if (!d.additive) { sel.nodes.clear(); sel.edges.clear(); }
+        doc.nodes.forEach(n => { const r = rectOf(n.id); if (r.x < d.rect.x + d.rect.w && r.x + r.w > d.rect.x && r.y < d.rect.y + d.rect.h && r.y + r.h > d.rect.y) sel.nodes.add(n.id); });
+        drawBoard(); drawSwimlane(); drawInspector();
+      }
+    });
+  }
+
+  // Right-click menu on the board.
+  function openMenu(ev) {
+    const card = ev.target.closest('.card'), wire = ev.target.closest('.wire'), p = toWorld(ev.clientX, ev.clientY), menu = $('#menu');
+    if (card && !sel.nodes.has(card.dataset.id)) select('nodes', card.dataset.id);
+    if (wire && !sel.edges.has(wire.dataset.edge)) select('edges', wire.dataset.edge);
+    const many = card && sel.nodes.size > 1;
+    const items = many ? doc.phases.map(p => ['Put these ' + sel.nodes.size + ' in: ' + p.title, () => assignPhase(p.id)]).concat([['Put these in a new phase\u2026', () => assignPhase('+')], ['Duplicate', duplicateSelected], ['Delete', removeSelected]])
+      : card ? [['Edit text', () => editCardText(card.dataset.id)], ['Change owner', () => editCardOwner(card.dataset.id)], ['Loop back to itself', () => { const id = card.dataset.id; if (!doc.edges.some(e => e.from === id && e.to === id)) change(() => { doc.edges.push({ id: newId('e'), from: id, to: id }); }); }], ['Duplicate', duplicateSelected], ['Start a new phase here', () => startPhaseAt(card.dataset.id)], ['Delete', removeSelected]]
+      : wire ? [['Reverse direction', () => reverseEdge(wire.dataset.edge)], ['Delete', removeSelected]]
+      : [['New step here', () => addNode('step', p.x, p.y)], ['New decision here', () => addNode('decision', p.x, p.y)], ['Select all', selectAll], ['Fit board', fitBoard]];
+    menu.innerHTML = items.map((item, i) => `<button type="button" data-i="${i}">${esc(item[0])}</button>`).join('');
+    menu.style.left = ev.clientX + 'px'; menu.style.top = ev.clientY + 'px'; menu.hidden = false;
+    menu.onclick = e => { const b = e.target.closest('button'); if (!b) return; closeMenu(); items[+b.dataset.i][1](); };
+  }
+  function closeMenu() { $('#menu').hidden = true; }
+  function selectAll() { doc.nodes.forEach(n => sel.nodes.add(n.id)); drawBoard(); drawSwimlane(); drawInspector(); }
+  function reverseEdge(id) { change(() => { const e = edge(id); [e.from, e.to] = [e.to, e.from]; delete e.route; if (e.sketch) { [e.sketch.a, e.sketch.b] = [e.sketch.b, e.sketch.a]; for (const k in e.sketch) if (!e.sketch[k]) delete e.sketch[k]; } }); }
+  function startPhaseAt(id) {
+    change(() => {
+      const n = node(id), at = laid(id), index = L.allPhases.findIndex(p => p.id === at.inPhase), next = L.allPhases[index + 1];
+      if (n.phase) { n.phase = null; return; }
+      if (next && !doc.nodes.some(m => m.phase === next.id)) { n.phase = next.id; return; }
+      let k = doc.phases.length + 1; while (doc.phases.some(p => p.id === 'p' + k)) k++;
+      const fresh = { id: 'p' + k, title: 'Phase ' + (index + 2), subtitle: '', color: Engine.PHASE_COLORS[(index + 1) % Engine.PHASE_COLORS.length] };
+      doc.phases.splice(index + 1, 0, fresh); n.phase = fresh.id;
+    });
+  }
+
+  // ------------------------------------------------------------------ swimlane pane
+  function applySwimView() {
+    $('#stage').style.transform = `translate(${sv.x}px,${sv.y}px) scale(${sv.s})`;
+    // grips keep the same size on screen however far the swimlane is zoomed out
+    const k = Math.min(6, 1 / Math.max(0.05, sv.s)); document.querySelectorAll('#stage .seg-grip').forEach(g => g.setAttribute('transform', `translate(${g.dataset.cx} ${g.dataset.cy}) scale(${k})`));
+  }
+  // Sliding one piece of the selected line in the swimlane. The piece moves square to itself only.
+  let nudge = null, nudgeJustEnded = false;
+  function startNudge(info, ev) {
+    const e = edge(info.id); if (!e || ev.button !== 0) return;
+    const old = e.route && e.route.nudge, keep = old && old.n === info.n ? Object.assign({}, old.s) : {};
+    nudge = { id: info.id, seg: info.seg, axis: info.axis, n: info.n, keep, base: +keep[info.seg] || 0, from: info.axis ? ev.clientY : ev.clientX, before: JSON.stringify(doc), moved: false };
+  }
+  function moveNudge(ev) {
+    const d = Math.round(((nudge.axis ? ev.clientY : ev.clientX) - nudge.from) / sv.s); if (!nudge.moved && Math.abs(d) < 1) return;
+    nudge.moved = true; const e = edge(nudge.id), s = Object.assign({}, nudge.keep); s[nudge.seg] = nudge.base + d;
+    e.route = Object.assign({}, e.route, { nudge: { n: nudge.n, s } }); recompute(); drawSwimlane();
+  }
+  function endNudge() {
+    const d = nudge; nudge = null; nudgeJustEnded = true; setTimeout(() => { nudgeJustEnded = false; }, 0); if (!d.moved) return;
+    // keep what was actually drawn (an end stops at the corner of its box), and drop pieces left where they were
+    const e = edge(d.id), drawn = built && built.edges.find(x => x.id === d.id), s = {};
+    Object.keys(e.route.nudge.s).forEach(i => { const v = drawn && drawn.nudged && drawn.nudged[i] !== undefined ? drawn.nudged[i] : e.route.nudge.s[i]; if (v) s[i] = v; });
+    if (Object.keys(s).length) e.route.nudge = { n: d.n, s }; else { delete e.route.nudge; if (!Object.keys(e.route).length) delete e.route; }
+    undoStack.push(d.before); redoStack = []; refresh();
+  }
+  function fitSwim() { const r = $('#swim').getBoundingClientRect(); if (!built || !r.width) return; sv.s = Math.min(r.width / built.w, r.height / built.h); sv.x = (r.width - built.w * sv.s) / 2; sv.y = (r.height - built.h * sv.s) / 2; sv.fitted = true; applySwimView(); }
+  function drawSwimlane() {
+    if (!L) return;
+    built = Render.build(L, { mode: 'screen', fs: ui.fs, selNodes: sel.nodes, selEdges: sel.edges,
+      onNode: (id, ev) => select('nodes', id, ev.shiftKey || ev.ctrlKey), onEdge: (id, ev) => select('edges', id, ev.shiftKey || ev.ctrlKey),
+      onLane: (i, j) => change(() => { const o = doc.lanes; [o[i], o[j]] = [o[j], o[i]]; }), onSeg: startNudge });
+    const stage = $('#stage'); stage.innerHTML = ''; stage.appendChild(built.svg);
+    window.__warns = built.warns; window.__built = built;
+    if (!sv.fitted) fitSwim(); else applySwimView();
+    showCounts();
+  }
+  function swimEvents() {
+    const vp = $('#swim'); let pan = null, moved = false;
+    vp.addEventListener('wheel', ev => { ev.preventDefault(); const r = vp.getBoundingClientRect(), f = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = Math.max(.05, Math.min(4, sv.s * f)), mx = ev.clientX - r.left, my = ev.clientY - r.top; sv.x = mx - (mx - sv.x) * ns / sv.s; sv.y = my - (my - sv.y) * ns / sv.s; sv.s = ns; applySwimView(); }, { passive: false });
+    vp.addEventListener('mousedown', ev => { pan = [ev.clientX - sv.x, ev.clientY - sv.y, ev.clientX, ev.clientY]; moved = false; vp.classList.add('panning'); });
+    addEventListener('mousemove', ev => { if (nudge) { moveNudge(ev); return; } if (!pan) return; if (Math.abs(ev.clientX - pan[2]) + Math.abs(ev.clientY - pan[3]) > 4) moved = true; sv.x = ev.clientX - pan[0]; sv.y = ev.clientY - pan[1]; applySwimView(); });
+    addEventListener('mouseup', () => { if (nudge) endNudge(); if (pan) { pan = null; vp.classList.remove('panning'); } });
+    vp.addEventListener('click', () => { if (!moved && !nudgeJustEnded) clearSelection(); });
+    vp.addEventListener('dblclick', fitSwim);
+  }
+
+  // ------------------------------------------------------------------ inspector
+  const field = (label, control) => `<label class="f"><span>${label}</span>${control}</label>`;
+  const options = (list, value) => list.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(t)}</option>`).join('');
+  const SIDES = [['', 'Auto'], ['L', 'Left'], ['R', 'Right'], ['T', 'Top'], ['B', 'Bottom']];
+  function drawInspector() {
+    const el = $('#inspector'), n = sel.nodes.size === 1 && !sel.edges.size ? node([...sel.nodes][0]) : null, e = sel.edges.size === 1 && !sel.nodes.size ? edge([...sel.edges][0]) : null;
+    let html = '';
+    if (n) {
+      const at = laid(n.id), st = n.style || {}, box = built && built.P[n.id], pinned = !!(n.layout && n.layout.pinned);
+      html = `<h3>${n.type === 'decision' ? 'Decision ' + esc(at.letter) : 'Step ' + at.number}</h3>
+        ${field('Type', `<select id="i_type">${options([['step', 'Step'], ['decision', 'Decision (diamond)']], n.type)}</select>`)}
+        ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
+        <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
+        ${field('Phase', `<select id="i_phase">${options([['', 'Continues the phase before it']].concat(doc.phases.map(p => [p.id, 'Starts: ' + p.title])).concat([['+', 'Starts a new phase…']]), n.phase || '')}</select>`)}
+        <label class="f col"><span>Note (shown above the box)</span><textarea id="i_note" rows="2">${esc(n.note || '')}</textarea></label>
+        ${field('Board position', `<span class="xy">X <input type="number" id="i_x" step="10" value="${n.sketch.x}"> Y <input type="number" id="i_y" step="10" value="${n.sketch.y}"></span>`)}
+        <p class="muted">Measured from the cross in the middle of the board to the box's top-left corner. Right and down are positive.</p>
+        <h4>Box in the swimlane</h4>
+        ${field('Width', `<span><input type="range" id="i_w" min="120" max="560" step="5" value="${Math.round(box ? box.w : 176)}"> <b id="i_wv">${st.w ? Math.round(st.w) : 'auto'}</b></span>`)}
+        ${field('Height', `<span><input type="checkbox" id="i_hauto"${st.h ? '' : ' checked'}> auto <input type="range" id="i_h" min="40" max="230" step="5" value="${Math.round(box ? box.h : 64)}"${st.h ? '' : ' disabled'}></span>`)}
+        ${field('Keep its place', `<span><input type="checkbox" id="i_pin"${pinned ? ' checked' : ''}> pinned</span>`)}
+        ${field('Column', `<input type="number" id="i_col" min="1" max="200" value="${at.layout.col + 1}"${pinned ? '' : ' disabled'}>`)}
+        ${field('Row half', `<select id="i_slot"${pinned ? '' : ' disabled'}>${options([[0, 'Upper'], [1, 'Lower']], at.layout.slot)}</select>`)}
+        <div class="row"><button type="button" id="i_reset">Reset box size</button><button type="button" id="i_dup">Duplicate</button><button type="button" id="i_del" class="danger">Delete</button></div>`;
+    } else if (e) {
+      const le = laidEdge(e.id), st = e.style || {}, rt = e.route || {}, a = laid(e.from), b = laid(e.to), name = x => x.type === 'decision' ? x.letter : x.number;
+      const color = st.color || (le.k ? Render.KC[le.k] : Render.OTHER);
+      html = `<h3>Arrow ${esc(name(a))} → ${esc(name(b))}</h3>
+        <label class="f col"><span>Label</span><input type="text" id="i_label" value="${esc(e.label || '')}" placeholder="Yes, No, or a few words"></label>
+        ${field('Kind', `<select id="i_kind">${options([['', 'Auto (' + (le.k || 'plain') + ')'], ['yes', 'Yes (green)'], ['no', 'No (red)'], ['loop', 'Loop (yellow)'], ['plain', 'Plain (grey)']], e.kind || '')}</select>`)}
+        ${field('Ideal path glow', `<select id="i_ideal">${options([['', 'Auto (' + (le.isIdeal ? 'on' : 'off') + ')'], ['1', 'On'], ['0', 'Off']], e.ideal === undefined ? '' : (e.ideal ? '1' : '0'))}</select>`)}
+        <h4>Arrow on the board</h4>
+        ${field('Leaves from', `<select id="i_ba">${options(SIDES, (e.sketch || {}).a || '')}</select>`)}
+        ${field('Arrives at', `<select id="i_bb">${options(SIDES, (e.sketch || {}).b || '')}</select>`)}
+        <p class="muted">Or drag the arrow's end dots. Drag its middle dot to bend it; double-click that dot to straighten.</p>
+        <h4>Line in the swimlane</h4>
+        ${field('Hide this line', `<input type="checkbox" id="i_hide"${st.hidden ? ' checked' : ''}>`)}
+        ${field('Color', `<span><input type="color" id="i_color" value="${esc(color)}">${[['Yes', Render.KC.yes], ['No', Render.KC.no], ['Loop', Render.KC.loop], ['Grey', Render.OTHER], ['Dark', '#1f2933']].map(([t, c]) => `<i class="sw" title="${t}" data-c="${c}" style="background:${c}"></i>`).join('')}</span>`)}
+        ${field('Pattern', `<select id="i_dash">${options(Object.keys(Render.DASH).map(k => [k, k]), st.dash || 'solid')}</select>`)}
+        ${field('Thickness', `<select id="i_width">${options([[1.6, 'Thin'], [2.8, 'Normal'], [3.4, 'Bold'], [4.6, 'Extra bold']], st.width || 2.8)}</select>`)}
+        ${field('Leaves from', `<select id="i_exit">${options(SIDES, rt.exit || '')}</select>`)}
+        ${field('Arrives at', `<select id="i_enter">${options(SIDES, rt.enter || '')}</select>`)}
+        ${field('Sideways swing', `<input type="number" id="i_swing" step="10" value="${rt.swing || 0}" title="For a line that leaves and arrives on the same side: how far it steps sideways first">`)}
+        <p class="muted">In the swimlane, drag a grip on the line to slide that piece. The first and last grips move where the line leaves and arrives; the others set how far out it runs. Lines always stay in right angles.</p>
+        ${rt.nudge ? '<div class="row"><button type="button" id="i_unnudge">Put the line back where it was</button></div>' : ''}
+        <div class="row"><button type="button" id="i_ereset">Reset this line</button><button type="button" id="i_rev">Reverse</button><button type="button" id="i_del" class="danger">Delete</button></div>`;
+    } else if (sel.nodes.size + sel.edges.size > 1) {
+      html = `<h3>${sel.nodes.size + sel.edges.size} things selected</h3><p class="muted">Drag any selected card to move them together.</p>
+        ${sel.nodes.size ? field('Owner for all', `<select id="i_lanes">${options([['', 'Choose…']].concat(doc.lanes.map(l => [l.id, l.name])), '')}</select>`) : ''}
+        ${sel.nodes.size ? field('Phase for all', `<select id="i_phases">${options([['', 'Choose\u2026']].concat(doc.phases.map(p => [p.id, p.title])).concat([['+', 'A new phase\u2026'], ['-', 'No phase of their own']]), '')}</select>`) : ''}
+        ${sel.nodes.size ? `<p class="muted">${esc(phaseSummary())}</p>` : ''}
+        <div class="row"><button type="button" id="i_dup">Duplicate</button><button type="button" id="i_del" class="danger">Delete</button></div>`;
+    } else html = mapPanel();
+    el.innerHTML = html;
+    wireInspector(n, e);
+  }
+
+  function mapPanel() {
+    const warns = (built && built.warns || []).concat(L.warnings || []), hidden = doc.edges.filter(e => e.style && e.style.hidden), pinned = doc.nodes.filter(n => n.layout && n.layout.pinned).length;
+    const name = id => { const x = laid(id); return x.type === 'decision' ? x.letter : x.number; };
+    return `<h3>Map</h3>
+      <label class="f col"><span>Title</span><input type="text" id="m_title" value="${esc(doc.title)}"></label>
+      <h4>Lanes (owners)</h4>
+      <div class="list">${doc.lanes.map((l, i) => `<div class="li" data-i="${i}"><input type="color" class="l_color" value="${esc(l.color)}" title="Lane colour"><input type="text" class="l_name" value="${esc(l.name)}"><button type="button" class="l_up" title="Move up"${i ? '' : ' disabled'}>▲</button><button type="button" class="l_down" title="Move down"${i < doc.lanes.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="l_del" title="${doc.nodes.some(n => n.lane === l.id) ? 'In use' : 'Remove'}"${doc.nodes.some(n => n.lane === l.id) ? ' disabled' : ''}>×</button></div>`).join('')}</div>
+      <div class="row"><button type="button" id="m_addlane">Add a lane</button><button type="button" id="m_owners">Set up owners</button></div>
+      <h4>Phases</h4>
+      <div class="list">${doc.phases.map((p, i) => `<div class="pi" data-i="${i}"><div class="li"><input type="color" class="p_color" value="${esc(p.color)}"><input type="text" class="p_title" value="${esc(p.title)}" placeholder="Title"><button type="button" class="p_del" title="Remove this phase"${doc.phases.length > 1 ? '' : ' disabled'}>×</button></div><input type="text" class="p_sub" value="${esc(p.subtitle)}" placeholder="Subtitle"></div>`).join('')}</div>
+      <p class="muted">To start a phase, right-click a card and choose "Start a new phase here".</p>
+      <h4>Swimlane</h4>
+      ${field('Font size', `<span><input type="range" id="m_fs" min="70" max="140" step="5" value="${Math.round(ui.fs * 100)}"> <b id="m_fsv">${Math.round(ui.fs * 100)}%</b></span>`)}
+      <p class="muted">${pinned ? `${pinned} of ${doc.nodes.length} boxes are pinned to a column.` : 'Boxes are arranged automatically.'}</p>
+      <div class="row"><button type="button" id="m_auto"${pinned ? '' : ' disabled'}>Arrange automatically</button><button type="button" id="m_pinall">Pin everything where it is</button></div>
+      <div class="row"><button type="button" id="m_tidy">Tidy the board to match</button></div>
+      ${hidden.length ? `<h4>Hidden lines</h4>${hidden.map(e => `<div class="row"><button type="button" class="m_show" data-id="${esc(e.id)}">Show ${esc(name(e.from))} → ${esc(name(e.to))}</button></div>`).join('')}` : ''}
+      ${warns.length ? `<h4>To check</h4><ul class="warns">${warns.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}`;
+  }
+
+  function wireInspector(n, e) {
+    const g = id => document.getElementById(id), on = (id, ev, fn) => { const x = g(id); if (x) x.addEventListener(ev, fn); };
+    const el = $('#inspector');
+    el.onmousedown = ev => ev.stopPropagation(); el.onkeydown = ev => ev.stopPropagation();
+    on('i_del', 'click', removeSelected); on('i_dup', 'click', duplicateSelected);
+    if (n) {
+      const id = n.id, style = patch => change(() => { const x = node(id); x.style = Object.assign({}, x.style, patch); for (const k in x.style) if (x.style[k] == null) delete x.style[k]; if (!Object.keys(x.style).length) delete x.style; }, { keepInspector: true });
+      on('i_type', 'change', ev => change(() => { node(id).type = ev.target.value; }));
+      on('i_lane', 'change', ev => { let v = ev.target.value; if (v === '+') { v = addLanePrompt(); if (!v) { drawInspector(); return; } } change(() => { node(id).lane = v; }); });
+      on('i_text', 'change', ev => change(() => { node(id).text = ev.target.value.replace(/\s+/g, ' ').trim(); }));
+      on('i_note', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) node(id).note = v; else delete node(id).note; }));
+      ['x', 'y'].forEach(k => on('i_' + k, 'change', ev => { const v = Math.round(+ev.target.value); if (isFinite(v)) change(() => { node(id).sketch[k] = v; }); }));
+      on('i_phase', 'change', ev => { const v = ev.target.value; if (v === '+') { startPhaseAt(id); return; } change(() => { node(id).phase = v || null; }); });
+      on('i_w', 'input', ev => { g('i_wv').textContent = ev.target.value; }); on('i_w', 'change', ev => style({ w: +ev.target.value }));
+      on('i_hauto', 'change', ev => { style({ h: ev.target.checked ? null : +g('i_h').value }); drawInspector(); });
+      on('i_h', 'change', ev => style({ h: +ev.target.value }));
+      on('i_reset', 'click', () => change(() => { delete node(id).style; }));
+      const place = () => change(() => { const x = node(id); if (g('i_pin').checked) x.layout = { col: Math.max(0, (+g('i_col').value || 1) - 1), slot: +g('i_slot').value ? 1 : 0, pinned: true }; else delete x.layout; });
+      on('i_pin', 'change', place); on('i_col', 'change', place); on('i_slot', 'change', place);
+    }
+    if (e) {
+      const id = e.id, set = (key, patch) => change(() => { const x = edge(id); x[key] = Object.assign({}, x[key], patch); for (const k in x[key]) if (x[key][k] == null || x[key][k] === '' || x[key][k] === false) delete x[key][k]; if (!Object.keys(x[key]).length) delete x[key]; });
+      on('i_label', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) edge(id).label = v; else delete edge(id).label; }));
+      on('i_kind', 'change', ev => change(() => { if (ev.target.value) edge(id).kind = ev.target.value; else delete edge(id).kind; }));
+      on('i_ideal', 'change', ev => change(() => { if (ev.target.value === '') delete edge(id).ideal; else edge(id).ideal = ev.target.value === '1'; }));
+      on('i_hide', 'change', ev => set('style', { hidden: ev.target.checked }));
+      on('i_color', 'change', ev => set('style', { color: ev.target.value }));
+      el.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => set('style', { color: sw.dataset.c })));
+      on('i_dash', 'change', ev => set('style', { dash: ev.target.value === 'solid' ? null : ev.target.value }));
+      on('i_width', 'change', ev => set('style', { width: +ev.target.value === 2.8 ? null : +ev.target.value }));
+      on('i_exit', 'change', ev => set('route', { exit: ev.target.value, nudge: null })); on('i_enter', 'change', ev => set('route', { enter: ev.target.value, nudge: null }));
+      on('i_swing', 'change', ev => set('route', { swing: +ev.target.value || null, nudge: null }));
+      on('i_unnudge', 'click', () => set('route', { nudge: null }));
+      on('i_ereset', 'click', () => change(() => { delete edge(id).style; delete edge(id).route; delete edge(id).sketch; }));
+      on('i_rev', 'click', () => reverseEdge(id));
+      on('i_ba', 'change', ev => set('sketch', { a: ev.target.value })); on('i_bb', 'change', ev => set('sketch', { b: ev.target.value }));
+    }
+    on('i_lanes', 'change', ev => { const v = ev.target.value; if (v) change(() => { sel.nodes.forEach(id => { node(id).lane = v; }); }); });
+    on('i_phases', 'change', ev => assignPhase(ev.target.value));
+    // Map panel
+    on('m_title', 'change', ev => change(() => { doc.title = ev.target.value.trim() || 'Untitled process'; }));
+    on('m_addlane', 'click', () => { const id = addLanePrompt(); if (id) refresh(); });
+    on('m_owners', 'click', openOwners);
+    el.querySelectorAll('.li[data-i]').forEach(row => {
+      const i = +row.dataset.i, q = s => row.querySelector(s);
+      if (q('.l_name')) q('.l_name').addEventListener('change', ev => change(() => { doc.lanes[i].name = ev.target.value.trim() || doc.lanes[i].name; }));
+      if (q('.l_color')) q('.l_color').addEventListener('change', ev => change(() => { doc.lanes[i].color = ev.target.value; doc.lanes[i].fill = tint(ev.target.value); }));
+      if (q('.l_up')) q('.l_up').addEventListener('click', () => change(() => { const o = doc.lanes; [o[i - 1], o[i]] = [o[i], o[i - 1]]; }));
+      if (q('.l_down')) q('.l_down').addEventListener('click', () => change(() => { const o = doc.lanes; [o[i + 1], o[i]] = [o[i], o[i + 1]]; }));
+      if (q('.l_del')) q('.l_del').addEventListener('click', () => change(() => { doc.lanes.splice(i, 1); }));
+    });
+    el.querySelectorAll('.pi').forEach(row => {
+      const i = +row.dataset.i, q = s => row.querySelector(s);
+      q('.p_title').addEventListener('change', ev => change(() => { doc.phases[i].title = ev.target.value; }));
+      q('.p_sub').addEventListener('change', ev => change(() => { doc.phases[i].subtitle = ev.target.value; }));
+      q('.p_color').addEventListener('change', ev => change(() => { doc.phases[i].color = ev.target.value; }));
+      q('.p_del').addEventListener('click', () => change(() => { const gone = doc.phases.splice(i, 1)[0]; doc.nodes.forEach(x => { if (x.phase === gone.id) x.phase = null; }); }));
+    });
+    on('m_fs', 'input', ev => { ui.fs = ev.target.value / 100; g('m_fsv').textContent = ev.target.value + '%'; save(); drawSwimlane(); });
+    on('m_auto', 'click', () => { if (confirm('Let the tool arrange every box? Columns and rows you set by hand are forgotten. Arrow sides, colours and box sizes are kept.')) change(() => { doc.nodes.forEach(x => { delete x.layout; }); delete doc.layoutHints; sv.fitted = false; }); });
+    on('m_pinall', 'click', () => change(() => { doc.nodes.forEach(x => { const at = laid(x.id); x.layout = { col: at.layout.col, slot: at.layout.slot, pinned: true }; }); }));
+    on('m_tidy', 'click', () => { change(() => { const li = {}; doc.lanes.forEach((l, i) => { li[l.id] = i; }); doc.nodes.forEach(x => { const at = laid(x.id); x.sketch = { x: 60 + at.layout.col * 270, y: 60 + li[x.lane] * 300 + at.layout.slot * 140 }; }); Engine.centerSketch(doc); }); fitBoard(); });
+    el.querySelectorAll('.m_show').forEach(b => b.addEventListener('click', () => change(() => { const x = edge(b.dataset.id); delete x.style.hidden; if (!Object.keys(x.style).length) delete x.style; })));
+  }
+  function openOwners() {
+    const ov = $('#ownersOv'), list = $('#ownersList'); ov.hidden = false;
+    const draw = () => {
+      list.innerHTML = doc.lanes.map((l, i) => { const used = doc.nodes.filter(n => n.lane === l.id).length; return `<div class="owner-row" data-i="${i}"><input type="color" class="o_color" value="${esc(l.color)}" title="Colour"><input type="text" class="o_name" value="${esc(l.name)}"><span class="muted">${used ? used + ' step' + (used === 1 ? '' : 's') : 'not used yet'}</span><button type="button" class="o_up" title="Move up"${i ? '' : ' disabled'}>\u25b2</button><button type="button" class="o_down" title="Move down"${i < doc.lanes.length - 1 ? '' : ' disabled'}>\u25bc</button><button type="button" class="o_del" title="${used ? 'In use: change those steps first' : 'Remove'}"${used || doc.lanes.length < 2 ? ' disabled' : ''}>\u00d7</button></div>`; }).join('');
+      list.querySelectorAll('.owner-row').forEach(row => {
+        const i = +row.dataset.i, q = c => row.querySelector(c), act = fn => { change(fn); draw(); };
+        q('.o_name').addEventListener('change', ev => act(() => { doc.lanes[i].name = ev.target.value.trim() || doc.lanes[i].name; }));
+        q('.o_color').addEventListener('change', ev => act(() => { doc.lanes[i].color = ev.target.value; doc.lanes[i].fill = tint(ev.target.value); }));
+        q('.o_up').addEventListener('click', () => act(() => { const o = doc.lanes; [o[i - 1], o[i]] = [o[i], o[i - 1]]; }));
+        q('.o_down').addEventListener('click', () => act(() => { const o = doc.lanes; [o[i + 1], o[i]] = [o[i], o[i + 1]]; }));
+        q('.o_del').addEventListener('click', () => act(() => { doc.lanes.splice(i, 1); }));
+      });
+    };
+    draw();
+    const add = () => {
+      const names = $('#ownersNew').value.split(/[\n,;]+/).map(t => t.trim()).filter(Boolean); if (!names.length) return;
+      change(() => { names.forEach(name => { if (doc.lanes.some(l => l.name.toLowerCase() === name.toLowerCase())) return; let id = name; while (doc.lanes.some(l => l.id === id)) id += ' '; const c = Engine.laneColors(name, doc.lanes.length); doc.lanes.push({ id, name, color: c[0], fill: c[1] }); }); });
+      $('#ownersNew').value = ''; draw(); $('#ownersNew').focus();
+    };
+    $('#ownersAdd').onclick = add;
+    $('#ownersNew').onkeydown = ev => { ev.stopPropagation(); if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); add(); } };
+    $('#ownersClose').onclick = () => { ov.hidden = true; };
+    ov.onkeydown = ev => ev.stopPropagation(); ov.onmousedown = ev => ev.stopPropagation();
+    $('#ownersNew').focus();
+  }
+  // Puts every selected card in one phase. A phase covers a stretch of columns, so cards between or after the
+  // chosen ones follow along until another phase starts.
+  function assignPhase(value) {
+    if (!value || !sel.nodes.size) return;
+    let id = value;
+    if (value === '+') {
+      const title = (prompt('Name of the new phase:', 'Phase ' + (doc.phases.length + 1)) || '').trim(); if (!title) { drawInspector(); return; }
+      let k = doc.phases.length + 1; while (doc.phases.some(p => p.id === 'p' + k)) k++; id = 'p' + k;
+      undoStack.push(JSON.stringify(doc)); doc.phases.push({ id, title, subtitle: '', color: Engine.PHASE_COLORS[doc.phases.length % Engine.PHASE_COLORS.length] });
+    }
+    change(() => { sel.nodes.forEach(nid => { node(nid).phase = value === '-' ? null : id; }); });
+    status(value === '-' ? 'Those cards now follow the phase before them.' : `${sel.nodes.size} card${sel.nodes.size === 1 ? '' : 's'} put in "${doc.phases.find(p => p.id === id).title}".`);
+  }
+  function phaseSummary() {
+    const names = {}; L.allPhases.forEach(p => { names[p.id] = p.title; });
+    const found = [...new Set([...sel.nodes].map(id => names[laid(id).inPhase]))];
+    return found.length === 1 ? `They are all in "${found[0]}" now.` : `They are spread over ${found.length} phases now: ${found.join(', ')}.`;
+  }
+  function addLanePrompt() {
+    const name = (prompt('Name of the new owner (lane):') || '').trim(); if (!name) return '';
+    const existing = doc.lanes.find(l => l.name.toLowerCase() === name.toLowerCase()); if (existing) return existing.id;
+    const c = Engine.laneColors(name, doc.lanes.length); undoStack.push(JSON.stringify(doc)); doc.lanes.push({ id: name, name, color: c[0], fill: c[1] }); return name;
+  }
+  // A pale version of a lane colour for the box fill.
+  function tint(hex) { const n = parseInt(hex.slice(1), 16); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (255 - v) * 0.86).toString(16).padStart(2, '0')).join(''); }
+
+  // ------------------------------------------------------------------ files
+  function download(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+  // The map as it is written to a file. On top of the working document it records where
+  // everything sits on the board, measured from the origin in the middle: each box's size and centre, each
+  // arrow's two attach points and its middle point, and the box that holds the whole drawing.
+  function mapJson() {
+    const out = JSON.parse(JSON.stringify(doc)), r1 = v => Math.round(v * 10) / 10, pt = p => ({ x: r1(p[0]), y: r1(p[1]) });
+    const geo = L ? boardGeometry() : {};
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    out.nodes.forEach(n => {
+      const r = rectOf(n.id);
+      n.sketch = { x: r.x, y: r.y, w: r.w, h: r.h, cx: r1(r.cx), cy: r1(r.cy) };
+      x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.w); y1 = Math.max(y1, r.y + r.h);
+    });
+    out.edges.forEach(e => {
+      const g = geo[e.id]; if (!g || !g.pa || !g.pb) return;
+      e.board = { from: Object.assign({ side: g.sa }, pt(g.pa)), to: Object.assign({ side: g.sb }, pt(g.pb)), mid: pt(curveOf(g).mid) };
+    });
+    out.board = Object.assign({}, out.board, { bounds: isFinite(x0) ? { x0, y0, x1, y1 } : { x0: 0, y0: 0, x1: 0, y1: 0 } });
+    return JSON.stringify(out, null, 2);
+  }
+  function saveFile() { download(fileName(), mapJson()); status('Saved ' + fileName() + ' to your downloads. Open it again with Open file.'); }
+  function openFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => { const problem = loadJson(reader.result, file.name); if (problem) status(problem, true); };
+    reader.readAsText(file);
+  }
+  // Loads a map from JSON text: one exported here, or an Arcweave project. Returns what went wrong, or ''.
+  function loadJson(text, name) {
+    let json; try { json = JSON.parse(text); } catch (error) { return 'That is not valid JSON. If Arcweave gave you a zip, unzip it and use project_settings.json.'; }
+    if (json && json.elements && json.connections) { openArcweave(json); return ''; }
+    if (json && Array.isArray(json.nodes)) { setDoc(json, `Loaded "${json.title || name || 'map'}".`); return ''; }
+    return 'That is neither a Freestyle map nor an Arcweave project.';
+  }
+  const fileName = () => (doc.title || 'process').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.map.json';
+  function openJsonBox() {
+    const box = $('#jsonText'), msg = $('#jsonMsg'); box.value = mapJson(); msg.textContent = ''; msg.className = 'muted'; $('#jsonOv').hidden = false; box.focus(); box.select();
+    const say = (text, bad) => { msg.textContent = text; msg.className = bad ? 'bad' : 'muted'; };
+    $('#jsonCopy').onclick = async () => { try { await navigator.clipboard.writeText(box.value); say('Copied.'); } catch (error) { box.focus(); box.select(); say(document.execCommand('copy') ? 'Copied.' : 'Copying is blocked here: the text is selected, press Ctrl+C.'); } };
+    $('#jsonDownload').onclick = () => { download(fileName(), box.value); say('Downloaded.'); };
+    $('#jsonLoad').onclick = () => { const problem = loadJson(box.value, 'pasted map'); if (problem) say(problem, true); else $('#jsonOv').hidden = true; };
+    $('#jsonClose').onclick = () => { $('#jsonOv').hidden = true; };
+  }
+  // Opening a newer export of the Arcweave board this map came from keeps everything adjusted here.
+  function openArcweave(json) {
+    const fresh = Engine.importArcweave(json), mine = {}; doc.nodes.forEach(n => { mine[n.id] = n; });
+    const shared = fresh.nodes.filter(n => mine[n.id]).length;
+    if (doc.source !== 'arcweave' || shared < Math.max(1, fresh.nodes.length * 0.3)) { setDoc(fresh, `Imported ${fresh.nodes.length} cards and ${fresh.edges.length} arrows from Arcweave.` + (fresh.warnings.length ? ' ' + fresh.warnings.length + ' connection(s) were skipped.' : '')); return; }
+    const freshIds = new Set(fresh.nodes.map(n => n.id)), added = fresh.nodes.filter(n => !mine[n.id]), gone = doc.nodes.filter(n => !freshIds.has(n.id));
+    const changed = fresh.nodes.filter(n => mine[n.id] && (mine[n.id].text !== n.text || mine[n.id].lane !== n.lane));
+    if (!confirm(`This is a newer version of the Arcweave board this map came from.\n\n${added.length} new card(s), ${gone.length} no longer there, ${changed.length} with changed text or owner.\n\nOK: update this map and keep your phases, pins, arrow sides, colours and box sizes.\nCancel: leave this map as it is.`)) return;
+    const drop = gone.length && confirm(`${gone.length} card(s) are no longer in Arcweave. Remove them from this map too?\n\nOK: remove them. Cancel: keep them.`);
+    change(() => {
+      const oldEdges = {}; doc.edges.forEach(e => { oldEdges[e.id] = e; });
+      fresh.lanes.forEach(l => { if (!doc.lanes.some(x => x.id === l.id)) doc.lanes.push(l); });
+      const nodes = fresh.nodes.map(n => { const old = mine[n.id]; return old ? Object.assign({}, old, { text: n.text, lane: n.lane, type: old.type === n.type ? old.type : n.type, phase: old.phase || n.phase }) : n; });
+      if (!drop) gone.forEach(n => nodes.push(n));
+      const keep = new Set(nodes.map(n => n.id));
+      const edges = fresh.edges.map(e => { const old = oldEdges[e.id]; return old ? Object.assign({}, old, { from: e.from, to: e.to, label: e.label }) : e; });
+      doc.edges.forEach(e => { if (!edges.some(x => x.id === e.id) && keep.has(e.from) && keep.has(e.to) && !freshIds.has(e.from) && !freshIds.has(e.to)) edges.push(e); });
+      doc.nodes = nodes; doc.edges = edges.filter(e => keep.has(e.from) && keep.has(e.to)); doc = Engine.normalize(doc); doc.source = 'arcweave';
+    });
+    status(`Updated from Arcweave: ${added.length} new, ${drop ? gone.length + ' removed' : gone.length + ' kept'}, ${changed.length} changed.`);
+  }
+
+  // A read-through of the map before it is shared. "need" items are gaps; "check" items are only pointed out.
+  function saveChecks(name) {
+    const items = [], add = (ok, level, text, detail) => items.push({ level: ok ? 'ok' : level, text, detail: ok ? '' : detail });
+    const label = n => { const at = laid(n.id); return at.type === 'decision' ? 'decision ' + at.letter : 'step ' + at.number; };
+    const list = ns => ns.slice(0, 6).map(label).join(', ') + (ns.length > 6 ? ` and ${ns.length - 6} more` : '');
+    add(name && !/^(new process|untitled process)$/i.test(name), 'need', 'It has a process name', 'Type the name of the process above.');
+    add(doc.nodes.length > 0, 'need', 'It has at least one step', 'The board is empty.');
+    const blank = doc.nodes.filter(n => !n.text.trim() || /^(new step|question\?)$/i.test(n.text.trim()));
+    add(!blank.length, 'need', 'Every box says what happens', `Still to be written: ${list(blank)}.`);
+    const loose = doc.nodes.length > 1 ? doc.nodes.filter(n => !doc.edges.some(e => e.from === n.id || e.to === n.id)) : [];
+    add(!loose.length, 'check', 'Every box is connected', `Not joined to anything: ${list(loose)}.`);
+    const vague = doc.nodes.filter(n => n.type === 'decision' && (doc.edges.filter(e => e.from === n.id).length < 2 || doc.edges.some(e => e.from === n.id && !(e.label || '').trim())));
+    add(!vague.length, 'check', 'Every decision has labelled ways out', `Fewer than two exits, or an exit with no label: ${list(vague)}.`);
+    const unnamed = L.phases.filter(p => /^phase \d+$/i.test(p.title.trim()));
+    add(!unnamed.length || L.phases.length === 1, 'check', 'The phases are named', `Still called ${unnamed.map(p => p.title).join(', ')}. Name them in the Map panel.`);
+    const warns = (built && built.warns || []).concat(L.warnings || []);
+    add(!warns.length, 'check', 'Nothing overlaps in the swimlane', warns.slice(0, 3).join('. ') + (warns.length > 3 ? ` (and ${warns.length - 3} more)` : '') + '.');
+    return items;
+  }
+
+  // ------------------------------------------------------------------ views, keys, start
+  // With both views showing they sit side by side or stacked; the button offers the other arrangement.
+  const ICON_SIDE = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg>';
+  const ICON_STACK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M1.5 8h13"/></svg>';
+  function syncStack() {
+    document.body.dataset.stack = ui.stack ? '1' : '0';
+    const b = $('#bStack'); b.hidden = ui.view !== 'split'; b.innerHTML = ui.stack ? ICON_SIDE + 'Side by side' : ICON_STACK + 'Stacked';
+  }
+  function setView(v) {
+    ui.view = v; document.body.dataset.view = v; syncStack(); save();
+    document.querySelectorAll('#viewTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    // A timer, not an animation frame: a tab opened in the background gets no frames, and would stay blank.
+    sv.fitted = false; setTimeout(() => { if (v !== 'swim') fitBoard(); if (v !== 'board') drawSwimlane(); }, 30);
+  }
+  function keys() {
+    addEventListener('keydown', ev => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+      if (ev.code === 'Space' && !typing) { spaceDown = true; boardEl().classList.add('can-pan'); if (ev.target === document.body) ev.preventDefault(); }
+      if (typing) return;
+      const mod = ev.ctrlKey || ev.metaKey;
+      if (mod && ev.key.toLowerCase() === 'z') { ev.preventDefault(); if (ev.shiftKey) redo(); else undo(); }
+      else if (mod && ev.key.toLowerCase() === 'y') { ev.preventDefault(); redo(); }
+      else if (mod && ev.key.toLowerCase() === 'd') { ev.preventDefault(); duplicateSelected(); }
+      else if (mod && ev.key.toLowerCase() === 'a') { ev.preventDefault(); selectAll(); }
+      else if (mod && ev.key.toLowerCase() === 's') { ev.preventDefault(); saveFile(); }
+      else if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); removeSelected(); }
+      else if (ev.key === 'Escape') { closeMenu(); $('#jsonOv').hidden = true; $('#ownersOv').hidden = true; clearSelection(); }
+      else if (ev.key === 'Enter' && sel.nodes.size === 1) { ev.preventDefault(); editCardText([...sel.nodes][0]); }
+      else if (/^Arrow/.test(ev.key) && sel.nodes.size) { ev.preventDefault(); const step = ev.shiftKey ? 50 : 10, d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key]; change(() => sel.nodes.forEach(id => { const s = node(id).sketch; s.x += d[0]; s.y += d[1]; }), { keepInspector: true }); }
+    });
+    addEventListener('keyup', ev => { if (ev.code === 'Space') { spaceDown = false; boardEl().classList.remove('can-pan'); } });
+    addEventListener('mousedown', ev => { if (!ev.target.closest('#menu')) closeMenu(); });
+  }
+
+  function start() {
+    load();
+    const on = (id, fn) => $(id).addEventListener('click', fn);
+    on('#bStep', () => { const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode('step', p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30)); });
+    on('#bDecision', () => { const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode('decision', p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30)); });
+    on('#bUndo', undo); on('#bRedo', redo); on('#bFitBoard', fitBoard); on('#bFitSwim', fitSwim);
+    on('#bNew', () => { if (confirm('Start an empty map? The current one stays in Undo, and you can export it first.')) setDoc({ title: 'New process', lanes: [], phases: [], nodes: [], edges: [] }, 'Empty map. Double-click the board to add your first step.'); });
+    on('#bExample', () => { if (confirm('Load the coffee shop example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
+    on('#bSave', saveFile); on('#bOpen', () => $('#file').click()); on('#bJson', openJsonBox); on('#bOwners', openOwners);
+    $('#file').addEventListener('change', ev => { if (ev.target.files[0]) openFile(ev.target.files[0]); ev.target.value = ''; });
+    on('#bStack', () => { ui.stack = !ui.stack; setView(ui.view); });
+    on('#bHelp', () => { $('#help').hidden = false; }); on('#helpClose', () => { $('#help').hidden = true; });
+    document.querySelectorAll('#viewTabs button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+    boardEl().addEventListener('dragover', ev => ev.preventDefault());
+    boardEl().addEventListener('drop', ev => { ev.preventDefault(); if (ev.dataTransfer.files[0]) openFile(ev.dataTransfer.files[0]); });
+    boardEvents(); swimEvents(); keys();
+    Exporter.start({ get L() { return L; }, get ui() { return ui; }, save, status });
+    Pdf.start({ title: () => doc.title, fileName: () => fileName().replace(/\.map\.json$/, '.pdf'), status });
+    recompute(); document.body.dataset.view = ui.view; drawBoard(); setView(ui.view); drawInspector();
+    addEventListener('resize', () => { sv.fitted = false; drawSwimlane(); });
+  }
+
+  return { start, get doc() { return doc; }, get L() { return L; }, setDoc };
+})();
+window.FreestyleApp = App;
+
+    try { window.FreestyleApp.start(); }
+    catch (error) { var status = document.getElementById('status'); status.className = 'bad'; status.textContent = 'The app could not start: ' + error.message; }
+  </script>
+</body>
+</html>
