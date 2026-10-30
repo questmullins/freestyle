@@ -457,6 +457,7 @@
         <li><b>A question is a decision.</b> End the text with "?" or choose Decision; it becomes a diamond.</li>
         <li><b>Start labels with Yes or No.</b> Yes arrows are green and No arrows red. An arrow that goes back to an earlier step is a loop, in yellow.</li>
         <li><b>The ideal path</b> is the shortest way through over plain and Yes arrows. It gets the blue glow. You can force it on or off per arrow.</li>
+        <li><b>Loops:</b> the swimlane follows the board as you draw it. An arrow that runs back to the left is drawn as a loop. If a loop comes out the wrong way round, click a box and set Start or end to mark where the process begins or finishes.</li>
         <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or select them and press <b>+ Phase</b> to make a new phase of them. Change a box's phase under Phase in the side panel and the swimlane moves it into that phase. Name phases in the Map panel (click empty space to see it).</li>
         <li><b>Order in time</b> follows the arrows. Where two cards could go either way, the one further left on the board comes first.</li>
       </ul>
@@ -672,6 +673,7 @@ const Engine = (() => {
       n.lane = n.lane || (map.lanes[0] && map.lanes[0].id) || 'Unassigned';
       if (!map.lanes.some(l => l.id === n.lane)) { const c = laneColors(n.lane, map.lanes.length); map.lanes.push({ id: n.lane, name: n.lane, color: c[0], fill: c[1] }); }
       if (n.phase && !map.phases.some(p => p.id === n.phase)) n.phase = null;
+      if (n.flag !== 'start' && n.flag !== 'end') delete n.flag;
     });
     map.lanes.forEach((l, i) => { const c = laneColors(l.name || l.id, i); l.name = l.name || l.id; l.color = l.color || c[0]; l.fill = l.fill || c[1]; });
     if (!map.lanes.length) { const c = LANE_COLORS[0]; map.lanes.push({ id: 'Lane 1', name: 'Lane 1', color: c[0], fill: c[1] }); }
@@ -732,27 +734,36 @@ const Engine = (() => {
     nodes.forEach(n => { out[n.id] = []; inc[n.id] = []; });
     edges.forEach(e => { if (e.from !== e.to) { out[e.from].push(e); inc[e.to].push(e); } else e.selfLoop = true; });
 
-    // 1. Loop returns. Inside a cycle, the arrow that leads back to a step nearer the start is the return.
-    //    "Nearer the start" is counted in arrows from the first card, so it does not matter which way the
-    //    board happens to be drawn (Arcweave boards often run down the page, not across).
+    // 1. Loop returns. The swimlane follows the board as it is drawn: inside a cycle, the arrow that runs back
+    //    against the way the board reads (leftward on a board that runs across, upward on one that runs down the
+    //    page) is the return. A box flagged as the start or the end settles it outright: arrows into the start
+    //    and out of the end are the returns.
     const scc = sccOf(nodes, edges), sccCount = {};
     nodes.forEach(n => { sccCount[scc[n.id]] = (sccCount[scc[n.id]] || 0) + 1; });
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    nodes.forEach(n => { x0 = Math.min(x0, sx(n)); x1 = Math.max(x1, sx(n)); y0 = Math.min(y0, sy(n)); y1 = Math.max(y1, sy(n)); });
+    const across = !nodes.length || x1 - x0 >= y1 - y0;
+    const along = n => across ? sx(n) : sy(n), beside = n => across ? sy(n) : sx(n);
+    const SLACK = across ? 90 : 60;   // about half a box: a box drawn a little behind the one before it is not a loop back
     const dist = {};
     const reach = starts => {
       const queue = starts.filter(n => dist[n.id] === undefined);
       queue.forEach(n => { dist[n.id] = 0; });
       while (queue.length) { const n = queue.shift(); out[n.id].forEach(e => { if (dist[e.to] === undefined) { dist[e.to] = dist[n.id] + 1; queue.push(byId[e.to]); } }); }
     };
-    reach(nodes.filter(n => inc[n.id].length === 0).sort((a, b) => sx(a) - sx(b) || sy(a) - sy(b)));
-    // A loop with no way in (every box has an arrow into it) starts in the first lane the map lists, at its top card.
-    const laneAt = {}; (map.lanes || []).forEach((l, i) => { laneAt[l.id] = i; });
-    const laneOf = n => laneAt[n.lane] === undefined ? 1e9 : laneAt[n.lane];
-    nodes.slice().sort((a, b) => laneOf(a) - laneOf(b) || sy(a) - sy(b) || sx(a) - sx(b)).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    const boardOrder = (a, b) => along(a) - along(b) || beside(a) - beside(b);
+    reach(nodes.filter(n => n.flag === 'start').sort(boardOrder));
+    reach(nodes.filter(n => inc[n.id].length === 0).sort(boardOrder));
+    nodes.slice().sort(boardOrder).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    const flagged = {}; nodes.forEach(n => { if (n.flag) flagged[scc[n.id]] = true; });
     edges.forEach(e => {
       if (e.selfLoop) { e.back = false; return; }
       const a = byId[e.from], b = byId[e.to], pa = pin(a), pb = pin(b);
+      const cyc = scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1;
       if (pa && pb) e.back = pb.col <= pa.col;                       // both placed by hand: the columns decide
-      else e.back = scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1 && dist[b.id] < dist[a.id];
+      else if (!cyc) e.back = false;
+      else if (flagged[scc[e.from]]) e.back = b.flag === 'start' || a.flag === 'end';   // the flags alone decide this loop
+      else e.back = along(b) < along(a) - SLACK;
     });
 
     // 2. Columns: one more than the furthest-right box feeding this one. Pinned boxes stay where they are.
@@ -1834,7 +1845,7 @@ const App = (() => {
     if (!sel.nodes.size) return;
     change(() => {
       const copies = {};
-      [...sel.nodes].forEach(id => { const n = node(id), c = JSON.parse(JSON.stringify(n)); c.id = newId('n'); c.sketch = { x: n.sketch.x + 30, y: n.sketch.y + 30 }; delete c.layout; delete c.phase; copies[id] = c.id; doc.nodes.push(c); });
+      [...sel.nodes].forEach(id => { const n = node(id), c = JSON.parse(JSON.stringify(n)); c.id = newId('n'); c.sketch = { x: n.sketch.x + 30, y: n.sketch.y + 30 }; delete c.layout; delete c.phase; delete c.flag; copies[id] = c.id; doc.nodes.push(c); });
       doc.edges.filter(e => copies[e.from] && copies[e.to]).forEach(e => { const c = JSON.parse(JSON.stringify(e)); c.id = newId('e'); c.from = copies[e.from]; c.to = copies[e.to]; doc.edges.push(c); });
       sel.nodes.clear(); sel.edges.clear(); Object.values(copies).forEach(id => sel.nodes.add(id));
     });
@@ -1865,7 +1876,7 @@ const App = (() => {
       const ln = lane(n.lane), decision = n.type === 'decision', picked = sel.nodes.has(n.id);
       const flag = ui.flags && !VIEWER ? flags[n.id] : '';
       return `<div class="card ${decision ? 'decision' : 'step'}${picked ? ' sel' : ''}${flag ? ' flag-' + flag : ''}" data-id="${esc(n.id)}" style="left:${n.sketch.x}px;top:${n.sketch.y}px;width:${CARD_W}px;--lane:${esc(ln.color)};--tint:${esc(ln.fill)}">
-        <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}</div>
+        <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}${node(n.id).flag ? `<span class="kind phase" title="Marked as the ${node(n.id).flag} of the process">${node(n.id).flag === 'start' ? 'Start' : 'End'}</span>` : ''}</div>
         <div class="card-body">${esc(n.text) || '<i>Double-click to write</i>'}</div>
         ${safeLink(n.link) ? `<a class="card-link" href="${esc(safeLink(n.link))}" target="_blank" rel="noopener" title="Open the link: ${esc(safeLink(n.link))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-1 1M9.4 6.6a3 3 0 0 0-4.2 0L2.9 8.9a3 3 0 0 0 4.2 4.2l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>` : ''}
         ${n.time ? `<span class="key-time" title="How long this step takes">${esc(n.time)}</span>` : ''}
@@ -2465,6 +2476,7 @@ const App = (() => {
         ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
         <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
         ${field('Phase', `<select id="i_phase">${options([['', 'Same as the box before it']].concat(doc.phases.map(p => [p.id, p.title])).concat([['+', 'A new phase…']]), n.phase || '')}</select>`)}
+        ${field('Start or end', `<select id="i_flag">${options([['', 'Neither'], ['start', 'Start of the process'], ['end', 'End of the process']], n.flag || '')}</select>`)}
         <h4>Keys</h4>
         ${field('Time it takes', `<input type="text" id="i_time" value="${esc(n.time || '')}" placeholder="e.g. 2 days">`)}
         ${field('Cutoff time', `<span class="cutoff-row"><input type="text" id="i_cutoff" value="${esc(n.cutoff || '')}" placeholder="none"><button type="button" id="i_cutoffStd" title="The standard cutoff">3pm</button></span>`)}
@@ -2571,6 +2583,7 @@ const App = (() => {
       on('i_broken', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) node(id).broken = v; else delete node(id).broken; }));
       on('i_time', 'change', ev => { const v = ev.target.value.trim(); if (v && !Engine.parseTime(v)) { g('i_timeinfo').textContent = 'That doesn\u2019t read as a time. Try "1 hour", "2 days" or "4-5 weeks".'; return; } change(() => { if (v) node(id).time = v; else delete node(id).time; }); });
       ['x', 'y'].forEach(k => on('i_' + k, 'change', ev => { const v = Math.round(+ev.target.value); if (isFinite(v)) change(() => { node(id).sketch[k] = v; }); }));
+      on('i_flag', 'change', ev => change(() => { const x = node(id); if (ev.target.value) x.flag = ev.target.value; else delete x.flag; }));
       on('i_phase', 'change', ev => { const v = ev.target.value; if (v === '+') { startPhaseAt(id); return; } change(() => { node(id).phase = v || null; }); });
       on('i_w', 'input', ev => { g('i_wv').textContent = ev.target.value; }); on('i_w', 'change', ev => style({ w: +ev.target.value }));
       on('i_hauto', 'change', ev => { style({ h: ev.target.checked ? null : +g('i_h').value }); drawInspector(); });
