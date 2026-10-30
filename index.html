@@ -1728,10 +1728,22 @@ const App = (() => {
   function save() { if (VIEWER) return; try { localStorage.setItem(STORE, JSON.stringify({ doc, ui })); } catch (ignored) {} }
   // Only web links may be followed from a step.
   const safeLink = text => { const t = String(text || '').trim(); if (!t) return ''; const u = /^[a-z][\w+.-]*:/i.test(t) ? t : 'https://' + t; return /^https?:\/\/[^\s]+$/i.test(u) ? u : ''; };
+  // Earlier built-in examples, left exactly as they came (same boxes, words, arrows and box spacing). A browser that
+  // still holds one of these untouched gets the current example instead; anything the person changed is kept.
+  const OLD_SAMPLES = ['1ycd09d.493', 'fklagd.533'];
+  function fingerprint(d) {
+    const o = (d.nodes[0] || {}).sketch || { x: 0, y: 0 };
+    const text = d.title + '#' + d.nodes.map(n => [n.id, n.text, n.lane, n.sketch.x - o.x, n.sketch.y - o.y].join('|')).join(';') + '#' + d.edges.map(e => e.from + '>' + e.to + ':' + (e.label || '')).join(';');
+    let h = 5381; for (let i = 0; i < text.length; i++) h = (h * 33 + text.charCodeAt(i)) >>> 0;
+    return h.toString(36) + '.' + text.length;
+  }
   function load() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORE));
-      if (stored && stored.doc && Array.isArray(stored.doc.nodes)) { doc = Engine.normalize(stored.doc); Object.assign(ui, stored.ui || {}); return; }
+      if (stored && stored.doc && Array.isArray(stored.doc.nodes)) {
+        const kept = Engine.normalize(stored.doc);
+        if (OLD_SAMPLES.indexOf(fingerprint(kept)) < 0) { doc = kept; Object.assign(ui, stored.ui || {}); return; }
+      }
     } catch (ignored) {}
     doc = Engine.normalize(SAMPLE_MAP);
   }
