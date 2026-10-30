@@ -47,7 +47,7 @@ Requirements: Python 3 to build. No other tooling.
    - `export.js`: print pages and images
    - `pdf.js`: the PDF download
    - `app.js`: the board, the panel, files and keys
-2. Run `python build.py`. It joins them, with the example in `examples/coffee-shop.map.json`, into `index.html`.
+2. Run `python build.py`. It joins them, with the example in `examples/coffee-orders.map.json`, into `index.html`.
 
 To host it, put `index.html` on any static host (GitHub Pages works).
 

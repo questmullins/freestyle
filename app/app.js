@@ -775,7 +775,7 @@ const App = (() => {
         ${field('Type', `<select id="i_type">${options([['step', 'Step'], ['decision', 'Decision (diamond)']], n.type)}</select>`)}
         ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
         <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
-        ${field('Phase', `<select id="i_phase">${options([['', 'Continues the phase before it']].concat(doc.phases.map(p => [p.id, 'Starts: ' + p.title])).concat([['+', 'Starts a new phase…']]), n.phase || '')}</select>`)}
+        ${field('Phase', `<select id="i_phase">${options([['', 'Same as the box before it']].concat(doc.phases.map(p => [p.id, p.title])).concat([['+', 'A new phase…']]), n.phase || '')}</select>`)}
         <h4>Keys</h4>
         ${field('Time it takes', `<input type="text" id="i_time" value="${esc(n.time || '')}" placeholder="e.g. 2 days">`)}
         ${field('Cutoff time', `<span class="cutoff-row"><input type="text" id="i_cutoff" value="${esc(n.cutoff || '')}" placeholder="none"><button type="button" id="i_cutoffStd" title="The standard cutoff">3pm</button></span>`)}
@@ -853,7 +853,8 @@ const App = (() => {
       <div class="row"><button type="button" id="m_addlane">Add a lane</button><button type="button" id="m_owners">Set up owners</button></div>
       <h4>Phases</h4>
       <div class="list">${doc.phases.map((p, i) => `<div class="pi" data-i="${i}"><div class="li"><input type="color" class="p_color" value="${esc(p.color)}"><input type="text" class="p_title" value="${esc(p.title)}" placeholder="Title"><button type="button" class="p_del" title="Remove this phase"${doc.phases.length > 1 ? '' : ' disabled'}>×</button></div><input type="text" class="p_sub" value="${esc(p.subtitle)}" placeholder="Subtitle"></div>`).join('')}</div>
-      <p class="muted">To start a phase, right-click a card and choose "Start a new phase here".</p>
+      <div class="row"><button type="button" id="m_addphase">Add a phase</button></div>
+      <p class="muted">To put boxes in a phase, select them (drag a box round them) and press + Phase, or pick a phase under Phase in the side panel. The swimlane moves them into it.</p>
       ${timingPanel()}
       <h4>Swimlane</h4>
       ${field('Font size', `<span><input type="range" id="m_fs" min="70" max="140" step="5" value="${Math.round(ui.fs * 100)}"> <b id="m_fsv">${Math.round(ui.fs * 100)}%</b></span>`)}
@@ -911,6 +912,7 @@ const App = (() => {
     on('i_phases', 'change', ev => assignPhase(ev.target.value));
     // Map panel
     on('m_title', 'change', ev => change(() => { doc.title = ev.target.value.trim() || 'Untitled process'; }));
+    on('m_addphase', 'click', addPhase);
     on('m_addlane', 'click', () => { const id = addLanePrompt(); if (id) refresh(); });
     on('m_owners', 'click', openOwners);
     el.querySelectorAll('.li[data-i]').forEach(row => {
@@ -971,6 +973,14 @@ const App = (() => {
     }
     change(() => { sel.nodes.forEach(nid => { node(nid).phase = value === '-' ? null : id; }); });
     status(value === '-' ? 'Those cards now follow the phase before them.' : `${sel.nodes.size} card${sel.nodes.size === 1 ? '' : 's'} put in "${doc.phases.find(p => p.id === id).title}".`);
+  }
+  // + Phase: with boxes selected they become a new phase; with none, an empty phase is added for boxes to be put in.
+  function addPhase() {
+    if (sel.nodes.size) { assignPhase('+'); return; }
+    const title = (prompt('Name of the new phase:', 'Phase ' + (doc.phases.length + 1)) || '').trim(); if (!title) return;
+    let k = doc.phases.length + 1; while (doc.phases.some(p => p.id === 'p' + k)) k++;
+    change(() => { doc.phases.push({ id: 'p' + k, title, subtitle: '', color: Engine.PHASE_COLORS[doc.phases.length % Engine.PHASE_COLORS.length] }); });
+    status(`Added "${title}". Select the boxes that belong in it and pick it under Phase in the side panel.`);
   }
   function phaseSummary() {
     const names = {}; L.allPhases.forEach(p => { names[p.id] = p.title; });
@@ -1113,12 +1123,12 @@ const App = (() => {
       if (insertAfterSelection(type)) return;                 // a step or an arrow is selected: the new box goes in the line there
       const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode(type, p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30));
     };
-    on('#bStep', () => addFromButton('step')); on('#bDecision', () => addFromButton('decision'));
+    on('#bStep', () => addFromButton('step')); on('#bDecision', () => addFromButton('decision')); on('#bPhase', addPhase);
     on('#bUndo', undo); on('#bRedo', redo); on('#bFlags', () => { ui.flags = !ui.flags; drawBoard(); drawSwimlane(); drawInspector(); flagButton(); });
     $('#inspector').addEventListener('click', ev => { const b = ev.target.closest('[data-flag]'); if (b) select('nodes', b.dataset.flag); });   // a box in the "missing an arrow" list
     on('#bFitBoard', fitBoard); on('#bFitSwim', fitSwim);
     on('#bNew', () => { if (confirm('Start an empty map? The current one stays in Undo, and you can export it first.')) setDoc({ title: 'New process', lanes: [], phases: [], nodes: [], edges: [] }, 'Empty map. Double-click the board to add your first step.'); });
-    on('#bExample', () => { if (confirm('Load the coffee shop example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
+    on('#bExample', () => { if (confirm('Load the Coffee Orders example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
     on('#bSave', saveFile); on('#bOpen', () => $('#file').click()); on('#bJson', openJsonBox); on('#bOwners', openOwners);
     $('#file').addEventListener('change', ev => { if (ev.target.files[0]) openFile(ev.target.files[0]); ev.target.value = ''; });
     on('#bStack', () => { ui.stack = !ui.stack; setView(ui.view); });

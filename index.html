@@ -329,7 +329,7 @@
     .view-chip{padding:3px 10px;border-radius:99px;background:var(--sunflower-gold);color:var(--shadow-grey);font-size:12px;font-weight:800;letter-spacing:.04em}
     /* View only: everything that changes the map is hidden */
     .view-chip{padding:3px 10px;border-radius:99px;background:#f2b84b;color:#3b2a00;font-size:12px;font-weight:800;letter-spacing:.04em}
-    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
+    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bPhase,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
     body[data-mode="view"] #bNew,body[data-mode="view"] #bQbSave,body[data-mode="view"] #bOpen,body[data-mode="view"] #bJson,body[data-mode="view"] #bExample,body[data-mode="view"] #bOwners,
     body[data-mode="view"] #menubar .menu:nth-child(2),body[data-mode="view"] .handle,body[data-mode="view"] #wireCtl{display:none!important}
     body[data-mode="view"] .card{cursor:pointer}
@@ -370,6 +370,7 @@
             <hr>
             <button type="button" data-proxy="#bStep">Add a step</button>
             <button type="button" data-proxy="#bDecision">Add a decision</button>
+            <button type="button" data-proxy="#bPhase">Add a phase</button>
             <hr>
             <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners&hellip;</button>
           </div></div>
@@ -394,6 +395,7 @@
   <div id="bar">
     <button type="button" id="bStep" class="primary" title="Add a step. With a step or arrow selected, it goes straight after it, joined in">+ Step</button>
     <button type="button" id="bDecision" title="Add a decision. With a step or arrow selected, it goes straight after it, joined in">+ Decision</button>
+    <button type="button" id="bPhase" title="Add a phase. With boxes selected, they become the new phase">+ Phase</button>
     <span class="sep"></span>
     <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
     <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
@@ -455,7 +457,7 @@
         <li><b>A question is a decision.</b> End the text with "?" or choose Decision; it becomes a diamond.</li>
         <li><b>Start labels with Yes or No.</b> Yes arrows are green and No arrows red. An arrow that goes back to an earlier step is a loop, in yellow.</li>
         <li><b>The ideal path</b> is the shortest way through over plain and Yes arrows. It gets the blue glow. You can force it on or off per arrow.</li>
-        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or right-click the first card of a phase and choose "Start a new phase here". Name phases in the Map panel (click empty space to see it).</li>
+        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or select them and press <b>+ Phase</b> to make a new phase of them. Change a box's phase under Phase in the side panel and the swimlane moves it into that phase. Name phases in the Map panel (click empty space to see it).</li>
         <li><b>Order in time</b> follows the arrows. Where two cards could go either way, the one further left on the board comes first.</li>
       </ul>
       <h3>From Arcweave</h3>
@@ -528,7 +530,7 @@
     })();
   </script>
   <script>
-const SAMPLE_MAP = {"version":1,"app":"freestyle","title":"Coffee shop order","lanes":[{"id":"Customer","name":"Customer"},{"id":"Barista","name":"Barista"},{"id":"Kitchen","name":"Kitchen"}],"phases":[{"id":"p1","title":"Phase 1 \u00b7 Order","subtitle":"From the counter to a paid ticket"},{"id":"p2","title":"Phase 2 \u00b7 Make and serve","subtitle":"Drinks and food to the customer"}],"nodes":[{"id":"n1","lane":"Customer","type":"step","text":"Order at the counter","phase":"p1","sketch":{"x":0,"y":0}},{"id":"n2","lane":"Barista","type":"step","text":"Enter the order","phase":"p1","sketch":{"x":280,"y":0}},{"id":"n3","lane":"Barista","type":"decision","text":"Is everything in stock?","phase":"p1","sketch":{"x":560,"y":0}},{"id":"n4","lane":"Barista","type":"step","text":"Offer an alternative","phase":"p1","sketch":{"x":560,"y":190}},{"id":"n6","lane":"Customer","type":"step","text":"Pay","phase":"p1","sketch":{"x":840,"y":0}},{"id":"n7","lane":"Barista","type":"decision","text":"Any food on the order?","phase":"p2","sketch":{"x":0,"y":400}},{"id":"n8","lane":"Kitchen","type":"step","text":"Prepare the food","phase":"p2","sketch":{"x":280,"y":590}},{"id":"n9","lane":"Barista","type":"step","text":"Make the drinks","phase":"p2","sketch":{"x":280,"y":400}},{"id":"n10","lane":"Barista","type":"step","text":"Call the name","phase":"p2","sketch":{"x":560,"y":400}},{"id":"n11","lane":"Customer","type":"step","text":"Collect the order","phase":"p2","sketch":{"x":840,"y":400}}],"edges":[{"from":"n1","to":"n2"},{"from":"n2","to":"n3"},{"from":"n3","to":"n6","label":"Yes"},{"from":"n3","to":"n4","label":"No"},{"from":"n4","to":"n2","label":"Customer picks something else"},{"from":"n6","to":"n7"},{"from":"n7","to":"n8","label":"Yes"},{"from":"n7","to":"n9","label":"No"},{"from":"n8","to":"n9"},{"from":"n9","to":"n10"},{"from":"n10","to":"n11"}]};
+const SAMPLE_MAP = {"version":1,"app":"freestyle","title":"Coffee Orders","lanes":[{"id":"Customer","name":"Customer","color":"#1b8a6b","fill":"#dff3ec"},{"id":"App","name":"App","color":"#2f6fb5","fill":"#e1ecfa"},{"id":"Barista","name":"Barista","color":"#b7791f","fill":"#fcefd6"}],"phases":[{"id":"p4","title":"Phase 1","subtitle":"Order Entry","color":"#a14848"},{"id":"p2","title":"Phase 2","subtitle":"Order Processing","color":"#8a4f9e"},{"id":"p3","title":"Phase 3","subtitle":"Order Delivery","color":"#2f8a63"}],"nodes":[{"id":"n518vq","lane":"Customer","type":"step","text":"Creates Order","sketch":{"x":20,"y":-350}},{"id":"nhmdaa","lane":"App","type":"step","text":"Order Enters Application","sketch":{"x":290,"y":-50},"phase":"p4"},{"id":"n5erwa","lane":"App","type":"decision","text":"Do we have stock for order?","sketch":{"x":-520,"y":-50},"phase":"p4"},{"id":"ngq9jh","lane":"App","type":"step","text":"Confirm order and pass to Barista","sketch":{"x":-250,"y":-50},"phase":"p2"},{"id":"n607ws","lane":"App","type":"step","text":"Inform customer item is unavailable and trigger a reorder","sketch":{"x":-250,"y":90},"phase":"p4"},{"id":"n0b1ek","lane":"Barista","type":"step","text":"Receives order from application and confirms details","sketch":{"x":20,"y":250},"phase":"p2"},{"id":"nmx51s","lane":"Barista","type":"step","text":"Puts together customer order and passes it to Customer","sketch":{"x":290,"y":250},"phase":"p3"}],"edges":[{"id":"eazcn4","from":"n518vq","to":"nhmdaa","sketch":{"a":"R"}},{"id":"ensdgs","from":"nhmdaa","to":"n5erwa","sketch":{"a":"R"}},{"id":"ecnuwe","from":"n5erwa","to":"ngq9jh","label":"Yes","sketch":{"a":"R"}},{"id":"e3pcea","from":"n5erwa","to":"n607ws","label":"No","sketch":{"a":"B"}},{"id":"ezbpzr","from":"n607ws","to":"n518vq","sketch":{"a":"L","b":"B"}},{"id":"eqjhkz","from":"ngq9jh","to":"n0b1ek","sketch":{"a":"R"}},{"id":"ek20fa","from":"n0b1ek","to":"nmx51s","sketch":{"a":"R"}}],"board":{"origin":"center","units":"px","xAxis":"right","yAxis":"down","boxAnchor":"top-left"}};
 
 /*
  * Freestyle: layout engine.
@@ -819,11 +821,30 @@ const Engine = (() => {
     let maxCol = 0; nodes.forEach(n => { maxCol = Math.max(maxCol, col[n.id]); });
     const phaseDefs = map.phases.map(p => Object.assign({}, p)), phaseIndex = {};
     phaseDefs.forEach((p, i) => { phaseIndex[p.id] = i; });
-    const colPhase = []; let carry = 0;
+    let colPhase = []; let carry = 0;
     for (let c = 0; c <= maxCol; c++) {
       let best = carry;
       nodes.forEach(n => { if (col[n.id] === c && n.phase && phaseIndex[n.phase] > best) best = phaseIndex[n.phase]; });
       colPhase[c] = best; carry = best;
+    }
+    // A box set to a phase belongs in it, even where the columns around it are already in a later phase. A box with
+    // no phase of its own takes the latest phase of the boxes leading into it (or of its column, if that is later).
+    // When a box ends up in a column of a different phase, the columns are put back in phase order: each phase's
+    // boxes keep their order among themselves, and the phases follow one another.
+    const eff = {};
+    nodes.slice().sort((a, b) => col[a.id] - col[b.id]).forEach(n => {
+      if (n.phase && phaseIndex[n.phase] !== undefined) { eff[n.id] = phaseIndex[n.phase]; return; }
+      eff[n.id] = inc[n.id].reduce((m, e) => e.back || eff[e.from] === undefined ? m : Math.max(m, eff[e.from]), colPhase[col[n.id]]);
+    });
+    const span = {}; nodes.forEach(n => { const s = span[eff[n.id]] = span[eff[n.id]] || [Infinity, -Infinity]; s[0] = Math.min(s[0], col[n.id]); s[1] = Math.max(s[1], col[n.id]); });
+    const order = Object.keys(span).map(Number).sort((a, b) => a - b);
+    if (order.some((p, i) => i && span[order[i - 1]][1] >= span[p][0])) {
+      const seats = [...new Set(nodes.map(n => eff[n.id] + '|' + col[n.id]))].sort((a, b) => { const [pa, ca] = a.split('|').map(Number), [pb, cb] = b.split('|').map(Number); return pa - pb || ca - cb; });
+      const to = {}; seats.forEach((k, i) => { to[k] = i; });
+      const next = {}; nodes.forEach(n => { next[n.id] = to[eff[n.id] + '|' + col[n.id]]; });
+      col = next; maxCol = seats.length - 1;
+      edges.forEach(e => { if (!e.selfLoop && !e.back && col[e.to] <= col[e.from]) e.back = true; });   // now runs back in time
+      colPhase = []; nodes.forEach(n => { colPhase[col[n.id]] = eff[n.id]; });
     }
     phaseDefs.forEach((p, i) => {
       const cs = []; colPhase.forEach((pi, c) => { if (pi === i) cs.push(c); });
@@ -2440,7 +2461,7 @@ const App = (() => {
         ${field('Type', `<select id="i_type">${options([['step', 'Step'], ['decision', 'Decision (diamond)']], n.type)}</select>`)}
         ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
         <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
-        ${field('Phase', `<select id="i_phase">${options([['', 'Continues the phase before it']].concat(doc.phases.map(p => [p.id, 'Starts: ' + p.title])).concat([['+', 'Starts a new phase…']]), n.phase || '')}</select>`)}
+        ${field('Phase', `<select id="i_phase">${options([['', 'Same as the box before it']].concat(doc.phases.map(p => [p.id, p.title])).concat([['+', 'A new phase…']]), n.phase || '')}</select>`)}
         <h4>Keys</h4>
         ${field('Time it takes', `<input type="text" id="i_time" value="${esc(n.time || '')}" placeholder="e.g. 2 days">`)}
         ${field('Cutoff time', `<span class="cutoff-row"><input type="text" id="i_cutoff" value="${esc(n.cutoff || '')}" placeholder="none"><button type="button" id="i_cutoffStd" title="The standard cutoff">3pm</button></span>`)}
@@ -2518,7 +2539,8 @@ const App = (() => {
       <div class="row"><button type="button" id="m_addlane">Add a lane</button><button type="button" id="m_owners">Set up owners</button></div>
       <h4>Phases</h4>
       <div class="list">${doc.phases.map((p, i) => `<div class="pi" data-i="${i}"><div class="li"><input type="color" class="p_color" value="${esc(p.color)}"><input type="text" class="p_title" value="${esc(p.title)}" placeholder="Title"><button type="button" class="p_del" title="Remove this phase"${doc.phases.length > 1 ? '' : ' disabled'}>×</button></div><input type="text" class="p_sub" value="${esc(p.subtitle)}" placeholder="Subtitle"></div>`).join('')}</div>
-      <p class="muted">To start a phase, right-click a card and choose "Start a new phase here".</p>
+      <div class="row"><button type="button" id="m_addphase">Add a phase</button></div>
+      <p class="muted">To put boxes in a phase, select them (drag a box round them) and press + Phase, or pick a phase under Phase in the side panel. The swimlane moves them into it.</p>
       ${timingPanel()}
       <h4>Swimlane</h4>
       ${field('Font size', `<span><input type="range" id="m_fs" min="70" max="140" step="5" value="${Math.round(ui.fs * 100)}"> <b id="m_fsv">${Math.round(ui.fs * 100)}%</b></span>`)}
@@ -2576,6 +2598,7 @@ const App = (() => {
     on('i_phases', 'change', ev => assignPhase(ev.target.value));
     // Map panel
     on('m_title', 'change', ev => change(() => { doc.title = ev.target.value.trim() || 'Untitled process'; }));
+    on('m_addphase', 'click', addPhase);
     on('m_addlane', 'click', () => { const id = addLanePrompt(); if (id) refresh(); });
     on('m_owners', 'click', openOwners);
     el.querySelectorAll('.li[data-i]').forEach(row => {
@@ -2636,6 +2659,14 @@ const App = (() => {
     }
     change(() => { sel.nodes.forEach(nid => { node(nid).phase = value === '-' ? null : id; }); });
     status(value === '-' ? 'Those cards now follow the phase before them.' : `${sel.nodes.size} card${sel.nodes.size === 1 ? '' : 's'} put in "${doc.phases.find(p => p.id === id).title}".`);
+  }
+  // + Phase: with boxes selected they become a new phase; with none, an empty phase is added for boxes to be put in.
+  function addPhase() {
+    if (sel.nodes.size) { assignPhase('+'); return; }
+    const title = (prompt('Name of the new phase:', 'Phase ' + (doc.phases.length + 1)) || '').trim(); if (!title) return;
+    let k = doc.phases.length + 1; while (doc.phases.some(p => p.id === 'p' + k)) k++;
+    change(() => { doc.phases.push({ id: 'p' + k, title, subtitle: '', color: Engine.PHASE_COLORS[doc.phases.length % Engine.PHASE_COLORS.length] }); });
+    status(`Added "${title}". Select the boxes that belong in it and pick it under Phase in the side panel.`);
   }
   function phaseSummary() {
     const names = {}; L.allPhases.forEach(p => { names[p.id] = p.title; });
@@ -2778,12 +2809,12 @@ const App = (() => {
       if (insertAfterSelection(type)) return;                 // a step or an arrow is selected: the new box goes in the line there
       const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode(type, p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30));
     };
-    on('#bStep', () => addFromButton('step')); on('#bDecision', () => addFromButton('decision'));
+    on('#bStep', () => addFromButton('step')); on('#bDecision', () => addFromButton('decision')); on('#bPhase', addPhase);
     on('#bUndo', undo); on('#bRedo', redo); on('#bFlags', () => { ui.flags = !ui.flags; drawBoard(); drawSwimlane(); drawInspector(); flagButton(); });
     $('#inspector').addEventListener('click', ev => { const b = ev.target.closest('[data-flag]'); if (b) select('nodes', b.dataset.flag); });   // a box in the "missing an arrow" list
     on('#bFitBoard', fitBoard); on('#bFitSwim', fitSwim);
     on('#bNew', () => { if (confirm('Start an empty map? The current one stays in Undo, and you can export it first.')) setDoc({ title: 'New process', lanes: [], phases: [], nodes: [], edges: [] }, 'Empty map. Double-click the board to add your first step.'); });
-    on('#bExample', () => { if (confirm('Load the coffee shop example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
+    on('#bExample', () => { if (confirm('Load the Coffee Orders example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
     on('#bSave', saveFile); on('#bOpen', () => $('#file').click()); on('#bJson', openJsonBox); on('#bOwners', openOwners);
     $('#file').addEventListener('change', ev => { if (ev.target.files[0]) openFile(ev.target.files[0]); ev.target.value = ''; });
     on('#bStack', () => { ui.stack = !ui.stack; setView(ui.view); });
