@@ -26,13 +26,10 @@
     .xh-mark{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--mint-cream);text-decoration:none}
     .xh-mark svg{width:30px;height:30px;flex:none}
     .xh-mark b{color:var(--sunflower-gold);font-weight:800}
-    .xh-tag{color:var(--lavender-grey);font-size:13px;font-weight:600}
-    :root[data-theme="dark"] .xh-tag{color:#a9adc6}
     .xh-grow{flex:1}
     #bTheme{height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(241,255,250,.28);border-radius:999px;background:none;color:var(--mint-cream);font-size:13px;font-weight:600;cursor:pointer}
     #bTheme:hover{border-color:var(--sunflower-gold);color:var(--sunflower-gold)}
     #bTheme svg{width:15px;height:15px}
-    @media(max-width:640px){.xh-tag{display:none}}
     button,input,select,textarea{font:inherit;color:inherit}
     input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--sunflower-gold)}
     [hidden]{display:none!important}
@@ -196,8 +193,153 @@
     .pgf{height:.3in;font-size:8pt;color:#444;display:flex;gap:16px;align-items:center}
     .pgf i{display:inline-block;width:22px;border-top:3px solid;vertical-align:middle;margin-right:5px}
     .wide{overflow:hidden}
+
+    /* ---- The Swimlane Creator settings, in the Freestyle colours: menus in the header, a quiet toolbar with
+       the side panel and unlinked-box switches, a swimlane whose phases and lane names stay put, flat cards,
+       decisions drawn as diamonds on the board, and the keys on each step (time, cutoff, something broken, note, link). */
+    /* Swimlane frame */
+    #swim{position:absolute;inset:36px 0 0 0;--gut:150px;--rul:76px;background:var(--x-soft);overflow:hidden}
+    #swimView{position:absolute;left:var(--gut);top:var(--rul);right:0;bottom:0;overflow:hidden;background:var(--x-board);cursor:grab}
+    #swimView.panning{cursor:grabbing}
+    /* the frame: phases along the top and lane names down the left stay put while the swimlane moves */
+    #swimPane::before{content:'';position:absolute;left:0;right:0;top:0;height:36px;z-index:2;border-bottom:1px solid var(--x-line);background:var(--x-paper)}
+    #swimLegend{position:absolute;left:112px;right:64px;top:0;height:36px;z-index:3;display:flex;align-items:center;gap:6px 14px;overflow:hidden;white-space:nowrap;color:var(--x-muted);font-size:12px;font-weight:600}
+    #swimLegend span{display:inline-flex;align-items:center;gap:5px}
+    #swimLegend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--c);border-radius:2px}
+    #swimLegend i.glow{box-shadow:0 0 0 4px rgba(47,124,246,.3)}
+    #swimLegend b.dia{width:11px;height:11px;border:1.4px solid #7a5c00;background:#fff6d6;transform:rotate(45deg)}
+    #swimLegend b.k-cutoff{width:17px;height:17px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.5 27.5 7 30.5M22.5 27.5 25 30.5' stroke='%23c26a12' stroke-width='2.2' stroke-linecap='round' fill='none'/%3E%3Cpath d='M4.2 10.2a5.6 5.6 0 0 1 6.6-6.6M27.8 10.2a5.6 5.6 0 0 0-6.6-6.6' stroke='%23c26a12' stroke-width='3.2' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='16' cy='17' r='11.4' fill='%23fff7e8' stroke='%23c26a12' stroke-width='2'/%3E%3Cpath d='M16 11v6l4 2' stroke='%23c26a12' stroke-width='1.8' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") center/contain no-repeat}
+    #swimLegend b.k-time{width:20px;height:11px;border:1.2px solid #4f8a34;border-radius:2px;background:#c9e7b8;transform:rotate(-12deg)}
+    #swimLegend b.k-broken{width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-7.4-4.5-9.6-9.1C.9 8.6 2.6 4.7 6.3 4.3c2.2-.2 3.8.9 5.7 2.9 1.9-2 3.5-3.1 5.7-2.9 3.7.4 5.4 4.3 3.9 7.6C19.4 16.5 12 21 12 21z' fill='%23d64545' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12.2 7.6 10.4 11l2.5 1.7-1.9 3.7' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+    #swimLegend b.k-note{width:22px;height:15px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 18'%3E%3Cpath d='M7.2 16.6a3.8 3.8 0 0 1-1.6-7.3 5.3 5.3 0 0 1 10-2.9 4.2 4.2 0 0 1 6.5 3.3 3.6 3.6 0 0 1-.8 6.9 3.1 3.1 0 0 1-4.6.4 3.6 3.6 0 0 1-5.3.2 3 3 0 0 1-4.2-.6z' fill='%23ffe6fa' stroke='%23b4589b' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+    #ruler{position:absolute;left:var(--gut);right:0;top:0;height:var(--rul);z-index:2;overflow:hidden;background:var(--x-paper);border-bottom:1px solid var(--x-line-strong)}
+    #ruler .seg{position:absolute;top:0;bottom:0;overflow:hidden;color:#fff;box-shadow:inset -2px 0 0 #fff}
+    #ruler .seg>div{display:flex;flex-direction:column;justify-content:center;gap:3px;height:100%;padding:8px 16px;white-space:nowrap}   /* room between the phase name, its description and its time */
+    #ruler .seg .seg-time{font-weight:700;opacity:1}
+    .time-table{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:13px}.time-table th,.time-table td{padding:4px 6px;border-bottom:1px solid var(--x-line);text-align:left;vertical-align:top}
+    .time-table tr:first-child th{color:var(--x-muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.time-table tr:last-child th,.time-table tr:last-child td{font-weight:800;border-bottom:0}
+    #ruler .seg b{font-size:16.2px;line-height:1.2;letter-spacing:.005em}#ruler .seg small{font-size:14.2px;line-height:1.2;opacity:.92}
+    #corner{position:absolute;left:0;top:0;z-index:3;width:var(--gut);height:var(--rul);display:flex;align-items:center;padding:0 12px;background:var(--x-paper);border-right:1px solid var(--x-line-strong);border-bottom:1px solid var(--x-line-strong);color:var(--x-muted);font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+    #tracks{position:absolute;left:0;top:var(--rul);bottom:0;z-index:2;width:var(--gut);overflow:hidden;background:var(--x-paper);border-right:1px solid var(--x-line-strong)}
+    .track{position:absolute;left:0;right:0;display:flex;align-items:center;gap:6px;padding:5px 8px 5px 8px;overflow:hidden;border-bottom:1px solid #d5d7e0;background:var(--tint);box-shadow:inset 4px 0 0 var(--lane)}
+    .track .nm{flex:1;min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;color:var(--lane);font-size:13px;font-weight:800;line-height:1.15;white-space:normal;overflow-wrap:normal}   /* a long name gets smaller and wraps, rather than being cut off */
+    .track .grip{flex:none;display:grid;place-items:center;width:16px;height:28px;margin-left:2px;border-radius:4px;color:var(--lane);opacity:.55;cursor:grab}
+    .track .grip svg{width:8px;height:14px;fill:currentColor}.track .grip:hover{opacity:1;background:rgba(255,255,255,.7)}
+    #tracks.dragging,#tracks.dragging .grip{cursor:grabbing}#tracks.dragging .track:not(.ghost){transition:transform .15s ease}
+    .track.lifting{opacity:.25}
+    .track.ghost{z-index:5;opacity:.95;box-shadow:inset 4px 0 0 var(--lane),0 8px 22px rgba(3,61,75,.28);outline:2px solid var(--lane);pointer-events:none}
+    body[data-mode="view"] .track .grip,body[data-mode="view"] .edit-only{display:none}
+    #swim.panning{cursor:grabbing}
+    #bFlags b{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:9px;font-size:11px;line-height:18px}#bFlags.has b{background:#d64545;color:#fff}#bFlags b:empty{display:none}
+    #bFlags[aria-pressed="true"]{border-color:#d64545;box-shadow:inset 0 0 0 1px #d64545}
+    .card.flag-none{box-shadow:0 0 0 3px #fff,0 0 0 6px #d64545!important}.card.flag-in,.card.flag-out{box-shadow:0 0 0 3px #fff,0 0 0 6px #e0a100!important}
+    .card.decision.flag-none,.card.decision.flag-in,.card.decision.flag-out{box-shadow:none!important;filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 4px #d64545)}
+    .flag-list{margin:0 0 12px;padding:0;list-style:none;display:grid;gap:4px}.flag-list button{width:100%;padding:6px 8px;border:1px solid var(--x-line);border-left:4px solid #d64545;border-radius:6px;background:var(--x-paper);text-align:left;font:inherit;font-size:12.5px;cursor:pointer}
+    .flag-list .flag-in button,.flag-list .flag-out button{border-left-color:#e0a100}.flag-list small{display:block;color:var(--x-muted)}
+    #swimView.dragging-box,#swimView.dragging-box *{cursor:grabbing!important}
+    .drag-ghost{opacity:.85;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(3,61,75,.35))}
+    .seat-mark{fill:rgba(168,85,247,.08);stroke:#a855f7;stroke-width:2.5;stroke-dasharray:8 5;pointer-events:none}
+    .side-mark{fill:#a855f7;fill-opacity:.25;stroke:#a855f7;stroke-width:2.5;pointer-events:none}
+    /* Menus in the header */
+    #menubar{display:flex;gap:2px;margin-left:10px}
+    .menu{position:relative}
+    .menu-top{height:32px;padding:0 11px;border:0;border-radius:6px;background:none;color:var(--mint-cream);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .menu-top:hover,.menu-top[aria-expanded="true"]{background:rgba(255,255,255,.14)}
+    .menu-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:60;min-width:250px;padding:6px;border:1px solid var(--x-line);border-radius:var(--x-radius-inner);background:var(--x-paper);color:var(--x-ink);box-shadow:var(--x-shadow-pop)}
+    .menu-pop button{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:32px;padding:6px 10px;border:0;border-radius:6px;background:none;color:var(--x-ink);font:inherit;font-size:13.5px;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer}
+    .menu-pop button:hover{background:var(--x-soft)}
+    .menu-pop button.strong{font-weight:700}
+    .menu-pop kbd{font:11.5px ui-monospace,Consolas,monospace;color:var(--x-muted)}
+    .menu-pop hr{margin:5px 4px;border:0;border-top:1px solid var(--x-line)}
+    .menu-check{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:13.5px;cursor:pointer}
+    .xh #status{color:#a9adc6;max-width:52ch;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .xh #status.bad{color:#ff9b92;font-weight:700}.xh #status.warn{color:var(--golden-pollen)}
+    @media(max-width:900px){.xh #status{display:none}}
+    /* A quiet toolbar */
+    #bar{padding-top:6px;padding-bottom:6px}
+    #bar button{border-color:transparent;background:none}
+    #bar button:hover:not(:disabled){border-color:transparent;background:var(--x-soft)}
+    #bar button.primary{border-color:var(--x-brand);background:var(--x-brand);color:var(--x-on-brand)}
+    #bar button.primary:hover:not(:disabled){border-color:var(--x-brand-hover);background:var(--x-brand-hover)}
+    #bar button.icon{width:32px;padding:0;justify-content:center}
+    #bar button.icon svg{width:16px;height:16px}
+    #bPanel[aria-pressed="false"]{color:var(--x-muted)}
+    #viewTabs{background:none;gap:4px}
+    #viewTabs button{border-radius:0;box-shadow:none!important;background:none!important;border-bottom:2px solid transparent!important}
+    #viewTabs button[aria-pressed="true"]{border-bottom-color:var(--x-brand)!important}
+    .pane-tag{background:none;letter-spacing:.16em}
+    body[data-panel="0"] #inspector{display:none}
+    /* Flat cards; decisions are diamonds */
+    .card{border:1px solid var(--lane);border-radius:4px;box-shadow:none}
+    .card-head{flex-wrap:wrap;align-content:center;gap:5px 7px;min-height:54px;padding:7px 9px;border-radius:3px 3px 0 0;font-size:12.5px;line-height:1.2;cursor:pointer}
+    .card-head .badge{min-width:22px;height:22px;border-radius:3px;font-size:11.5px}
+    .card-head .owner{flex:1 1 calc(100% - 30px);min-width:0;overflow-wrap:anywhere}
+    .card-head .kind{padding:2px 7px;border-radius:3px}
+    .card-head .kind:first-of-type{margin-left:29px}
+    .card-body{border-radius:0 0 3px 3px}
+    .card.decision{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:168px;padding:34px 46px;border:0;border-radius:0;text-align:center;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 1 99 50 50 99 1 50z' fill='%23fff6d6' stroke='%237a5c00' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+    .card.decision .card-head{min-height:0;padding:0 0 4px;justify-content:center;background:none;color:#7a5c00;font-size:11px}
+    .card.decision .card-body{color:#4a3a00}
+    .card.decision .card-head .owner{flex:0 1 auto}
+    .card.decision .card-head .badge{min-width:20px;height:20px;background:#7a5c00;color:#fff}
+    .card.decision .card-head .kind{margin-left:0;display:none}
+    .card.decision .card-head .kind.phase{display:inline-block;background:rgba(122,92,0,.16);color:#4a3a00}
+    .card.decision .card-body{min-height:0;padding:0;background:none;color:#4a3a00;font-size:12.5px;font-weight:600}
+    .card.decision.sel{box-shadow:none;outline:0;filter:drop-shadow(0 0 2px var(--x-select)) drop-shadow(0 0 4px var(--x-select))}
+    .card.decision .card-edit{border-radius:3px;min-height:44px;text-align:center}
+    .card.decision .card-note{margin-top:6px;border:1px dashed #6b7a8c;border-radius:3px}
+    .card.decision .owner-pick{flex:0 1 120px}
+    /* on a diamond an arrow attaches at a point, so that is what lights up */
+    .card.decision.face-T::before,.card.decision.face-B::before{left:calc(50% - 10px);right:auto;width:20px;height:20px;border-radius:50%}
+    .card.decision.face-T::before{top:-10px}.card.decision.face-B::before{bottom:-10px}
+    .card.decision.face-L::before,.card.decision.face-R::before{top:calc(50% - 10px);bottom:auto;width:20px;height:20px;border-radius:50%}
+    .card.decision.face-L::before{left:-10px}.card.decision.face-R::before{right:-10px}
+    .card.decision.face-all::before{inset:8px;border-radius:50%}
+    #inspector input[type=text],#inspector input[type=number],#inspector select,#inspector textarea{height:30px;border:1px solid transparent;border-radius:4px;background:var(--x-soft)}
+    #inspector textarea{height:auto}
+    #inspector input[type=text]:hover,#inspector input[type=number]:hover,#inspector select:hover,#inspector textarea:hover{border-color:var(--x-line-strong)}
+    #inspector h3{font-size:15px}
+    /* The keys: time, something broken, note. The note is a small cloud that pops open when pointed at. */
+    .key-cutoff{position:absolute;left:50%;top:-19px;z-index:3;width:30px;height:30px;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.18))}.key-cutoff svg{width:100%;height:100%}
+    .cutoff-row{display:flex;gap:6px}#inspector .cutoff-row input{flex:none;width:118px;min-width:0}
+    .insert-row{display:flex;gap:6px;margin:4px 0 8px}
+    #wires .wire.drop-target path:not(.hit){stroke-width:6!important;stroke:#a855f7!important}
+    .card.dropping{outline:3px dashed #a855f7;outline-offset:4px}
+    .drop-line{fill:none;stroke:#a855f7;stroke-width:9;stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+    .ctl.add{cursor:copy}
+    .key-time{position:absolute;right:-12px;top:-13px;z-index:3;padding:2px 8px;border:1.2px solid #4f8a34;border-radius:3px;background:#c9e7b8;color:#2f5d1e;font-size:11px;font-weight:700;white-space:nowrap;transform:rotate(-8deg);pointer-events:none}
+    .card-keys{position:absolute;right:-9px;bottom:-11px;z-index:3;display:flex;gap:5px}
+    .key-pop{position:relative;width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;cursor:help;outline:0}
+    .key-broken{border-radius:0}.key-broken>svg{width:22px;height:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+    .key-note{width:26px}.key-note svg{width:26px;height:18px;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}.key-note:hover svg,.key-note:focus svg{transform:scale(1.2)}
+    .key-pop .pop{position:absolute;left:50%;bottom:calc(100% + 8px);z-index:20;width:max-content;max-width:min(320px,70vw);overflow-wrap:anywhere;text-wrap:pretty;padding:9px 13px;border-radius:16px;background:#fff;color:#2b3b4d;font-size:12.5px;font-weight:500;line-height:1.35;text-align:left;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transform:translateX(-50%) scale(.3);transform-origin:50% 100%;transition:opacity .15s,transform .25s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
+    .key-pop .pop b{display:block;margin-bottom:2px;color:#b03030;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+    .key-note .pop{border:1.5px solid #e3a6d2;background:#fff4fc;border-radius:22px}
+    .key-pop:hover .pop,.key-pop:focus .pop{opacity:1;transform:translateX(-50%) scale(1)}
+    .pop-p{display:block}.pop-p+.pop-p{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(180,88,155,.35)}
+    #keyPop{position:absolute;z-index:6;width:max-content;max-width:min(340px,80vw);overflow-wrap:anywhere;text-wrap:pretty;padding:9px 13px;border-radius:16px;background:#fff;color:#2b3b4d;font-size:12.5px;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:none;transform:translate(-50%,calc(-100% - 10px)) scale(.3);transform-origin:50% 100%;opacity:0;transition:opacity .15s,transform .25s cubic-bezier(.3,1.5,.5,1)}
+    #keyPop.on{opacity:1;transform:translate(-50%,calc(-100% - 10px)) scale(1)}
+    #keyPop.note{border:1.5px solid #e3a6d2;background:#fff4fc;border-radius:22px}
+    #keyPop b{display:block;margin-bottom:2px;color:#b03030;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+    #keyPop.note b,.key-note .pop b{color:#a0397f}
+    /* A link on a step */
+    .card-link{position:absolute;left:-10px;top:-12px;z-index:3;width:22px;height:22px;display:grid;place-items:center;border:1.6px solid #2f6fb3;border-radius:50%;background:#fff;color:#2f6fb3}
+    .card-link svg{width:13px;height:13px}.card-link:hover{background:#2f6fb3;color:#fff}
+    /* View only and embedded */
+    .view-chip{padding:3px 10px;border-radius:99px;background:var(--sunflower-gold);color:var(--shadow-grey);font-size:12px;font-weight:800;letter-spacing:.04em}
+    /* View only: everything that changes the map is hidden */
+    .view-chip{padding:3px 10px;border-radius:99px;background:#f2b84b;color:#3b2a00;font-size:12px;font-weight:800;letter-spacing:.04em}
+    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
+    body[data-mode="view"] #bNew,body[data-mode="view"] #bQbSave,body[data-mode="view"] #bOpen,body[data-mode="view"] #bJson,body[data-mode="view"] #bExample,body[data-mode="view"] #bOwners,
+    body[data-mode="view"] #menubar .menu:nth-child(2),body[data-mode="view"] .handle,body[data-mode="view"] #wireCtl{display:none!important}
+    body[data-mode="view"] .card{cursor:pointer}
+    /* Embed: only the swimlane, filling the page */
+    body[data-embed="1"] .xh,body[data-embed="1"] #bar,body[data-embed="1"] #inspector,body[data-embed="1"] .pane-tag,body[data-embed="1"] .pane-hint,body[data-embed="1"] #help{display:none!important}
+    body[data-embed="1"] .pane-tools{top:8px;right:8px}
+    #inspector .view-note{display:inline-block;margin:0 0 10px;padding:2px 9px;border-radius:99px;background:#fff3d6;color:#7a5c00;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    #inspector .vrow{display:grid;gap:2px;margin:9px 0}#inspector .vrow>span{color:var(--x-muted);font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}#inspector .vrow a{color:#2f6fb3;overflow-wrap:anywhere}
     @media print{.uionly{display:none!important}}
-    @media(max-width:900px){#inspector{width:270px}#status{display:none}}
+    @media(max-width:900px){#inspector{width:270px}#bar #status{display:none}}
   </style>
 </head>
 <body data-view="split">
@@ -206,36 +348,62 @@
       <a class="xh-mark" href="#" aria-label="Freestyle">
         <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#ffbf46"/><path d="M6 21c4-9 7 5 11-4s5-6 9-7" fill="none" stroke="#2d2a32" stroke-width="3.2" stroke-linecap="round"/></svg>
         <span>Free<b>style</b></span></a>
-      <span class="xh-tag">Sketch a process. Get a swimlane.</span>
+      <nav id="menubar" aria-label="Menu">
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">File</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bNew">New</button>
+            <button type="button" id="bOpen" class="strong" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file&hellip;</button>
+            <button type="button" id="bSave" class="strong" title="Save this map to your computer as a .map.json file">Save file<kbd>Ctrl+S</kbd></button>
+            <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy or paste JSON&hellip;</button>
+            <hr>
+            <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print, one page per phase&hellip;</button>
+            <button type="button" id="bPdf" title="The whole process on one wide page">Print on one wide page&hellip;</button>
+            <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
+            <button type="button" id="bImages">Images&hellip;</button>
+            <hr>
+            <button type="button" id="bExample">Open the example</button>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">Edit</button>
+          <div class="menu-pop" hidden>
+            <button type="button" data-proxy="#bUndo">Undo<kbd>Ctrl+Z</kbd></button>
+            <button type="button" data-proxy="#bRedo">Redo<kbd>Ctrl+Y</kbd></button>
+            <hr>
+            <button type="button" data-proxy="#bStep">Add a step</button>
+            <button type="button" data-proxy="#bDecision">Add a decision</button>
+            <hr>
+            <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners&hellip;</button>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">View</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bViewMode" class="edit-only" title="Open this map the way a viewer sees it, in a new tab">Open in viewer mode</button>
+            <hr class="edit-only">
+            <label class="menu-check"><input type="checkbox" id="hcChk"> High contrast swimlane</label>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">Help</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bHelp">How it works</button>
+          </div></div>
+      </nav>
+      <span class="view-chip" id="viewChip" hidden>View only</span>
       <span class="xh-grow"></span>
+      <span id="status"></span>
       <button type="button" id="bTheme" title="Switch between light and dark"></button>
     </div>
   </header>
 
   <div id="bar">
-    <button type="button" id="bNew">New</button>
-    <button type="button" id="bOpen" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file</button>
-    <button type="button" id="bSave" title="Save this map to your computer as a .map.json file (Ctrl+S)">Save file</button>
-    <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy / paste JSON</button>
-    <button type="button" id="bExample">Example</button>
-    <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners</button>
-    <input type="file" id="file" accept=".json,application/json" hidden>
+    <button type="button" id="bStep" class="primary" title="Add a step. With a step or arrow selected, it goes straight after it, joined in">+ Step</button>
+    <button type="button" id="bDecision" title="Add a decision. With a step or arrow selected, it goes straight after it, joined in">+ Decision</button>
     <span class="sep"></span>
-    <button type="button" id="bStep" class="primary">+ Step</button>
-    <button type="button" id="bDecision">+ Decision</button>
     <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
     <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
-    <span class="sep"></span>
-    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
-    <button type="button" id="bStack" title="Switch between the two views side by side and one above the other"></button>
+    <span class="sep edit-only"></span>
+    <button type="button" id="bFlags" class="edit-only" aria-pressed="false" title="Outline boxes that are missing an arrow">Unlinked <b id="flagCount"></b></button>
     <span class="grow"></span>
-    <span id="status"></span>
-    <label class="tool"><input type="checkbox" id="hcChk"> High contrast</label>
-    <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print phases</button>
-    <button type="button" id="bPdf" title="The whole process on one wide page">One wide page</button>
-    <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
-    <button type="button" id="bImages">Images</button>
-    <button type="button" id="bHelp">Help</button>
+    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
+    <button type="button" id="bStack" class="icon"></button>
+    <button type="button" id="bPanel" class="icon" aria-pressed="true" title="Show or hide the side panel" aria-label="Show or hide the side panel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M10.5 2.5v11"/></svg></button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
   </div>
 
   <div id="main">
@@ -249,8 +417,9 @@
     <section class="pane" id="swimPane">
       <span class="pane-tag">Swimlane</span>
       <div class="pane-tools"><button type="button" id="bFitSwim">Fit</button></div>
-      <div id="swim"><div id="stage"></div></div>
-      <span class="pane-hint">Click a box or line to adjust it &middot; drag to move &middot; scroll to zoom &middot; double-click to fit</span>
+      <div id="swimLegend" aria-label="Legend"></div>
+      <div id="swim"><div id="corner">Lanes</div><div id="ruler"></div><div id="tracks"></div><div id="swimView"><div id="stage"></div></div><div id="keyPop" hidden></div></div>
+      <span class="pane-hint">Click a box or line to adjust it &middot; drag a box to move it &middot; double-click empty space to add a step &middot; scroll to zoom</span>
     </section>
    </div>
     <aside id="inspector"></aside>
@@ -264,15 +433,19 @@
       <p class="muted">Draw the process on the Board the way you would in Arcweave. The Swimlane beside it is the same map, arranged for you.</p>
       <h3>On the board</h3>
       <ul>
-        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision.</li>
+        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision (also under Edit).</li>
         <li><b>Write in it:</b> double-click the card. Enter finishes, Shift+Enter adds a line, Esc cancels.</li>
         <li><b>Connect:</b> drag from a gold dot on a card to another card. Drop on empty space to make the next card. The arrow leaves from the dot you dragged.</li>
         <li><b>Shape an arrow:</b> click it. Drag an end dot round its card to change the side it leaves or arrives on (or onto another card). Drag the middle dot to bend it; double-click that dot to straighten. While you drag, the side it will attach to lights up in gold.</li>
-        <li><b>Owners:</b> set them all up with the Owners button. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Owners:</b> set them all up with Edit, Owners. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Links:</b> give a step a Link and a link icon appears on its box; click it to open the page.</li>
+        <li><b>Keys:</b> select a step and give it a <b>time</b> ("2 days", "4-5 weeks"): the Map panel adds up how long the whole process takes, and each step shows how long from it to the end. <b>Something broken</b> records a problem at that step (a red mark). A <b>note</b> is a small cloud on the box that opens when you point at it. Printed swimlanes list the problems and notes underneath.</li>
         <li><b>Label an arrow:</b> double-click it, or select it and type in the panel.</li>
         <li><b>One at a time:</b> click a card or an arrow and it is the only thing that responds; the rest fade a little. Click empty space to let go of it.</li>
         <li><b>Select several:</b> drag a box around them, or Shift-click. Drag one to move them all.</li>
-        <li><b>Both views:</b> with Both chosen, the button beside it switches between side by side and stacked (board above, swimlane below).</li>
+        <li><b>Both views:</b> the toolbar shows the board, the swimlane or both, side by side or top and bottom, and hides or shows the side panel.</li>
+        <li><b>Look only:</b> View, Open in viewer mode opens this map in a new tab where nothing can be changed: for showing it to someone on your screen.</li>
+        <li><b>Lanes:</b> drag a lane by the dotted grip beside its name to move it up or down.</li>
         <li><b>Move around:</b> hold Space and drag (or drag with the right mouse button). Scroll to zoom.</li>
         <li><kbd>Delete</kbd> removes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, arrow keys nudge.</li>
       </ul>
@@ -293,10 +466,9 @@
       </ul>
       <h3>Getting it out</h3>
       <ul>
-        <li><b>Print phases:</b> one letter-landscape page per phase. Choose "Save as PDF" in the print window.</li>
+        <li><b>File, Print:</b> one letter-landscape page per phase, or the whole process on one wide page. Choose "Save as PDF" in the print window. <b>Download PDF</b> gives the phase pages as a file, with no print window.</li>
         <li><b>Images:</b> a PNG of each phase and of the whole process, to copy or download.</li>
-        <li><b>Download PDF:</b> the same phase pages as a PDF file, with no print window.</li>
-        <li><b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy / paste JSON</b> shows the same thing as text, to send to someone.</li>
+        <li>Under File, <b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy or paste JSON</b> shows the same thing as text, to send to someone.</li>
         <li><b>Nothing is uploaded.</b> Freestyle runs in your browser. The map on screen is also remembered in this browser between visits, but the file you save is the copy to keep.</li>
       </ul>
       <p><button type="button" id="helpClose">Close</button></p>
@@ -321,6 +493,27 @@
     </div>
   </div>
   <div id="printRoot"></div>
+
+  <script>
+    /* Menus in the header. An item with data-proxy presses the toolbar button it names. */
+    (function () {
+      var bar = document.getElementById('menubar'), open = null;
+      function close() { if (!open) return; open.querySelector('.menu-pop').hidden = true; open.querySelector('.menu-top').setAttribute('aria-expanded', 'false'); open = null; }
+      function show(menu) { close(); open = menu; menu.querySelector('.menu-pop').hidden = false; menu.querySelector('.menu-top').setAttribute('aria-expanded', 'true'); }
+      bar.querySelectorAll('.menu').forEach(function (menu) {
+        var top = menu.querySelector('.menu-top');
+        top.addEventListener('click', function (ev) { ev.stopPropagation(); if (open === menu) close(); else show(menu); });
+        top.addEventListener('mouseenter', function () { if (open && open !== menu) show(menu); });
+        menu.querySelector('.menu-pop').addEventListener('click', function (ev) {
+          var item = ev.target.closest('button'); if (!item) return;
+          if (item.dataset.proxy) { var target = document.querySelector(item.dataset.proxy); if (target && !target.disabled) target.click(); }
+          close();
+        });
+      });
+      document.addEventListener('mousedown', function (ev) { if (open && !(ev.target.closest && ev.target.closest('#menubar'))) close(); });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
+    })();
+  </script>
 
   <script>
     /* Theme: follows the system until you choose, then remembers the choice in this browser. */
@@ -706,7 +899,73 @@ const Engine = (() => {
     return search(e => e.k !== 'no' && e.k !== 'loop') || search(() => true) || {};
   }
 
-  return { importArcweave, normalize, centerSketch, layout, classifyLabel, htmlToText, laneColors, LANE_COLORS, PHASE_COLORS };
+  // ------------------------------------------------------------------ time stamps
+  // A step can say how long it takes: "1 hour", "~2 days", "4-5 weeks". Times are counted in working hours
+  // (a day is 8 hours, a week 5 days, a month 21 days), and a range is kept as its low and high ends.
+  const HOURS = { min: 1 / 60, minute: 1 / 60, h: 1, hr: 1, hour: 1, d: 8, day: 8, w: 40, wk: 40, week: 40, mo: 168, month: 168 };
+  function parseTime(text) {
+    const m = String(text || '').toLowerCase().replace(/~|≈|\babout\b|\baround\b/g, ' ').match(/(\d+(?:\.\d+)?)\s*(?:(?:-|–|to)\s*(\d+(?:\.\d+)?))?\s*(min(?:ute)?s?|h(?:ou)?rs?|h|days?|d|w(?:ee)?ks?|w|mo(?:nth)?s?)\b/);
+    if (!m) return null;
+    const unit = m[3].replace(/s$/, '').replace(/^hr$/, 'hr'), per = HOURS[unit] ?? HOURS[unit.replace(/ute$/, '')] ?? (unit.startsWith('w') ? 40 : unit.startsWith('mo') ? 168 : unit.startsWith('d') ? 8 : unit.startsWith('min') ? 1 / 60 : 1);
+    const lo = +m[1] * per, hi = (m[2] ? +m[2] : +m[1]) * per;
+    return { lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
+  }
+  // Working hours written out exactly, so the times entered visibly add up: "1 week 2 days 3 hours" (a week is
+  // 5 working days of 8 hours). Nothing is rounded but minutes.
+  function exactTime(hours) {
+    let m = Math.round((hours || 0) * 60); if (m <= 0) return '0 hours';
+    const parts = [], take = (size, name) => { const n = Math.floor(m / size); if (n) { parts.push(`${n} ${name}${n === 1 ? '' : 's'}`); m -= n * size; } };
+    take(40 * 60, 'week'); take(8 * 60, 'day'); take(60, 'hour'); take(1, 'minute');
+    return parts.join(' ');
+  }
+  // "3 days" or "2 days to 1 week 1 day": from the shortest to the longest.
+  function formatTime(lo, hi) {
+    if (!(hi > 0)) return '';
+    return Math.abs(hi - lo) < 1 / 120 ? exactTime(hi) : `${exactTime(lo)} to ${exactTime(hi)}`;
+  }
+  // How long the process takes, along its longest path (an arrow that loops back to an earlier step is left out),
+  // and for each step how long it takes to reach it and how long from it to the end. Steps without a time count as
+  // nothing. Loops are found from the arrows themselves, not from where boxes sit, so two steps in one column are fine.
+  function durations(L) {
+    const own = {}, ins = {}, outs = {}, next = {}; let timed = 0;
+    L.nodes.forEach(n => { const t = parseTime(n.time); own[n.id] = t || { lo: 0, hi: 0 }; if (t) timed++; ins[n.id] = []; outs[n.id] = []; next[n.id] = []; });
+    L.edges.forEach(e => { if (e.from !== e.to && own[e.from] && own[e.to]) next[e.from].push(e.to); });
+    const state = {}, loop = new Set(), dfs = id => { state[id] = 1; next[id].forEach(to => { if (state[to] === 1) loop.add(id + '>' + to); else if (!state[to]) dfs(to); }); state[id] = 2; };
+    const hasIn = new Set(L.edges.map(e => e.to)); L.nodes.filter(n => !hasIn.has(n.id)).concat(L.nodes).forEach(n => { if (!state[n.id]) dfs(n.id); });
+    L.nodes.forEach(n => next[n.id].forEach(to => { if (!loop.has(n.id + '>' + to)) { outs[n.id].push(to); ins[to].push(n.id); } }));
+    const order = [], seen = {}, visit = id => { if (seen[id]) return; seen[id] = 1; ins[id].forEach(visit); order.push(id); };
+    L.nodes.forEach(n => visit(n.id));
+    const before = {}, after = {};
+    order.forEach(id => { before[id] = ins[id].reduce((m, p) => ({ lo: Math.max(m.lo, before[p].lo + own[p].lo), hi: Math.max(m.hi, before[p].hi + own[p].hi) }), { lo: 0, hi: 0 }); });
+    order.slice().reverse().forEach(id => { const tail = outs[id].reduce((m, q) => ({ lo: Math.max(m.lo, after[q].lo), hi: Math.max(m.hi, after[q].hi) }), { lo: 0, hi: 0 }); after[id] = { lo: own[id].lo + tail.lo, hi: own[id].hi + tail.hi }; });
+    const total = L.nodes.reduce((m, n) => ({ lo: Math.max(m.lo, before[n.id].lo + after[n.id].lo), hi: Math.max(m.hi, before[n.id].hi + after[n.id].hi) }), { lo: 0, hi: 0 });
+    // The ideal path (the glowing one) at the shortest end of each time, and the longest way through, every branch
+    // and No path included, at the longest end. Loops back are not counted: each time round adds its steps again.
+    const idealIds = new Set(); L.edges.forEach(e => { if (e.isIdeal) { idealIds.add(e.from); idealIds.add(e.to); } });
+    const colOf = {}; L.nodes.forEach(n => { colOf[n.id] = n.layout ? n.layout.col : 0; });
+    const shortest = ids => {   // with no ideal path marked: the quickest way from a start to the last step (the right-most end)
+      const best = {}, ends = [];
+      order.forEach(id => { if (!ids.has(id)) return; const from = ins[id].filter(p => ids.has(p)); best[id] = own[id].lo + (from.length ? Math.min(...from.map(p => best[p])) : 0); if (!outs[id].some(q => ids.has(q))) ends.push(id); });
+      if (!ends.length) return 0;
+      const last = ends.reduce((m, id) => colOf[id] > colOf[m] || (colOf[id] === colOf[m] && best[id] > best[m]) ? id : m, ends[0]);
+      return best[last];
+    };
+    const longest = ids => {
+      const best = {}; let out = 0;
+      order.forEach(id => { if (!ids.has(id)) return; best[id] = own[id].hi + Math.max(0, ...ins[id].filter(p => ids.has(p)).map(p => best[p])); out = Math.max(out, best[id]); });
+      return out;
+    };
+    const span = ids => {
+      const onIdeal = [...ids].filter(id => idealIds.has(id));
+      const lo = onIdeal.length ? onIdeal.reduce((sum, id) => sum + own[id].lo, 0) : shortest(ids);
+      return { lo, hi: longest(ids), timed: [...ids].filter(id => own[id].hi).length, idealTimed: onIdeal.length ? onIdeal.filter(id => own[id].hi).length : lo > 0 ? 1 : 0 };
+    };
+    const all = new Set(L.nodes.map(n => n.id)), whole = span(all);
+    const phases = (L.phases || []).map(p => Object.assign({ id: p.id, title: p.title }, span(new Set(L.nodes.filter(n => n.inPhase === p.id).map(n => n.id)))));
+    return { own, before, after, total, timed, steps: L.nodes.length, ideal: whole.lo, longest: whole.hi, idealTimed: whole.idealTimed, phases, loops: loop.size };
+  }
+
+  return { importArcweave, normalize, centerSketch, layout, classifyLabel, htmlToText, laneColors, parseTime, formatTime, exactTime, durations, LANE_COLORS, PHASE_COLORS };
 })();
 
 /*
@@ -721,6 +980,9 @@ const Engine = (() => {
  *            fs: font scale 0.7 to 1.4              hc: high contrast (exports only)
  *            aligned: phase export keeps the full diagram's rows and positions
  *            selNodes, selEdges: Sets of selected ids      onNode, onEdge, onLane: click handlers (screen mode)
+ *            onNodeDown(id, ev): a box is pressed (to drag it)  onEnd({id, end, box}, ev): an arrow's end is pressed
+ *            onInsert(edgeId): the "+" on the selected arrow is pressed (a new step goes on that arrow)
+ *            flags: { id: 'none' | 'in' | 'out' } boxes to outline as missing an arrow
  *
  * build() is a pure function of (L, options). Screen, print and images all call it.
  */
@@ -789,7 +1051,13 @@ const Render = (() => {
     const SLOTS = (PHASE && !O.aligned) ? (usedSlot1(ids) ? 2 : 1) : 0;
     const slotsOf = () => SLOTS || 2;
     const HB = Math.round(84 * Math.max(1, FS)), TMv = 62 + HB + 6;
-    const lanes = L.lanes.map(l => Object.assign({}, laneBy[l.id])); let acc = TMv;
+    // A phase page leaves out the lanes with nothing in that phase (keeping a lane a "from/to another phase" box sits in)
+    let inPage = null;
+    if (PHASE && !O.aligned) {
+      const inS = new Set(ids); inPage = new Set(ids.map(id => ND[id].lane));
+      L.edges.forEach(e => { if (eff(e).hide) return; const ai = inS.has(e.from), bi = inS.has(e.to); if (ai !== bi) inPage.add(ND[ai ? e.to : e.from].lane); });
+    }
+    const lanes = L.lanes.filter(l => !inPage || inPage.has(l.id)).map(l => Object.assign({}, laneBy[l.id])); let acc = TMv;
     lanes.forEach(l => { l.top = acc; l.h = slotsOf() * SH; acc += l.h; });
     const laneTop = {}; lanes.forEach(l => { laneTop[l.id] = l.top; });
     const bottom = acc;
@@ -822,12 +1090,12 @@ const Render = (() => {
       for (let c = phs.s; c <= phs.e; c++) { if (c > phs.s) x += colW[c - 1] + gap(c); CX[c] = x; }
       CX[phs.s - 1] = LM + 24; CX[phs.e + 1] = CX[phs.e] + colW[phs.e] + GP; w = CX[phs.e] + colW[phs.e] + (hasOut ? GP + GW : 0) + 30;
     }
-    const h = bottom + 30;
+    let h = bottom + 30;
     const usesS1 = {}; for (const id of (O.aligned ? L.nodes.map(n => n.id) : ids)) { if (slotOf(id) === 1) usesS1[ND[id].lane] = 1; }
     const rowY = (ln, sl) => usesS1[ln] ? laneTop[ln] + sl * SH + SH / 2 : laneTop[ln] + slotsOf() * SH / 2;
 
     const P = {};
-    for (const id of ids) { const n = ND[id], d = isDia(id), yc = rowY(n.lane, slotOf(id)), hh = HT[id], c = colOf(id); P[id] = { id, ln: n.lane, sl: slotOf(id), c, t: TXT[id], num: d ? null : n.number, letter: n.letter, dia: d, note: n.note || '', x: CX[c] + (colW[c] - WD[id]) / 2, yc, y: yc - hh / 2, w: WD[id], h: hh }; }
+    for (const id of ids) { const n = ND[id], d = isDia(id), yc = rowY(n.lane, slotOf(id)), hh = HT[id], c = colOf(id); P[id] = { id, ln: n.lane, sl: slotOf(id), c, t: TXT[id], num: d ? null : n.number, letter: n.letter, dia: d, note: n.note || '', time: n.time || '', broken: n.broken || '', link: n.link || '', cutoff: n.cutoff || '', x: CX[c] + (colW[c] - WD[id]) / 2, yc, y: yc - hh / 2, w: WD[id], h: hh }; }
     const label = id => isDia(id) ? ND[id].letter : ND[id].number;
     for (const gid in ghosts) {
       const g = ghosts[gid], r = ND[g.ref], yc = rowY(r.lane, slotOf(g.ref));
@@ -985,6 +1253,47 @@ const Render = (() => {
 
     for (const e of vis) { const r = pathHit(e.pts, [e.a, e.b]); if (r && P[r] && !P[r].ghost) warns.push('The arrow ' + nm(e.raw.from) + ' to ' + nm(e.raw.to) + ' crosses box ' + nm(r)); }
 
+    // ---- the keys: what is listed under a printed swimlane, and the whole process's time
+    const KEYED = { broken: Object.keys(P).filter(id => !P[id].ghost && P[id].broken), note: Object.keys(P).filter(id => !P[id].ghost && P[id].note) };
+    const timing = Engine.durations(L), TOTAL = timing.timed ? `Whole process: ${timing.idealTimed ? `${Engine.exactTime(timing.ideal)} on the ideal path to ` : 'up to '}${Engine.exactTime(timing.longest)} on the longest (${timing.timed} of ${timing.steps} steps have a time${timing.loops ? '; each loop back adds its steps again' : ''})` : '';
+    const phaseTime = id => { const p = timing.phases.find(q => q.id === id); return !p || !p.timed ? '' : p.idealTimed ? Engine.formatTime(p.lo, p.hi) : `up to ${Engine.exactTime(p.hi)}`; };
+    let listH = 0;
+    // The key list under a printed swimlane: as many characters a line as its column has room for, a word too long
+    // for a line broken, and each of several notes on a step ("a · b") starting a line of its own.
+    const listChars = broken => { const both = KEYED.broken.length && KEYED.note.length, room = both ? Math.max(560, w / 2) - 40 : w - LM - 20; return Math.max(40, Math.min(110, Math.floor(room / 6.1))); };
+    const listLines = (text, n) => String(text).split(/\s+·\s+/).flatMap((para, i) => wrap(para.split(' ').map(word => word.length > n ? word.match(new RegExp(`.{1,${n - 1}}`, 'g')).join('- ') : word).join(' '), n).map((t, j) => (i && !j ? '• ' : '') + t));
+    if (!UI) {
+      const tall = ids => ids.reduce((sum, id) => sum + listLines(P[id][ids === KEYED.broken ? 'broken' : 'note'], listChars(ids === KEYED.broken)).length * 15 + 8, 30);
+      listH = Math.max(KEYED.broken.length ? tall(KEYED.broken) : 0, KEYED.note.length ? tall(KEYED.note) : 0) + (TOTAL ? 30 : 0);
+      if (listH) h += listH + 20;
+    }
+    function timeTag(parent, x, y, text, legend) {
+      const tw = Math.max(34, String(text).length * 6.4 + 14) * FS, g = add(parent, 'g', { transform: `rotate(-12 ${x + tw / 2} ${y})`, 'pointer-events': 'none' });
+      add(g, 'rect', { x, y: y - 9 * FS, width: tw, height: 18 * FS, rx: 3, fill: '#c9e7b8', stroke: '#4f8a34', 'stroke-width': 1.2 });
+      add(g, 'text', { x: x + tw / 2, y: y + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 10.5, 'font-weight': 700, fill: '#2f5d1e' }, text);
+      return g;
+    }
+    function brokenMark(parent, x, y, text) {             // a broken heart; on paper its number sits on a small badge
+      const g = add(parent, 'g', { 'class': 'key-mark', style: UI ? 'cursor:help' : '' });
+      const h = add(g, 'g', { transform: `translate(${x - 12} ${y - 12.5})` });
+      add(h, 'path', { d: 'M12 21s-7.4-4.5-9.6-9.1C.9 8.6 2.6 4.7 6.3 4.3c2.2-.2 3.8.9 5.7 2.9 1.9-2 3.5-3.1 5.7-2.9 3.7.4 5.4 4.3 3.9 7.6C19.4 16.5 12 21 12 21z', fill: '#d64545', stroke: '#fff', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+      add(h, 'path', { d: 'M12.2 7.6 10.4 11l2.5 1.7-1.9 3.7', fill: 'none', stroke: '#fff', 'stroke-width': 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      if (text && text !== '!') { add(g, 'circle', { cx: x + 9, cy: y - 9, r: 7, fill: '#7d1f1f', stroke: '#fff', 'stroke-width': 1.4 }); add(g, 'text', { x: x + 9, y: y - 8.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 9, 'font-weight': 800, fill: '#fff' }, text); }
+      return g;
+    }
+    function alarmMark(parent, cx, cy, text) {            // the cutoff time: an alarm clock with the time on its face
+      const g = add(parent, 'g', { 'class': 'key-mark', 'pointer-events': 'none' });
+      const c = add(g, 'g', { transform: `translate(${cx - 16} ${cy - 17})` }); c.innerHTML = `<path d='M9.5 27.5 7 30.5M22.5 27.5 25 30.5' stroke='#c26a12' stroke-width='2.2' stroke-linecap='round' fill='none'/><path d='M4.2 10.2a5.6 5.6 0 0 1 6.6-6.6M27.8 10.2a5.6 5.6 0 0 0-6.6-6.6' stroke='#c26a12' stroke-width='3.2' stroke-linecap='round' fill='none'/><circle cx='16' cy='17' r='11.4' fill='#fff7e8' stroke='#c26a12' stroke-width='2'/>`;
+      const t = String(text || ''); add(g, 'text', { x: cx, y: cy + 0.6, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': t.length <= 3 ? 8.6 : t.length <= 5 ? 7 : 5.8, 'font-weight': 800, fill: '#8a4b0f', 'letter-spacing': -0.2 }, t);
+      return g;
+    }
+    function cloudMark(parent, x, y, text) {             // a small whole cloud; on paper its number sits inside
+      const g = add(parent, 'g', { 'class': 'key-mark', style: UI ? 'cursor:help' : '' });
+      add(add(g, 'g', { transform: `translate(${x - 9} ${y - 12.5})` }), 'path', { d: 'M7.2 16.6a3.8 3.8 0 0 1-1.6-7.3 5.3 5.3 0 0 1 10-2.9 4.2 4.2 0 0 1 6.5 3.3 3.6 3.6 0 0 1-.8 6.9 3.1 3.1 0 0 1-4.6.4 3.6 3.6 0 0 1-5.3.2 3 3 0 0 1-4.2-.6z', fill: '#ffe6fa', stroke: '#b4589b', 'stroke-width': 1.4, 'stroke-linejoin': 'round' });
+      if (text) add(g, 'text', { x: x + 3.5, y: y - 1.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 9.5, 'font-weight': 800, fill: '#7d2e67' }, text);
+      return g;
+    }
+
     // ---- drawing
     const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('xmlns', NS); svg.setAttribute('font-family', 'Segoe UI, Arial, sans-serif');
     const defs = add(svg, 'defs', {}), mk = {};
@@ -998,6 +1307,12 @@ const Render = (() => {
         add(svg, 'line', { x1: lx, x2: lx + 28, y1: 48, y2: 48, stroke: KC[k] || OTHER, 'stroke-width': 2.8 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, t); lx += 34 + t.length * 6.6 * FS + 22;
       });
       add(svg, 'path', { d: `M${lx + 9} 48 l9 -8 l9 8 l-9 8 z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 1.5 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, 'Decision');
+      // the three keys, shown only when the map uses them
+      lx += 34 + 8 * 6.6 * FS + 22;
+      if (L.nodes.some(n => n.time)) { timeTag(svg, lx + 4, 48, '2 days', true); add(svg, 'text', { x: lx + 64, y: 52, 'font-size': 12, fill: '#444' }, 'Time'); lx += 64 + 4 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.broken)) { brokenMark(svg, lx + 10, 48, '!'); add(svg, 'text', { x: lx + 26, y: 52, 'font-size': 12, fill: '#444' }, 'Something broken'); lx += 26 + 16 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.note)) { cloudMark(svg, lx + 12, 48, ''); add(svg, 'text', { x: lx + 30, y: 52, 'font-size': 12, fill: '#444' }, 'Note'); lx += 30 + 4 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.cutoff)) { alarmMark(svg, lx + 12, 47, '3pm'); add(svg, 'text', { x: lx + 32, y: 52, 'font-size': 12, fill: '#444' }, 'Cutoff time'); }
     }
     lanes.forEach((l, i) => {
       add(svg, 'rect', { x: 0, y: l.top, width: w, height: l.h, fill: i % 2 ? '#fff' : '#f6f6f2', 'data-lane-row': l.id });
@@ -1011,12 +1326,15 @@ const Render = (() => {
       });
     });
     add(svg, 'line', { x1: 0, x2: w, y1: bottom, y2: bottom, stroke: '#cfcfc8' });
+    const spans = [];
     (PHASE ? [phs] : PH).forEach(ph => {
       const x0 = (ph.s === 0 || PHASE) ? LM - 30 : CX[ph.s] - 45, x1 = (ph.e === NCOL - 1 || PHASE) ? w : CX[ph.e] + colW[ph.e] + 45;
+      spans.push({ x0, x1, title: ph.title, subtitle: ph.subtitle || '', color: ph.color, time: phaseTime(ph.id) });
       add(svg, 'rect', { x: x0, y: TMv, width: x1 - x0, height: bottom - TMv, fill: ph.color, 'fill-opacity': .07 });
       add(svg, 'rect', { x: x0, y: 62, width: x1 - x0, height: HB, fill: ph.color });
       add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.41, 'font-size': 36, 'font-weight': 700, 'dominant-baseline': 'central', fill: '#fff' }, ph.title);
       add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.80, 'font-size': 17, 'dominant-baseline': 'central', fill: '#fff', 'fill-opacity': .95 }, ph.subtitle || '');
+      if (phaseTime(ph.id) && !UI) add(svg, 'text', { x: x1 - 20, y: 62 + HB * 0.41, 'font-size': 20, 'font-weight': 700, 'text-anchor': 'end', 'dominant-baseline': 'central', fill: '#fff' }, '\u23F1 ' + phaseTime(ph.id));
       if (ph.s > 0 && !PHASE) add(svg, 'line', { x1: x0, x2: x0, y1: 62, y2: bottom, stroke: ph.color, 'stroke-width': 3, 'stroke-dasharray': '10 6' });
     });
     const glowG = add(svg, 'g', {}), sub = add(svg, 'g', {});
@@ -1036,14 +1354,22 @@ const Render = (() => {
       if (n.dia) {
         const cxn = n.x + n.w / 2; add(box, 'path', { d: `M${n.x} ${n.yc} L${cxn} ${n.y} L${n.x + n.w} ${n.yc} L${cxn} ${n.y + n.h} Z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 2 });
         const ls = wrap(n.t, Math.max(8, Math.floor(17 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: cxn, y: n.yc - (ls.length - 1) * 7 * FS + i * 14 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, fill: '#4a3a00' }, t));
-        add(box, 'circle', { cx: n.x + 14, cy: n.y + 10, r: 10, fill: '#7a5c00' }); add(box, 'text', { x: n.x + 14, y: n.y + 11, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, n.letter);
+        const bx = n.x + n.w * 0.25, by = n.y + n.h * 0.25;          // on the upper-left edge
+        add(box, 'circle', { cx: bx, cy: by, r: 10, fill: '#7a5c00', stroke: '#fff', 'stroke-width': 1.5 }); add(box, 'text', { x: bx, y: by + 1, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, n.letter);
       } else {
         add(box, 'rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 6, fill: l.f, stroke: l.s, 'stroke-width': 1.6 });
         const ls = wrap(n.t, Math.max(10, Math.floor(27 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: n.x + n.w / 2, y: n.yc - (ls.length - 1) * 7.25 * FS + i * 14.5 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12.5, fill: '#222' }, t));
         add(box, 'circle', { cx: n.x + 4, cy: n.y + 2, r: 11, fill: '#fff', stroke: l.s, 'stroke-width': 1.6 }); add(box, 'text', { x: n.x + 4, y: n.y + 3, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, 'font-weight': 700, fill: l.s, 'data-lane': 1 }, String(n.num));
       }
       if (UI && O.onNode) {
-        const ov = add(svg, 'rect', { 'class': 'uionly', x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent', style: 'cursor:pointer' }); ov.addEventListener('mousedown', ev => ev.stopPropagation()); ov.addEventListener('click', ev => { ev.stopPropagation(); O.onNode(id, ev); });
+        const flag = O.flags && O.flags[id];
+        if (flag) {                                         // missing an arrow: red with none at all, amber with no way in or no way out
+          const c = flag === 'none' ? '#d64545' : '#e0a100', pad = 7;
+          if (n.dia) add(svg, 'path', { 'class': 'uionly flag-ring', d: `M${n.x - pad * 1.6} ${n.yc} L${n.x + n.w / 2} ${n.y - pad} L${n.x + n.w + pad * 1.6} ${n.yc} L${n.x + n.w / 2} ${n.y + n.h + pad} Z`, fill: c, 'fill-opacity': .12, stroke: c, 'stroke-width': 3, 'stroke-dasharray': '7 4', 'pointer-events': 'none' });
+          else add(svg, 'rect', { 'class': 'uionly flag-ring', x: n.x - pad, y: n.y - pad, width: n.w + pad * 2, height: n.h + pad * 2, rx: 10, fill: c, 'fill-opacity': .12, stroke: c, 'stroke-width': 3, 'stroke-dasharray': '7 4', 'pointer-events': 'none' });
+        }
+        const ov = add(svg, 'rect', { 'class': 'uionly', x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent', style: O.onNodeDown ? 'cursor:grab' : 'cursor:pointer' });
+        ov.addEventListener('mousedown', ev => { ev.stopPropagation(); if (O.onNodeDown && ev.button === 0) O.onNodeDown(id, ev); }); ov.addEventListener('click', ev => { ev.stopPropagation(); O.onNode(id, ev); });
         if (selNodes.has(id)) add(svg, 'rect', { 'class': 'uionly', x: n.x - 6, y: n.y - 6, width: n.w + 12, height: n.h + 12, rx: 9, fill: 'none', stroke: '#a855f7', 'stroke-width': 3, 'stroke-dasharray': '8 5', 'pointer-events': 'none' });
       }
     }
@@ -1093,15 +1419,57 @@ const Render = (() => {
         grip.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); O.onSeg({ id: e.id, seg: i, axis: hz ? 1 : 0, n: e.pts.length }, ev); });
         grip.addEventListener('click', ev => ev.stopPropagation());
       }
+      if (e && e.a !== e.b && !ghosts[e.id] && O.onInsert) {     // on its longest piece, beside that piece's grip
+        let best = 0, len = -1; for (let i = 0; i < e.pts.length - 1; i++) { const l = Math.hypot(e.pts[i + 1][0] - e.pts[i][0], e.pts[i + 1][1] - e.pts[i][1]); if (l > len) { len = l; best = i; } }
+        const a = e.pts[best], b = e.pts[best + 1], k = len > 80 ? Math.min(0.5, 30 / len) : 0, px = (a[0] + b[0]) / 2 + (b[0] - a[0]) * k, py = (a[1] + b[1]) / 2 + (b[1] - a[1]) * k;
+        const plus = add(svg, 'g', { 'class': 'uionly add-grip', transform: `translate(${px} ${py})`, style: 'cursor:copy' });
+        add(plus, 'title', {}, 'Add a step on this arrow');
+        add(plus, 'circle', { r: 12, fill: '#a855f7', stroke: '#fff', 'stroke-width': 2.5 }); add(plus, 'path', { d: 'M-5 0H5M0 -5V5', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+        plus.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); }); plus.addEventListener('click', ev => { ev.stopPropagation(); O.onInsert(e.id); });
+      }
+      if (e && e.a !== e.b && !ghosts[e.id] && O.onEnd) [['a', e.pts[0], e.a], ['b', e.pts[e.pts.length - 1], e.b]].forEach(([end, p, box]) => {
+        const h = add(svg, 'g', { 'class': 'uionly end-grip', transform: `translate(${p[0]} ${p[1]})`, style: 'cursor:move' });
+        add(h, 'title', {}, end === 'a' ? 'Drag to choose the side this arrow leaves from' : 'Drag to choose the side this arrow goes in');
+        add(h, 'circle', { r: 8, fill: '#fff', stroke: '#a855f7', 'stroke-width': 2.6 }); add(h, 'circle', { r: 3, fill: '#a855f7' });
+        h.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); O.onEnd({ id: e.id, end, box }, ev); });
+        h.addEventListener('click', ev => ev.stopPropagation());
+      });
     }
 
-    // ---- notes: a dashed card above its box
+    // ---- the keys on each box: a time tag on the top right, a problem mark on the bottom right, a small note cloud
+    //      on the bottom left. On screen the mark and the cloud open when pointed at; on paper they carry a number
+    //      that the list under the swimlane explains.
     for (const id in P) {
-      const n = P[id]; if (!n.note) continue;
-      const lines = wrap(n.note, HC ? 38 : 34), nw = 210 * FS, nh = (lines.length * 15 + 19) * FS, nx = n.x - 14, ny = n.y - nh - 26;
-      add(svg, 'line', { x1: n.x + n.w / 2, y1: ny + nh, x2: n.x + n.w / 2, y2: n.y - 2, stroke: '#6b7a8c', 'stroke-dasharray': '3 3', 'stroke-width': 1.5 });
-      add(svg, 'rect', { x: nx, y: ny, width: nw, height: nh, rx: 6, fill: '#eef3f8', stroke: '#6b7a8c', 'stroke-dasharray': '5 3' });
-      lines.forEach((t, i) => add(svg, 'text', { x: nx + 10, y: ny + 18 * FS + i * 15 * FS, 'font-size': 11.5, fill: '#2b3b4d' }, t));
+      const n = P[id]; if (n.ghost) continue;
+      const on = n.dia ? { time: [n.x + n.w * 0.75 - 12, n.y + n.h * 0.25 - 6], broken: [n.x + n.w * 0.75, n.y + n.h * 0.75], note: [n.x + n.w * 0.25 - 5, n.y + n.h * 0.75 + 3], link: [n.x + n.w / 2 + 14, n.y - 17], cutoff: [n.x + n.w / 2, n.y - 6] }
+        : { time: [n.x + n.w - 34, n.y - 4], broken: [n.x + n.w - 2, n.y + n.h - 2], note: [n.x + 4, n.y + n.h - 2], link: [n.x + 20, n.y - 9], cutoff: [n.x + n.w / 2, n.y - 6] };
+      if (n.cutoff) alarmMark(svg, on.cutoff[0], on.cutoff[1], n.cutoff);
+      if (n.time) timeTag(svg, on.time[0], on.time[1], n.time, false);
+      if (/^https?:\/\//i.test(n.link)) {                  // a link: on screen it opens; on paper it is just the icon
+        const holder = UI ? add(svg, 'a', { href: n.link, target: '_blank', rel: 'noopener', 'class': 'key-link' }) : svg, g = add(holder, 'g', { transform: `translate(${on.link[0]} ${on.link[1]})`, style: UI ? 'cursor:pointer' : '' });
+        if (UI) add(g, 'title', {}, 'Open the link');
+        add(g, 'circle', { cx: 9, cy: 9, r: 9.5, fill: '#fff', stroke: '#2f6fb3', 'stroke-width': 1.6 });
+        add(g, 'path', { d: 'M7.8 10.2a2.4 2.4 0 0 0 3.4 0l1.8-1.8a2.4 2.4 0 0 0-3.4-3.4l-.8.8M10.2 7.8a2.4 2.4 0 0 0-3.4 0L5 9.6a2.4 2.4 0 0 0 3.4 3.4l.8-.8', fill: 'none', stroke: '#2f6fb3', 'stroke-width': 1.5, 'stroke-linecap': 'round' });
+        if (UI) holder.addEventListener('mousedown', ev => ev.stopPropagation());
+      }
+      if (n.broken) { const k = KEYED.broken.indexOf(id) + 1, g = brokenMark(svg, on.broken[0], on.broken[1], UI ? '!' : String(k)); if (UI) { g.setAttribute('data-pop', n.broken); g.setAttribute('data-pop-kind', 'broken'); } }
+      if (n.note) { const k = KEYED.note.indexOf(id) + 1, g = cloudMark(svg, on.note[0], on.note[1], UI ? '' : String(k)); if (UI) { g.setAttribute('data-pop', n.note); g.setAttribute('data-pop-kind', 'note'); } }
+    }
+    if (!UI && listH) {
+      let y = bottom + 34; const col = (x, title, items, mark) => { let yy = y; add(svg, 'text', { x, y: yy, 'font-size': 13, 'font-weight': 700, fill: '#222' }, title); yy += 22;
+        const n = listChars(title !== 'Notes');
+        items.forEach(([k, text]) => { mark(x + 9, yy - 4, k); const ls = listLines(text, n); ls.forEach((t, i) => { add(svg, 'text', { x: x + 28, y: yy + i * 15, 'font-size': 11.5, fill: '#333' }, t); }); yy += ls.length * 15 + 8; }); };
+      if (TOTAL) add(svg, 'text', { x: LM - 10, y: y - 6, 'font-size': 13, 'font-weight': 700, fill: '#2f5d1e' }, TOTAL);
+      if (KEYED.broken.length) col(LM - 10, 'Something broken', KEYED.broken.map((id, i) => [String(i + 1), P[id].broken]), (x, yy, k) => brokenMark(svg, x, yy, k));
+      if (KEYED.note.length) col(KEYED.broken.length ? LM - 10 + Math.max(560, w / 2) : LM - 10, 'Notes', KEYED.note.map((id, i) => [String(i + 1), P[id].note]), (x, yy, k) => cloudMark(svg, x, yy, k));
+    }
+    // On screen the app draws the phases along the top and the lane names down the left itself, pinned in place
+    // while the swimlane moves under them (like tracks in a video editor), so the drawing starts below and right of them.
+    if (UI && !PHASE) {
+      const X0 = LM - 30, Y0 = TMv;
+      svg.setAttribute('viewBox', `${X0} ${Y0} ${w - X0} ${h - Y0}`); svg.setAttribute('width', w - X0); svg.setAttribute('height', h - Y0);
+      return { svg, warns, edges, nm, w: w - X0, h: h - Y0, bottom, P, geo: { CX, colW, NCOL, lanes: lanes.map(l => ({ id: l.id, top: l.top, h: l.h })) },
+        tracks: lanes.map(l => ({ id: l.id, name: l.n, color: l.s, fill: l.f, top: l.top - Y0, h: l.h })), spans: spans.map(q => Object.assign(q, { x0: q.x0 - X0, x1: q.x1 - X0 })) };
     }
     return { svg, warns, edges, nm, w, h, bottom, P };
   }
@@ -1312,13 +1680,19 @@ const App = (() => {
   let doc = null, L = null, built = null;
   const sel = { nodes: new Set(), edges: new Set() };
   let undoStack = [], redoStack = [];
-  const ui = { fs: 1, hc: false, view: 'split', stack: false, exportMode: 'fit' };
+  const ui = { fs: 1, hc: false, view: 'split', stack: false, exportMode: 'fit', flags: false };
   const bv = { s: 1, x: 30, y: 30 };              // board view (zoom and pan)
   const sv = { s: 1, x: 0, y: 0, fitted: false };  // swimlane view
   const dims = {};                                 // measured card sizes on the board
 
   // ------------------------------------------------------------------ document, undo, storage
-  function save() { try { localStorage.setItem(STORE, JSON.stringify({ doc, ui })); } catch (ignored) {} }
+  // A link can open the page to look only (mode=view). A viewer can look, move around, select and print, but
+  // nothing it does changes the map, and it never overwrites the map this browser keeps for its own editing.
+  // mode=embed is a viewer with nothing around it: just the swimlane to move around in, for putting inside another page.
+  const PARAMS = new URLSearchParams(location.search), MODE = (PARAMS.get('mode') || '').toLowerCase(), EMBED = MODE === 'embed', VIEWER = MODE === 'view' || EMBED;
+  function save() { if (VIEWER) return; try { localStorage.setItem(STORE, JSON.stringify({ doc, ui })); } catch (ignored) {} }
+  // Only web links may be followed from a step.
+  const safeLink = text => { const t = String(text || '').trim(); if (!t) return ''; const u = /^[a-z][\w+.-]*:/i.test(t) ? t : 'https://' + t; return /^https?:\/\/[^\s]+$/i.test(u) ? u : ''; };
   function load() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORE));
@@ -1327,23 +1701,49 @@ const App = (() => {
     doc = Engine.normalize(SAMPLE_MAP);
   }
   function recompute() {
-    try { L = Engine.layout(doc); } catch (error) { console.error(error); status('Layout problem: ' + error.message, true); }
+    try { L = Engine.layout(doc); squeezeColumns(); } catch (error) { console.error(error); status('Layout problem: ' + error.message, true); }
+  }
+  // Empty columns close up: after a step is moved or removed, the boxes it left a gap between sit side by side again
+  // (the columns boxes are pinned to are renumbered without the gaps).
+  function squeezeColumns() {
+    if (!doc.nodes.some(n => n.layout && n.layout.pinned)) return;
+    const used = [...new Set(L.nodes.map(n => n.layout.col))].sort((a, b) => a - b);
+    if (!used.length || used[used.length - 1] === used.length - 1) return;
+    const to = {}; used.forEach((c, i) => { to[c] = i; });
+    doc.nodes.forEach(n => { if (!n.layout || !n.layout.pinned) return; const at = L.nodes.find(m => m.id === n.id); if (at && to[at.layout.col] !== undefined) n.layout = Object.assign({}, n.layout, { col: to[at.layout.col] }); });
+    L = Engine.layout(doc);
   }
   // Every edit goes through change(): it records an undo step, applies the edit and redraws both views.
   function change(edit, opts) {
+    if (VIEWER) return;
     undoStack.push(JSON.stringify(doc)); if (undoStack.length > 120) undoStack.shift(); redoStack = [];
     edit();
     refresh(opts);
+  }
+  function linkFlags() {
+    if (!L || !L.nodes.length) return {};
+    const ins = {}, outs = {}, cols = L.nodes.map(n => n.layout.col), first = Math.min(...cols), last = Math.max(...cols), out = {};
+    doc.edges.forEach(e => { if (e.from === e.to) return; outs[e.from] = (outs[e.from] || 0) + 1; ins[e.to] = (ins[e.to] || 0) + 1; });
+    L.nodes.forEach(n => {
+      const i = ins[n.id] || 0, o = outs[n.id] || 0;
+      if (!i && !o) out[n.id] = 'none'; else if (!i && n.layout.col !== first) out[n.id] = 'in'; else if (!o && n.layout.col !== last) out[n.id] = 'out';
+    });
+    return out;
+  }
+  function flagButton() {
+    const f = linkFlags(), n = Object.keys(f).length, b = $('#bFlags'); if (!b) return;
+    b.setAttribute('aria-pressed', String(ui.flags)); $('#flagCount').textContent = n ? String(n) : ''; b.classList.toggle('has', n > 0);
+    b.title = n ? `${n} box${n === 1 ? ' is' : 'es are'} missing an arrow. Click to ${ui.flags ? 'stop outlining them' : 'outline them'}.` : 'Every box has its arrows';
   }
   function refresh(opts) {
     for (const id of [...sel.nodes]) if (!doc.nodes.some(n => n.id === id)) sel.nodes.delete(id);
     for (const id of [...sel.edges]) if (!doc.edges.some(e => e.id === id)) sel.edges.delete(id);
     recompute(); save(); drawBoard(); drawSwimlane();
     if (!(opts && opts.keepInspector)) drawInspector();
-    $('#bUndo').disabled = !undoStack.length; $('#bRedo').disabled = !redoStack.length;
+    $('#bUndo').disabled = !undoStack.length; $('#bRedo').disabled = !redoStack.length; flagButton();
   }
-  function undo() { if (!undoStack.length) return; redoStack.push(JSON.stringify(doc)); doc = JSON.parse(undoStack.pop()); refresh(); }
-  function redo() { if (!redoStack.length) return; undoStack.push(JSON.stringify(doc)); doc = JSON.parse(redoStack.pop()); refresh(); }
+  function undo() { if (VIEWER || !undoStack.length) return; redoStack.push(JSON.stringify(doc)); doc = JSON.parse(undoStack.pop()); refresh(); }
+  function redo() { if (VIEWER || !redoStack.length) return; undoStack.push(JSON.stringify(doc)); doc = JSON.parse(redoStack.pop()); refresh(); }
   function setDoc(next, note) {
     undoStack.push(JSON.stringify(doc)); redoStack = [];
     doc = Engine.normalize(next); sel.nodes.clear(); sel.edges.clear(); sv.fitted = false;
@@ -1428,26 +1828,44 @@ const App = (() => {
     bv.x = (r.width - (x1 - x0) * bv.s) / 2 - x0 * bv.s; bv.y = (r.height - (y1 - y0) * bv.s) / 2 - y0 * bv.s; applyBoardView();
   }
 
+  // Text for a key's pop-up: several notes on one step ("a · b") become paragraphs of their own
+  const popText = t => String(t || '').split(/\s+·\s+/).map(p => `<span class="pop-p">${esc(p)}</span>`).join('');
   function drawBoard() {
     if (!L) return;
     const cards = $('#cards');
     // The first tagged card of each phase carries the "Phase start" flag.
     const phaseStart = {};
     L.phases.forEach((p, i) => { if (!i) return; const first = L.nodes.filter(n => node(n.id).phase === p.id && n.layout.col === p.s)[0]; if (first) phaseStart[first.id] = true; });
+    const flags = linkFlags();
     cards.innerHTML = L.nodes.map(n => {
       const ln = lane(n.lane), decision = n.type === 'decision', picked = sel.nodes.has(n.id);
-      return `<div class="card ${decision ? 'decision' : 'step'}${picked ? ' sel' : ''}" data-id="${esc(n.id)}" style="left:${n.sketch.x}px;top:${n.sketch.y}px;width:${CARD_W}px;--lane:${esc(ln.color)};--tint:${esc(ln.fill)}">
+      const flag = ui.flags && !VIEWER ? flags[n.id] : '';
+      return `<div class="card ${decision ? 'decision' : 'step'}${picked ? ' sel' : ''}${flag ? ' flag-' + flag : ''}" data-id="${esc(n.id)}" style="left:${n.sketch.x}px;top:${n.sketch.y}px;width:${CARD_W}px;--lane:${esc(ln.color)};--tint:${esc(ln.fill)}">
         <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}</div>
         <div class="card-body">${esc(n.text) || '<i>Double-click to write</i>'}</div>
-        ${n.note ? `<div class="card-note">${esc(n.note)}</div>` : ''}
+        ${safeLink(n.link) ? `<a class="card-link" href="${esc(safeLink(n.link))}" target="_blank" rel="noopener" title="Open the link: ${esc(safeLink(n.link))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-1 1M9.4 6.6a3 3 0 0 0-4.2 0L2.9 8.9a3 3 0 0 0 4.2 4.2l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>` : ''}
+        ${n.time ? `<span class="key-time" title="How long this step takes">${esc(n.time)}</span>` : ''}
+        ${n.cutoff ? `<span class="key-cutoff" title="Cutoff time: ${esc(n.cutoff)}"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9.5 27.5 7 30.5M22.5 27.5 25 30.5" stroke="#c26a12" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M4.2 10.2a5.6 5.6 0 0 1 6.6-6.6M27.8 10.2a5.6 5.6 0 0 0-6.6-6.6" stroke="#c26a12" stroke-width="3.2" stroke-linecap="round" fill="none"/><circle cx="16" cy="17" r="11.4" fill="#fff7e8" stroke="#c26a12" stroke-width="2"/><text x="16" y="17.6" text-anchor="middle" dominant-baseline="central" font-size="${n.cutoff.length <= 3 ? 8.6 : n.cutoff.length <= 5 ? 7 : 5.8}" font-weight="800" fill="#8a4b0f">${esc(n.cutoff)}</text></svg></span>` : ''}
+        ${n.broken || n.note ? `<span class="card-keys">${n.broken ? `<span class="key-pop key-broken" tabindex="0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.4-4.5-9.6-9.1C.9 8.6 2.6 4.7 6.3 4.3c2.2-.2 3.8.9 5.7 2.9 1.9-2 3.5-3.1 5.7-2.9 3.7.4 5.4 4.3 3.9 7.6C19.4 16.5 12 21 12 21z" fill="#d64545" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.2 7.6 10.4 11l2.5 1.7-1.9 3.7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="pop"><b>Something broken</b>${popText(n.broken)}</span></span>` : ''}${n.note ? `<span class="key-pop key-note" tabindex="0"><svg viewBox="0 0 26 18" aria-hidden="true"><path d="M7.2 16.6a3.8 3.8 0 0 1-1.6-7.3 5.3 5.3 0 0 1 10-2.9 4.2 4.2 0 0 1 6.5 3.3 3.6 3.6 0 0 1-.8 6.9 3.1 3.1 0 0 1-4.6.4 3.6 3.6 0 0 1-5.3.2 3 3 0 0 1-4.2-.6z" fill="#ffe6fa" stroke="#b4589b" stroke-width="1.4" stroke-linejoin="round"/></svg><span class="pop"><b>Notes</b>${popText(n.note)}</span></span>` : ''}</span>` : ''}
         <i class="handle" data-side="T"></i><i class="handle" data-side="R"></i><i class="handle" data-side="B"></i><i class="handle" data-side="L"></i></div>`;
     }).join('');
     cards.querySelectorAll('.card').forEach(el => { if (el.offsetWidth) dims[el.dataset.id] = { w: el.offsetWidth, h: el.offsetHeight }; });
+    if (window.ResizeObserver) { cardWatch = cardWatch || new ResizeObserver(remeasure); cardWatch.disconnect(); cards.querySelectorAll('.card').forEach(el => cardWatch.observe(el)); }
     world().classList.toggle('focus', sel.nodes.size + sel.edges.size === 1);
     drawBoardEdges();
     applyBoardView();
   }
 
+  let cardWatch = null;
+  function remeasure() {
+    let changed = false;
+    $('#cards').querySelectorAll('.card').forEach(el => {
+      if (!el.offsetWidth) return; const d = dims[el.dataset.id];
+      if (!d || d.w !== el.offsetWidth || d.h !== el.offsetHeight) { dims[el.dataset.id] = { w: el.offsetWidth, h: el.offsetHeight }; changed = true; }
+    });
+    if (changed) drawBoardEdges();
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (L) remeasure(); });
   const svgEl = (parent, tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; parent.appendChild(e); return e; };
   const rectOf = id => { const n = node(id), d = dims[id] || { w: CARD_W, h: 90 }; return { x: n.sketch.x, y: n.sketch.y, w: d.w, h: d.h, cx: n.sketch.x + d.w / 2, cy: n.sketch.y + d.h / 2 }; };
   // Arrows on the board. Each end attaches to a face of its card: the nearest one, unless the author chose
@@ -1456,19 +1874,21 @@ const App = (() => {
   function autoSides(a, b) { const dx = b.cx - a.cx, dy = b.cy - a.cy; return Math.abs(dx) >= Math.abs(dy) * 0.8 ? (dx >= 0 ? ['R', 'L'] : ['L', 'R']) : (dy >= 0 ? ['B', 'T'] : ['T', 'B']); }
   function nearestSide(r, pt) { const d = { L: Math.abs(pt.x - r.x), R: Math.abs(pt.x - r.x - r.w), T: Math.abs(pt.y - r.y), B: Math.abs(pt.y - r.y - r.h) }; return Object.keys(d).sort((u, v) => d[u] - d[v])[0]; }
   const facePoint = (r, side, off) => side === 'L' ? [r.x, r.cy + off] : side === 'R' ? [r.x + r.w, r.cy + off] : side === 'T' ? [r.cx + off, r.y] : [r.cx + off, r.y + r.h];
+  // A decision is drawn as a diamond: an arrow that meets it away from a point is brought in to the slanted edge.
+  const onDiamond = (r, p) => { const dx = p[0] - r.cx, dy = p[1] - r.cy, k = Math.abs(dx) / (r.w / 2) + Math.abs(dy) / (r.h / 2); return k ? [r.cx + dx / k, r.cy + dy / k] : p; };
   function boardGeometry() {
     const geo = {}, faces = {};
     L.edges.forEach(e => {
       if (e.from === e.to) return;
       const a = rectOf(e.from), b = rectOf(e.to), auto = autoSides(a, b), sk = e.sketch || {};
       const g = geo[e.id] = { a, b, sa: sk.a || auto[0], sb: sk.b || auto[1], mid: sk.mid || null };
-      (faces[e.from + '|' + g.sa] = faces[e.from + '|' + g.sa] || []).push({ g, end: 'a', rect: a, side: g.sa, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : b });
-      (faces[e.to + '|' + g.sb] = faces[e.to + '|' + g.sb] || []).push({ g, end: 'b', rect: b, side: g.sb, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : a });
+      (faces[e.from + '|' + g.sa] = faces[e.from + '|' + g.sa] || []).push({ g, end: 'a', id: e.from, rect: a, side: g.sa, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : b });
+      (faces[e.to + '|' + g.sb] = faces[e.to + '|' + g.sb] || []).push({ g, end: 'b', id: e.to, rect: b, side: g.sb, other: g.mid ? { cx: g.mid.x, cy: g.mid.y } : a });
     });
     Object.values(faces).forEach(list => {
       const along = list[0].side === 'T' || list[0].side === 'B' ? 'cx' : 'cy', length = along === 'cx' ? list[0].rect.w : list[0].rect.h;
       const gap = Math.min(26, (length - 24) / Math.max(1, list.length - 1));
-      list.sort((u, v) => u.other[along] - v.other[along]).forEach((item, i) => { item.g['p' + item.end] = facePoint(item.rect, item.side, (i - (list.length - 1) / 2) * gap); });
+      list.sort((u, v) => u.other[along] - v.other[along]).forEach((item, i) => { const at = facePoint(item.rect, item.side, (i - (list.length - 1) / 2) * gap); item.g['p' + item.end] = node(item.id) && node(item.id).type === 'decision' ? onDiamond(item.rect, at) : at; });
     });
     return geo;
   }
@@ -1510,6 +1930,11 @@ const App = (() => {
       // The selected arrow shows its three nodes: drag an end to another face (or card), drag the middle to bend it.
       if (only === e.id && g) {
         svgEl(top, 'circle', { cx: path.mid[0], cy: path.mid[1], r: 8, class: 'ctl mid', 'data-ctl': 'mid', 'data-edge': e.id });
+        if (!VIEWER) {                                          // a "+" beside the middle: a new step on this arrow
+          const plus = svgEl(top, 'g', { class: 'ctl add', 'data-ctl': 'add', 'data-edge': e.id, transform: `translate(${path.mid[0] + 26} ${path.mid[1] - 22})` });
+          svgEl(plus, 'title', {}, 'Add a step on this arrow');
+          svgEl(plus, 'circle', { r: 12, fill: '#a855f7', stroke: '#fff', 'stroke-width': 2.5 }); svgEl(plus, 'path', { d: 'M-5 0H5M0 -5V5', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linecap': 'round', 'pointer-events': 'none' });
+        }
         svgEl(top, 'circle', { cx: g.pa[0], cy: g.pa[1], r: 8, class: 'ctl end', 'data-ctl': 'a', 'data-edge': e.id });
         svgEl(top, 'circle', { cx: g.pb[0], cy: g.pb[1], r: 8, class: 'ctl end', 'data-ctl': 'b', 'data-edge': e.id });
       }
@@ -1555,8 +1980,9 @@ const App = (() => {
   function boardEvents() {
     const board = boardEl();
     board.addEventListener('wheel', ev => { ev.preventDefault(); const r = board.getBoundingClientRect(), f = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = Math.max(0.03, Math.min(2.5, bv.s * f)), mx = ev.clientX - r.left, my = ev.clientY - r.top; bv.x = mx - (mx - bv.x) * ns / bv.s; bv.y = my - (my - bv.y) * ns / bv.s; bv.s = ns; applyBoardView(); }, { passive: false });
-    board.addEventListener('contextmenu', ev => { ev.preventDefault(); openMenu(ev); });
+    board.addEventListener('contextmenu', ev => { ev.preventDefault(); if (!VIEWER) openMenu(ev); });
     board.addEventListener('dblclick', ev => {
+      if (VIEWER) return;
       const card = ev.target.closest('.card'), wire = ev.target.closest('.wire');
       if (ev.target.closest('.card-edit')) return;
       if (ev.target.closest('.ctl')) { const w = ev.target; if (ev.target.dataset.ctl === 'mid' && edge(w.dataset.edge).sketch) change(() => { const e = edge(w.dataset.edge); delete e.sketch.mid; if (!Object.keys(e.sketch).length) delete e.sketch; }); return; }
@@ -1569,10 +1995,17 @@ const App = (() => {
     });
     board.addEventListener('mousedown', ev => {
       closeMenu();
-      if (ev.target.closest('.card-edit') || ev.target.closest('.owner-pick')) return;
+      if (ev.target.closest('.card-edit') || ev.target.closest('.owner-pick') || ev.target.closest('.card-link') || ev.target.closest('.key-pop')) return;
+      if (VIEWER) {                                       // look only: a click selects, a drag moves the view
+        const card = ev.target.closest('.card'), wire = ev.target.closest('.wire');
+        if (ev.button === 0 && card) { select('nodes', card.dataset.id); return; }
+        if (ev.button === 0 && wire) { select('edges', wire.dataset.edge); return; }
+        drag = { type: 'pan', sx: ev.clientX - bv.x, sy: ev.clientY - bv.y, cx: ev.clientX, cy: ev.clientY, viewer: true }; board.classList.add('panning'); ev.preventDefault(); return;
+      }
       const p = toWorld(ev.clientX, ev.clientY), handle = ev.target.closest('.handle'), card = ev.target.closest('.card'), wire = ev.target.closest('.wire');
       if (ev.button === 1 || ev.button === 2 || spaceDown) { drag = { type: 'pan', sx: ev.clientX - bv.x, sy: ev.clientY - bv.y }; board.classList.add('panning'); ev.preventDefault(); return; }
       const ctl = ev.target.closest('.ctl');
+      if (ctl && ctl.dataset.ctl === 'add' && ev.button === 0) { ev.preventDefault(); ev.stopPropagation(); insertAfterSelection('step'); return; }
       if (ctl && ev.button === 0) { drag = { type: 'ctl', which: ctl.dataset.ctl, id: ctl.dataset.edge, before: JSON.stringify(doc), moved: false }; if (ctl.dataset.ctl !== 'mid') { const e = edge(drag.id), g = boardGeo[drag.id]; if (g) showFace(ctl.dataset.ctl === 'a' ? e.from : e.to, ctl.dataset.ctl === 'a' ? g.sa : g.sb); } ev.preventDefault(); return; }
       if (handle) { drag = { type: 'connect', from: card.dataset.id, side: handle.dataset.side, start: p, line: svgEl($('#wires'), 'path', { fill: 'none', stroke: '#2f7cf6', 'stroke-width': 2.4, 'stroke-dasharray': '6 5', 'pointer-events': 'none' }) }; ev.preventDefault(); return; }
       if (card) {
@@ -1595,6 +2028,9 @@ const App = (() => {
         const dx = p.x - drag.start.x, dy = p.y - drag.start.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
         drag.origin.forEach(o => { o.n.sketch.x = Math.round((o.x + dx) / 10) * 10; o.n.sketch.y = Math.round((o.y + dy) / 10) * 10; const el = $(`#cards .card[data-id="${CSS.escape(o.n.id)}"]`); if (el) { el.style.left = o.n.sketch.x + 'px'; el.style.top = o.n.sketch.y + 'px'; } });
         drawBoardEdges();
+        drag.onto = drag.origin.length === 1 ? wireUnder(drag.origin[0].n.id) : null;     // an arrow the card is over: it would go into it
+        if (drag.onto) { const w = $(`#wires .wire[data-edge="${CSS.escape(drag.onto)}"]`); if (w) w.classList.add('drop-target'); }
+        $(`#cards .card[data-id="${CSS.escape(drag.origin[0].n.id)}"]`)?.classList.toggle('dropping', !!drag.onto);
       }
       else if (drag.type === 'connect') {
         drag.line.setAttribute('d', dragCurve(drag.from, drag.side, p));
@@ -1616,8 +2052,13 @@ const App = (() => {
     });
     addEventListener('mouseup', ev => {
       if (!drag) return; const d = drag; drag = null; boardEl().classList.remove('panning'); showFace(null);
+      if (d.viewer && Math.abs(ev.clientX - d.cx) + Math.abs(ev.clientY - d.cy) < 4) { clearSelection(); return; }   // a click, not a drag
       // A single card lets go once it has been moved, so the next one can be grabbed straight away. A group stays selected.
-      if (d.type === 'move' && d.moved) { undoStack.push(d.before); redoStack = []; if (sel.nodes.size === 1 && !sel.edges.size) sel.nodes.clear(); refresh(); }
+      if (d.type === 'move' && d.moved) {
+        undoStack.push(d.before); redoStack = [];
+        if (d.onto) { const n = d.origin[0].n, e = edge(d.onto); spliceInto(n, d.onto, true); status(`"${(n.text || '').slice(0, 40)}" now sits on the arrow, between its two steps.`); }
+        if (sel.nodes.size === 1 && !sel.edges.size) sel.nodes.clear(); refresh();
+      }
       else if (d.type === 'connect') {
         // Where the mouse was let go decides it, not what happened to be under it (a hint label, the pane's edge).
         d.line.remove(); const p = toWorld(ev.clientX, ev.clientY), pane = boardEl().getBoundingClientRect();
@@ -1675,8 +2116,50 @@ const App = (() => {
   }
 
   // ------------------------------------------------------------------ swimlane pane
+  // The frame round the swimlane: phase names along the top and lane names down the left stay in place while the
+  // swimlane moves under them, and follow it as it scrolls and zooms.
+  function drawFrame() {
+    if (!built || !built.tracks) return;
+    $('#ruler').innerHTML = built.spans.map(q => `<div class="seg" style="background:${esc(q.color)}"><div><b>${esc(q.title)}</b>${q.subtitle ? `<small>${esc(q.subtitle)}</small>` : ''}${q.time ? `<small class="seg-time" title="Ideal path to longest path">&#9201; ${esc(q.time)}</small>` : ''}</div></div>`).join('');
+    $('#tracks').innerHTML = built.tracks.map((t, i) => `<div class="track" data-i="${i}" style="--lane:${esc(t.color)};--tint:${esc(t.fill)}"><span class="grip" title="Drag to move this lane"><svg viewBox="0 0 8 14" aria-hidden="true"><circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/><circle cx="2" cy="7" r="1.2"/><circle cx="6" cy="7" r="1.2"/><circle cx="2" cy="12" r="1.2"/><circle cx="6" cy="12" r="1.2"/></svg></span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span></div>`).join('');
+    const keys = [['time', 'Time'], ['cutoff', 'Cutoff time'], ['broken', 'Something broken'], ['note', 'Note']].filter(([k]) => doc.nodes.some(n => n[k]));
+    $('#swimLegend').innerHTML = [['Yes', Render.KC.yes], ['No', Render.KC.no], ['Loop', Render.KC.loop], ['Other', Render.OTHER]].map(([t, c]) => `<span><i style="--c:${c}"></i>${t}</span>`).join('')
+      + '<span><i class="glow" style="--c:#8a94a0"></i>Ideal path</span><span><b class="dia"></b>Decision</span>' + keys.map(([k, t]) => `<span><b class="k-${k}"></b>${t}</span>`).join('');
+    namesAt = 0; placeFrame();
+  }
+  // Lane names grow as the swimlane is zoomed in and shrink as it is zoomed out, and always fit their header:
+  // each word on one line, three lines at most, never taller than the lane.
+  let namesAt = 0;
+  function fitNames() {
+    if (Math.abs(namesAt - sv.s) < 1e-6) return; namesAt = sv.s;
+    const want = Math.max(9, Math.min(24, 13 * Math.sqrt(sv.s / (sv.fitS || sv.s))));
+    [...$('#tracks').querySelectorAll('.nm')].forEach(nm => {
+      const room = nm.parentNode.clientHeight - 10, start = Math.max(8, Math.min(want, room / 1.15));   // one line always fits the lane
+      for (let px = start; px >= 8; px -= .5) {
+        nm.style.fontSize = `${px}px`;
+        if (nm.scrollWidth <= nm.clientWidth + 1 && nm.scrollHeight <= Math.min(px * 1.15 * 3, Math.max(px * 1.15, room)) + 2) break;
+      }
+    });
+  }
+  function placeFrame() {
+    if (!built || !built.tracks) return;
+    const heads = $('#tracks').children, segs = $('#ruler').children;
+    built.tracks.forEach((t, i) => { const el = heads[i]; if (!el) return; el.style.top = `${sv.y + t.top * sv.s}px`; el.style.height = `${t.h * sv.s}px`; });
+    fitNames();
+    built.spans.forEach((q, i) => {
+      const el = segs[i]; if (!el) return; const left = sv.x + q.x0 * sv.s, width = (q.x1 - q.x0) * sv.s;
+      el.style.left = `${left}px`; el.style.width = `${width}px`;
+      el.firstElementChild.style.transform = `translateX(${Math.max(0, Math.min(-left, width - 90))}px)`;   // a phase's name stays in view while the phase does
+    });
+  }
   function applySwimView() {
-    $('#stage').style.transform = `translate(${sv.x}px,${sv.y}px) scale(${sv.s})`;
+    // the board stays against its edges: it can't be pulled away from the left or top, just as it can't run off the right or bottom
+    const r = $('#swimView').getBoundingClientRect();
+    if (built && r.width) {
+      const keep = (v, room, size) => size <= room ? 0 : Math.min(0, Math.max(room - size, v));
+      sv.x = keep(sv.x, r.width, built.w * sv.s); sv.y = keep(sv.y, r.height, built.h * sv.s);
+    }
+    $('#stage').style.transform = `translate(${sv.x}px,${sv.y}px) scale(${sv.s})`; placeFrame();
     // grips keep the same size on screen however far the swimlane is zoomed out
     const k = Math.min(6, 1 / Math.max(0.05, sv.s)); document.querySelectorAll('#stage .seg-grip').forEach(g => g.setAttribute('transform', `translate(${g.dataset.cx} ${g.dataset.cy}) scale(${k})`));
   }
@@ -1686,6 +2169,180 @@ const App = (() => {
     const e = edge(info.id); if (!e || ev.button !== 0) return;
     const old = e.route && e.route.nudge, keep = old && old.n === info.n ? Object.assign({}, old.s) : {};
     nudge = { id: info.id, seg: info.seg, axis: info.axis, n: info.n, keep, base: +keep[info.seg] || 0, from: info.axis ? ev.clientY : ev.clientX, before: JSON.stringify(doc), moved: false };
+  }
+  // ------------------------------------------------------------------ editing in the swimlane
+  // Everything here changes the same map the board shows: a box dragged to another lane changes its owner there, a
+  // box dragged to another column moves along the board to sit with that column's boxes, a step added here appears
+  // there, and an arrow's chosen sides are the board's sides too.
+  const toDrawing = ev => new DOMPoint(ev.clientX, ev.clientY).matrixTransform(built.svg.getScreenCTM().inverse());
+  function seatAt(p) {                                    // the lane, column and half a point falls in
+    const g = built.geo; let col = 0, best = Infinity;
+    for (let c = 0; c < g.NCOL; c++) { const d = Math.abs(p.x - (g.CX[c] + g.colW[c] / 2)); if (d < best) { best = d; col = c; } }
+    const right = g.CX[g.NCOL - 1] + g.colW[g.NCOL - 1]; if (p.x > right + 50) col = g.NCOL;   // past the last column: a new one
+    const lane = g.lanes.find(l => p.y >= l.top && p.y < l.top + l.h) || (p.y < g.lanes[0].top ? g.lanes[0] : g.lanes[g.lanes.length - 1]);
+    const slot = p.y - lane.top < lane.h / 2 ? 0 : 1, wide = col < g.NCOL ? g.colW[col] : g.colW[g.NCOL - 1];
+    return { col, lane: lane.id, slot, x: col < g.NCOL ? g.CX[col] : right + 60, w: wide, y: lane.top + slot * lane.h / 2, h: lane.h / 2 };
+  }
+  function boardXFor(col, except) {                       // where a box in this column sits on the board: with that column's boxes
+    const at = c => L.nodes.filter(m => m.id !== except && m.layout.col === c).map(m => node(m.id).sketch.x), mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+    if (at(col).length) return Math.round(mean(at(col)) / 10) * 10;
+    let lo = col - 1, hi = col + 1; while (lo >= 0 && !at(lo).length) lo--; while (hi <= L.ncols && !at(hi).length) hi++;
+    const a = lo >= 0 ? mean(at(lo)) : null, b = hi <= L.ncols && at(hi).length ? mean(at(hi)) : null;
+    return Math.round((a !== null && b !== null ? (a + b) / 2 : a !== null ? a + 300 : b !== null ? b - 300 : 60) / 10) * 10;
+  }
+  function seatNode(n, s) {                               // inside change(): put a box in a seat, making room if it is taken
+    const laidAt = m => { const x = L.nodes.find(q => q.id === m.id); return x ? x.layout : (m.layout || {}); };
+    const taken = (slot, but) => doc.nodes.find(m => m !== n && m !== but && m.lane === s.lane && laidAt(m).col === s.col && laidAt(m).slot === slot);
+    const there = taken(s.slot);
+    if (there) {
+      if (!taken(1 - s.slot, there)) there.layout = { col: s.col, slot: 1 - s.slot, pinned: true };
+      else doc.nodes.forEach(m => { if (m !== n && laidAt(m).col >= s.col) m.layout = { col: laidAt(m).col + 1, slot: laidAt(m).slot, pinned: true }; });   // a full seat: a new column
+    }
+    n.lane = s.lane; n.layout = { col: s.col, slot: s.slot, pinned: true };
+    n.sketch = Object.assign({}, n.sketch, { x: boardXFor(s.col, n.id) });
+  }
+  function seatMark(s) {
+    let m = built.svg.querySelector('.seat-mark'); if (!m) { m = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); m.setAttribute('class', 'seat-mark'); built.svg.appendChild(m); }
+    m.setAttribute('x', s.x - 6); m.setAttribute('y', s.y + 4); m.setAttribute('width', s.w + 12); m.setAttribute('height', s.h - 8); m.setAttribute('rx', 9);
+  }
+  function startBoxDrag(id, ev) {
+    const p0 = toDrawing(ev), x0 = ev.clientX, y0 = ev.clientY; let ghost = null, seat = null, onto = null;
+    const move = e => {
+      if (!ghost) {
+        if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) < 5) return;
+        const src = built.svg.querySelector(`[data-node="${CSS.escape(id)}"]`); if (!src) return;
+        ghost = src.cloneNode(true); ghost.setAttribute('class', 'drag-ghost'); built.svg.appendChild(ghost); src.style.opacity = .3; $('#swimView').classList.add('dragging-box');
+      }
+      const p = toDrawing(e); ghost.setAttribute('transform', `translate(${p.x - p0.x} ${p.y - p0.y})`); seat = seatAt(p); seatMark(seat);
+      onto = lineAt(p, id); dropLine(onto);
+    };
+    const up = () => {
+      removeEventListener('mousemove', move); removeEventListener('mouseup', up); $('#swimView').classList.remove('dragging-box');
+      if (!ghost || !seat) return;
+      const n = node(id), at = laid(id).layout, s = seat;
+      if (onto) { change(() => { seatNode(n, s); spliceInto(n, onto, false); }); status(`Added "${(n.text || '').slice(0, 40)}" into the arrow. It sits where you dropped it.`); return; }
+      if (n.lane === s.lane && at.col === s.col && at.slot === s.slot) { drawSwimlane(); return; }
+      change(() => seatNode(n, s));
+      status(`Moved to ${lane(s.lane).name}, column ${s.col + 1}. It stays where you put it; the board shows the same change.`);
+    };
+    addEventListener('mousemove', move); addEventListener('mouseup', up);
+  }
+  // The swimlane arrow under a point (within a few pixels on screen), not one of the dragged box's own
+  function lineAt(p, id) {
+    const reach = 12 / sv.s; let best = null, bestD = reach;
+    built.edges.forEach(e => {
+      if (!e.pts || e.a === id || e.b === id || (e.f && e.f.hide)) return;
+      for (let i = 0; i < e.pts.length - 1; i++) {
+        const [ax, ay] = e.pts[i], [bx, by] = e.pts[i + 1], dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy || 1)));
+        const d = Math.hypot(p.x - ax - t * dx, p.y - ay - t * dy); if (d < bestD) { bestD = d; best = e.id; }
+      }
+    });
+    return best;
+  }
+  function dropLine(eid) {                                     // show the arrow the box would go into
+    let m = built.svg.querySelector('.drop-line'); if (m) m.remove(); if (!eid) { const s = built.svg.querySelector('.seat-mark'); if (s) s.style.display = ''; return; }
+    const e = built.edges.find(x => x.id === eid); if (!e) return;
+    m = document.createElementNS('http://www.w3.org/2000/svg', 'path'); m.setAttribute('class', 'drop-line'); m.setAttribute('d', e.pts.map((q, i) => (i ? 'L' : 'M') + q[0] + ' ' + q[1]).join(' ')); built.svg.appendChild(m);
+    const s = built.svg.querySelector('.seat-mark'); if (s) s.style.display = 'none';
+  }
+  function startEndDrag(h, ev) {
+    const box = built.P[h.box]; let side = null, dot = null;
+    const sides = { L: [box.x, box.yc], R: [box.x + box.w, box.yc], T: [box.x + box.w / 2, box.y], B: [box.x + box.w / 2, box.y + box.h] };
+    const move = e => {
+      const p = toDrawing(e); side = Object.keys(sides).sort((u, v) => Math.hypot(p.x - sides[u][0], p.y - sides[u][1]) - Math.hypot(p.x - sides[v][0], p.y - sides[v][1]))[0];
+      if (!dot) { dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); dot.setAttribute('class', 'side-mark'); dot.setAttribute('r', 10); built.svg.appendChild(dot); }
+      dot.setAttribute('cx', sides[side][0]); dot.setAttribute('cy', sides[side][1]);
+    };
+    const up = () => {
+      removeEventListener('mousemove', move); removeEventListener('mouseup', up);
+      if (!side) return;
+      change(() => {
+        const e = edge(h.id); e.route = Object.assign({}, e.route, { [h.end === 'a' ? 'exit' : 'enter']: side, nudge: null });
+        e.sketch = Object.assign({}, e.sketch, { [h.end]: side });     // the board's arrow uses the same side
+      });
+    };
+    addEventListener('mousemove', move); addEventListener('mouseup', up);
+  }
+  function addSwimStep(ev) {                              // double-click empty swimlane: a new step there
+    const s = seatAt(toDrawing(ev)), id = newId('n'), ys = doc.nodes.filter(m => m.lane === s.lane).map(m => m.sketch.y);
+    change(() => {
+      const n = { id, lane: s.lane, type: 'step', text: 'New step', sketch: { x: 0, y: ys.length ? Math.round(ys.reduce((a, b) => a + b, 0) / ys.length / 10) * 10 : 60 } };
+      doc.nodes.push(n); seatNode(n, s); sel.nodes.clear(); sel.edges.clear(); sel.nodes.add(id);
+    });
+    if (!ui.panel) { const b = $('#bPanel'); if (b && b.getAttribute('aria-pressed') === 'false') b.click(); }
+    const t = $('#i_text'); if (t) { t.focus(); t.select(); }
+  }
+  // With a step selected, a new box goes straight after it: between it and the step it leads to, on the arrow
+  // between them (which now runs through the new box). With an arrow selected, the new box goes on that arrow.
+  // A step with several arrows out uses its main one (the ideal path, else the first going forward). The new box
+  // takes the next column in the selected step's lane, and later columns move along to make room.
+  // A step dropped onto an arrow goes into it: the arrow ends at the step and a new one carries on to where it went.
+  // If the step was already in a line (one arrow in, one out), that line closes up behind it.
+  function spliceInto(n, eid, placeColumn) {
+    const e = edge(eid); if (!e || e.from === n.id || e.to === n.id) return;
+    const ins = doc.edges.filter(x => x.to === n.id && x.from !== n.id), outs = doc.edges.filter(x => x.from === n.id && x.to !== n.id);
+    if (ins.length === 1 && outs.length === 1 && ins[0].from !== outs[0].to && !doc.edges.some(x => x.from === ins[0].from && x.to === outs[0].to)) {
+      ins[0].to = outs[0].to; delete ins[0].route; doc.edges.splice(doc.edges.indexOf(outs[0]), 1);
+    }
+    const to = e.to; e.to = n.id; delete e.route; if (e.sketch) delete e.sketch.b;
+    if (!doc.edges.some(x => x.from === n.id && x.to === to)) doc.edges.push(newEdge(n, to));
+    const from = node(e.from), at = from && laid(from.id) ? laid(from.id).layout : null;
+    if (placeColumn && at && from.layout && from.layout.pinned) {   // in the swimlane it takes the column straight after the arrow's start
+      doc.nodes.forEach(m => { if (m !== n && m.layout && m.layout.pinned && laid(m.id) && laid(m.id).layout.col > at.col) m.layout = Object.assign({}, m.layout, { col: laid(m.id).layout.col + 1 }); });
+      n.layout = { col: at.col + 1, slot: 0, pinned: true };
+    }
+  }
+  // The board arrow a card sits over (the one nearest its middle that runs through the card), not one of its own.
+  function wireUnder(id) {
+    const r = rectOf(id), pad = 6; let best = null, bestD = Infinity;
+    document.querySelectorAll('#wires .wire').forEach(w => {
+      w.classList.remove('drop-target');
+      const eid = w.dataset.edge, e = edge(eid); if (!e || e.from === id || e.to === id) return;
+      const p = w.querySelector('path.hit'); if (!p) return; const L2 = p.getTotalLength();
+      for (let s = 0; s <= L2; s += 8) { const q = p.getPointAtLength(s); if (q.x >= r.x - pad && q.x <= r.x + r.w + pad && q.y >= r.y - pad && q.y <= r.y + r.h + pad) { const d = Math.hypot(q.x - r.cx, q.y - r.cy); if (d < bestD) { bestD = d; best = eid; } } }
+    });
+    return best;
+  }
+  // Cutoff times read as a time of day: "3pm", "11:30am". 15:00 becomes 3pm; a bare 1 to 6 is taken as the afternoon.
+  const CUTOFF = '3pm';
+  function cutoffText(raw) {
+    const t = String(raw || '').trim().toLowerCase().replace(/\s+/g, '').replace(/\./g, ''); if (!t) return '';
+    const m = t.match(/^(\d{1,2})(?::?(\d{2}))?(am|pm|a|p)?$/); if (!m) return null;
+    let h = +m[1]; const min = m[2] || '', ap = m[3] ? m[3][0] + 'm' : '';
+    if (h > 23 || (min && +min > 59)) return null;
+    let suffix = ap; if (!suffix) { if (h >= 13) { h -= 12; suffix = 'pm'; } else if (h === 0) { h = 12; suffix = 'am'; } else suffix = h === 12 || h <= 6 ? 'pm' : 'am'; }
+    else if (h > 12) return null;
+    return `${h}${min && min !== '00' ? ':' + min : ''}${suffix}`;
+  }
+  function insertAfterSelection(type) {
+    if (VIEWER) return false;
+    const oneNode = sel.nodes.size === 1 && !sel.edges.size, oneEdge = sel.edges.size === 1 && !sel.nodes.size;
+    if (!oneNode && !oneEdge) return false;
+    let from, via = null;
+    if (oneEdge) { via = edge([...sel.edges][0]); from = node(via.from); }
+    else {
+      from = node([...sel.nodes][0]);
+      const outs = doc.edges.filter(e => e.from === from.id && e.to !== from.id), lay = id => laid(id).layout.col, at = lay(from.id);
+      const ideal = outs.find(e => { const l = L.edges.find(x => x.id === e.id); return l && l.isIdeal; });
+      via = ideal || outs.find(e => lay(e.to) > at) || outs[0] || null;
+    }
+    const to = via ? node(via.to) : null, id = newId('n'), at = laid(from.id).layout;
+    change(() => {
+      // room in the swimlane: everything after the selected step's column moves one column along
+      doc.nodes.forEach(m => { const c = laid(m.id).layout; if (m.layout && m.layout.pinned && c.col > at.col) m.layout = Object.assign({}, m.layout, { col: c.col + 1 }); });
+      const a = from.sketch, b = to ? to.sketch : { x: a.x + 600, y: a.y };
+      const n = { id, lane: from.lane, type, text: type === 'decision' ? 'Question?' : 'New step', sketch: { x: Math.round((a.x + b.x) / 20) * 10, y: Math.round((a.y + b.y) / 20) * 10 } };
+      if (from.layout && from.layout.pinned) n.layout = { col: at.col + 1, slot: at.slot, pinned: true };
+      doc.nodes.push(n);
+      if (via) {                                                  // the arrow now ends at the new box (keeping its label), and a new one carries on
+        const e = edge(via.id); e.to = id; delete e.route; if (e.sketch) delete e.sketch.b;
+        const onward = newEdge(n, to.id); doc.edges.push(onward);
+      } else doc.edges.push(newEdge(from, id));
+      sel.nodes.clear(); sel.edges.clear(); sel.nodes.add(id);
+    });
+    status(to ? `Added between "${(from.text || '').slice(0, 40)}" and "${(to.text || '').slice(0, 40)}".` : `Added after "${(from.text || '').slice(0, 40)}".`);
+    if (ui.view === 'swim') { const t = $('#i_text'); if (t) { t.focus(); t.select(); } } else editCardText(id, true);
+    return true;
   }
   function moveNudge(ev) {
     const d = Math.round(((nudge.axis ? ev.clientY : ev.clientX) - nudge.from) / sv.s); if (!nudge.moved && Math.abs(d) < 1) return;
@@ -1700,32 +2357,81 @@ const App = (() => {
     if (Object.keys(s).length) e.route.nudge = { n: d.n, s }; else { delete e.route.nudge; if (!Object.keys(e.route).length) delete e.route; }
     undoStack.push(d.before); redoStack = []; refresh();
   }
-  function fitSwim() { const r = $('#swim').getBoundingClientRect(); if (!built || !r.width) return; sv.s = Math.min(r.width / built.w, r.height / built.h); sv.x = (r.width - built.w * sv.s) / 2; sv.y = (r.height - built.h * sv.s) / 2; sv.fitted = true; applySwimView(); }
+  // Fitted, the lanes start at the top left, under the phases and beside their names, like tracks in a timeline.
+  function fitSwim() { const r = $('#swimView').getBoundingClientRect(); if (!built || !r.width) return; sv.s = Math.min(1.6, r.width / built.w, r.height / built.h); sv.fitS = sv.s; sv.x = 0; sv.y = 0; sv.fitted = true; applySwimView(); }
   function drawSwimlane() {
     if (!L) return;
     built = Render.build(L, { mode: 'screen', fs: ui.fs, selNodes: sel.nodes, selEdges: sel.edges,
       onNode: (id, ev) => select('nodes', id, ev.shiftKey || ev.ctrlKey), onEdge: (id, ev) => select('edges', id, ev.shiftKey || ev.ctrlKey),
-      onLane: (i, j) => change(() => { const o = doc.lanes; [o[i], o[j]] = [o[j], o[i]]; }), onSeg: startNudge });
+      onLane: VIEWER ? null : (i, j) => change(() => { const o = doc.lanes; [o[i], o[j]] = [o[j], o[i]]; }), onSeg: VIEWER ? null : startNudge,
+      onNodeDown: VIEWER ? null : startBoxDrag, onEnd: VIEWER ? null : startEndDrag, onInsert: VIEWER ? null : () => insertAfterSelection('step'), flags: ui.flags && !VIEWER ? linkFlags() : null });
     const stage = $('#stage'); stage.innerHTML = ''; stage.appendChild(built.svg);
+    built.svg.querySelectorAll('[data-pop]').forEach(mark => {
+      const open = () => { const pop = $('#keyPop'), r = mark.getBoundingClientRect(), pane = $('#swim').getBoundingClientRect();
+        pop.className = 'key-bubble ' + mark.dataset.popKind; pop.innerHTML = (mark.dataset.popKind === 'broken' ? '<b>Something broken</b>' : '<b>Notes</b>') + popText(mark.dataset.pop);
+        pop.hidden = false; const half = pop.offsetWidth / 2, x = r.left + r.width / 2 - pane.left;
+        pop.style.left = `${Math.max(half + 8, Math.min(pane.width - half - 8, x))}px`; pop.style.top = `${r.top - pane.top}px`; requestAnimationFrame(() => pop.classList.add('on')); setTimeout(() => pop.classList.add('on'), 30); };
+      const close = () => { if (!$('#keyPop').dataset.pinned) { $('#keyPop').classList.remove('on'); $('#keyPop').hidden = true; } };
+      mark.addEventListener('pointerenter', open); mark.addEventListener('pointerleave', close);
+      mark.addEventListener('mousedown', ev => ev.stopPropagation());
+      mark.addEventListener('click', ev => { ev.stopPropagation(); const pop = $('#keyPop'); if (pop.dataset.pinned) { delete pop.dataset.pinned; close(); } else { open(); pop.dataset.pinned = '1'; } });
+    });
+    delete $('#keyPop').dataset.pinned; $('#keyPop').hidden = true;
     window.__warns = built.warns; window.__built = built;
+    drawFrame();
     if (!sv.fitted) fitSwim(); else applySwimView();
     showCounts();
   }
   function swimEvents() {
-    const vp = $('#swim'); let pan = null, moved = false;
+    const vp = $('#swimView'); let pan = null, moved = false;
+    // the frame: lane buttons, and scrolling over the lane names or phases moves the swimlane
+    // Drag a lane by its grip: a copy of its header follows the pointer, the others make room, and it drops in place.
+    $('#tracks').addEventListener('mousedown', ev => {
+      const grip = ev.target.closest('.grip'); if (!grip || VIEWER || ev.button) return; ev.preventDefault(); ev.stopPropagation();
+      const box = $('#tracks'), heads = [...box.children], el = grip.closest('.track'), i = +el.dataset.i, top0 = el.offsetTop, h = el.offsetHeight, y0 = ev.clientY;
+      const ghost = el.cloneNode(true); ghost.classList.add('ghost'); ghost.style.top = `${top0}px`; box.appendChild(ghost);
+      el.classList.add('lifting'); box.classList.add('dragging'); let j = i;
+      const move = e => {
+        const top = top0 + e.clientY - y0, mid = top + h / 2; ghost.style.top = `${top}px`;
+        j = heads.filter((t, k) => k !== i && t.offsetTop + t.offsetHeight / 2 < mid).length;
+        heads.forEach((t, k) => { t.style.transform = k > i && k <= j ? `translateY(${-h}px)` : k < i && k >= j ? `translateY(${h}px)` : ''; });
+      };
+      const up = () => {
+        removeEventListener('mousemove', move); removeEventListener('mouseup', up);
+        ghost.remove(); box.classList.remove('dragging'); heads.forEach(t => { t.style.transform = ''; t.classList.remove('lifting'); });
+        if (j !== i) change(() => { const [lane] = doc.lanes.splice(i, 1); doc.lanes.splice(j, 0, lane); });
+      };
+      addEventListener('mousemove', move); addEventListener('mouseup', up);
+    });
+    $('#tracks').addEventListener('wheel', ev => { ev.preventDefault(); sv.y -= ev.deltaY; applySwimView(); }, { passive: false });
+    $('#ruler').addEventListener('wheel', ev => { ev.preventDefault(); sv.x -= ev.deltaY + ev.deltaX; applySwimView(); }, { passive: false });
     vp.addEventListener('wheel', ev => { ev.preventDefault(); const r = vp.getBoundingClientRect(), f = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = Math.max(.05, Math.min(4, sv.s * f)), mx = ev.clientX - r.left, my = ev.clientY - r.top; sv.x = mx - (mx - sv.x) * ns / sv.s; sv.y = my - (my - sv.y) * ns / sv.s; sv.s = ns; applySwimView(); }, { passive: false });
     vp.addEventListener('mousedown', ev => { pan = [ev.clientX - sv.x, ev.clientY - sv.y, ev.clientX, ev.clientY]; moved = false; vp.classList.add('panning'); });
-    addEventListener('mousemove', ev => { if (nudge) { moveNudge(ev); return; } if (!pan) return; if (Math.abs(ev.clientX - pan[2]) + Math.abs(ev.clientY - pan[3]) > 4) moved = true; sv.x = ev.clientX - pan[0]; sv.y = ev.clientY - pan[1]; applySwimView(); });
+    addEventListener('mousemove', ev => { if (nudge) { moveNudge(ev); return; } if (!pan) return; if (Math.abs(ev.clientX - pan[2]) + Math.abs(ev.clientY - pan[3]) > 4) moved = true; sv.x = ev.clientX - pan[0]; sv.y = ev.clientY - pan[1]; applySwimView(); pan[0] = ev.clientX - sv.x; pan[1] = ev.clientY - sv.y; });
     addEventListener('mouseup', () => { if (nudge) endNudge(); if (pan) { pan = null; vp.classList.remove('panning'); } });
     vp.addEventListener('click', () => { if (!moved && !nudgeJustEnded) clearSelection(); });
-    vp.addEventListener('dblclick', fitSwim);
+    vp.addEventListener('dblclick', ev => { if (VIEWER || !built || !built.geo || ev.target.closest('[data-node], .key-mark, .end-grip, .seg-grip')) { if (VIEWER) fitSwim(); return; } addSwimStep(ev); });
   }
 
   // ------------------------------------------------------------------ inspector
   const field = (label, control) => `<label class="f"><span>${label}</span>${control}</label>`;
   const options = (list, value) => list.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(t)}</option>`).join('');
   const SIDES = [['', 'Auto'], ['L', 'Left'], ['R', 'Right'], ['T', 'Top'], ['B', 'Bottom']];
+  // What a viewer sees in the side panel: the same facts, nothing to change.
+  function viewerPanel(n, e) {
+    const name = x => x.type === 'decision' ? 'Decision ' + x.letter : 'Step ' + x.number, row = (label, value) => value ? `<div class="vrow"><span>${label}</span><div>${value}</div></div>` : '';
+    if (n) {
+      const at = laid(n.id), link = safeLink(n.link);
+      return `<p class="view-note">View only</p><h3>${esc(name(at))}</h3>${row('Owner', esc(lane(n.lane).name))}${row('What happens', esc(n.text))}
+        ${row('Time it takes', esc(n.time || ''))}${row('Cutoff time', esc(n.cutoff || ''))}<p class="muted">${esc(timeInfo(n))}</p>${row('Something broken', n.broken ? `<span class="bad">${esc(n.broken)}</span>` : '')}${row('Note', esc(n.note || ''))}
+        ${row('Link', link ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>` : '')}`;
+    }
+    if (e) { const a = laid(e.from), b = laid(e.to); return `<p class="view-note">View only</p><h3>Arrow</h3>${row('From', esc(name(a) + ': ' + a.text))}${row('To', esc(name(b) + ': ' + b.text))}${row('Label', esc(e.label || ''))}`; }
+    return `<p class="view-note">View only</p><h3>${esc(doc.title)}</h3><p class="muted">You are looking at a saved swimlane. Move around, click a box for its details, or print it from File. Nothing here can be changed.</p>
+      <h4>Owners</h4><p>${doc.lanes.map(l => esc(l.name)).join(' · ')}</p><h4>Phases</h4><p>${doc.phases.map(p => esc(p.title)).join(' · ')}</p>${timingPanel()}`;
+  }
   function drawInspector() {
+    if (VIEWER) { const n1 = sel.nodes.size === 1 && !sel.edges.size ? node([...sel.nodes][0]) : null, e1 = sel.edges.size === 1 && !sel.nodes.size ? edge([...sel.edges][0]) : null; $('#inspector').innerHTML = viewerPanel(n1, e1); $('#inspector').onmousedown = ev => ev.stopPropagation(); return; }
     const el = $('#inspector'), n = sel.nodes.size === 1 && !sel.edges.size ? node([...sel.nodes][0]) : null, e = sel.edges.size === 1 && !sel.nodes.size ? edge([...sel.edges][0]) : null;
     let html = '';
     if (n) {
@@ -1735,7 +2441,13 @@ const App = (() => {
         ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
         <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
         ${field('Phase', `<select id="i_phase">${options([['', 'Continues the phase before it']].concat(doc.phases.map(p => [p.id, 'Starts: ' + p.title])).concat([['+', 'Starts a new phase…']]), n.phase || '')}</select>`)}
-        <label class="f col"><span>Note (shown above the box)</span><textarea id="i_note" rows="2">${esc(n.note || '')}</textarea></label>
+        <h4>Keys</h4>
+        ${field('Time it takes', `<input type="text" id="i_time" value="${esc(n.time || '')}" placeholder="e.g. 2 days">`)}
+        ${field('Cutoff time', `<span class="cutoff-row"><input type="text" id="i_cutoff" value="${esc(n.cutoff || '')}" placeholder="none"><button type="button" id="i_cutoffStd" title="The standard cutoff">3pm</button></span>`)}
+        <p class="muted" id="i_timeinfo">${esc(timeInfo(n))}</p>
+        <label class="f col"><span>Something broken</span><textarea id="i_broken" rows="2" placeholder="A problem or risk at this step">${esc(n.broken || '')}</textarea></label>
+        <label class="f col"><span>Note (a small cloud on the box that opens when pointed at)</span><textarea id="i_note" rows="2">${esc(n.note || '')}</textarea></label>
+        <label class="f col"><span>Link (a link icon on the box opens it)</span><input type="text" id="i_link" value="${esc(n.link || '')}" placeholder="https://"></label>
         ${field('Board position', `<span class="xy">X <input type="number" id="i_x" step="10" value="${n.sketch.x}"> Y <input type="number" id="i_y" step="10" value="${n.sketch.y}"></span>`)}
         <p class="muted">Measured from the cross in the middle of the board to the box's top-left corner. Right and down are positive.</p>
         <h4>Box in the swimlane</h4>
@@ -1749,6 +2461,8 @@ const App = (() => {
       const le = laidEdge(e.id), st = e.style || {}, rt = e.route || {}, a = laid(e.from), b = laid(e.to), name = x => x.type === 'decision' ? x.letter : x.number;
       const color = st.color || (le.k ? Render.KC[le.k] : Render.OTHER);
       html = `<h3>Arrow ${esc(name(a))} → ${esc(name(b))}</h3>
+        <p class="insert-row"><button type="button" id="i_insert" class="primary">+ Add a step on this arrow</button><button type="button" id="i_insertDec">+ Decision</button></p>
+        <p class="muted" style="margin-top:-4px">Or drag any step onto an arrow to put it there.</p>
         <label class="f col"><span>Label</span><input type="text" id="i_label" value="${esc(e.label || '')}" placeholder="Yes, No, or a few words"></label>
         ${field('Kind', `<select id="i_kind">${options([['', 'Auto (' + (le.k || 'plain') + ')'], ['yes', 'Yes (green)'], ['no', 'No (red)'], ['loop', 'Loop (yellow)'], ['plain', 'Plain (grey)']], e.kind || '')}</select>`)}
         ${field('Ideal path glow', `<select id="i_ideal">${options([['', 'Auto (' + (le.isIdeal ? 'on' : 'off') + ')'], ['1', 'On'], ['0', 'Off']], e.ideal === undefined ? '' : (e.ideal ? '1' : '0'))}</select>`)}
@@ -1778,10 +2492,26 @@ const App = (() => {
     wireInspector(n, e);
   }
 
+  // How long it takes to reach a step, and how long from it to the end, along the longest paths.
+  function timeInfo(n) {
+    const t = Engine.durations(L); if (!t.timed) return 'Give steps a time and the whole process, and the time from any step to the end, are added up.';
+    const span = v => v.hi ? Engine.formatTime(v.lo, v.hi) : 'no timed steps', own = t.own[n.id];
+    return `To reach this step: ${t.before[n.id].hi ? span(t.before[n.id]) : 'no timed steps before it'}. From here to the end: ${span(t.after[n.id])}${own && own.hi ? ` (this step ${Engine.formatTime(own.lo, own.hi)})` : ''}.`;
+  }
+  function timingPanel() {
+    const t = Engine.durations(L), broken = L.nodes.filter(n => n.broken), name = x => x.type === 'decision' ? x.letter : x.number;
+    const row = (label, lo, hi, timed, idealTimed) => `<tr><th>${esc(label)}</th><td>${timed && idealTimed ? esc(Engine.exactTime(lo)) : timed ? '<span class="muted">no timed steps</span>' : '—'}</td><td>${timed ? esc(Engine.exactTime(hi)) : '—'}</td></tr>`;
+    return `<h4>Time</h4>${t.timed ? `<p><b>Whole process: ${t.idealTimed ? esc(Engine.formatTime(t.ideal, t.longest)) : `up to ${esc(Engine.exactTime(t.longest))}`}</b>${t.idealTimed ? '' : '<br><span class="muted">No step on the ideal path has a time yet.</span>'}</p>
+      <table class="time-table"><tr><th></th><th>Ideal path</th><th>Longest</th></tr>${t.phases.length > 1 ? t.phases.map(p => row(p.title, p.lo, p.hi, p.timed, p.idealTimed)).join('') : ''}${row('Whole process', t.ideal, t.longest, t.timed, t.idealTimed)}</table>
+      <p class="muted">The ideal path is the glowing one. The longest takes every branch, No paths included, at the top of any range. ${t.timed} of ${t.steps} steps have a time; the rest count as nothing.${t.loops ? ' Each loop back adds its steps again every time round.' : ''} A week is 5 working days of 8 hours.</p>` : '<p>No step has a time yet. Select a step and give it one ("2 days") to see how long each phase and the whole process take.</p>'}
+      ${broken.length ? `<h4>Something broken</h4><ul class="warns">${broken.map(x => `<li><b>${esc(name(x))}.</b> ${esc(x.broken)}</li>`).join('')}</ul>` : ''}`;
+  }
   function mapPanel() {
     const warns = (built && built.warns || []).concat(L.warnings || []), hidden = doc.edges.filter(e => e.style && e.style.hidden), pinned = doc.nodes.filter(n => n.layout && n.layout.pinned).length;
     const name = id => { const x = laid(id); return x.type === 'decision' ? x.letter : x.number; };
-    return `<h3>Map</h3>
+    const flags = ui.flags ? linkFlags() : {}, flagged = Object.keys(flags), why = { none: 'no arrows', in: 'no way in', out: 'no way out' };
+    const flagList = ui.flags ? `<h4>Missing an arrow</h4>${flagged.length ? `<ul class="flag-list">${flagged.map(id => `<li class="flag-${flags[id]}"><button type="button" data-flag="${esc(id)}"><b>${esc(String(name(id)))}</b> ${esc((node(id).text || '').slice(0, 60))}<small>${why[flags[id]]}</small></button></li>`).join('')}</ul>` : '<p class="muted">Every box has its arrows.</p>'}` : '';
+    return `<h3>Map</h3>${flagList}
       <label class="f col"><span>Title</span><input type="text" id="m_title" value="${esc(doc.title)}"></label>
       <h4>Lanes (owners)</h4>
       <div class="list">${doc.lanes.map((l, i) => `<div class="li" data-i="${i}"><input type="color" class="l_color" value="${esc(l.color)}" title="Lane colour"><input type="text" class="l_name" value="${esc(l.name)}"><button type="button" class="l_up" title="Move up"${i ? '' : ' disabled'}>▲</button><button type="button" class="l_down" title="Move down"${i < doc.lanes.length - 1 ? '' : ' disabled'}>▼</button><button type="button" class="l_del" title="${doc.nodes.some(n => n.lane === l.id) ? 'In use' : 'Remove'}"${doc.nodes.some(n => n.lane === l.id) ? ' disabled' : ''}>×</button></div>`).join('')}</div>
@@ -1789,6 +2519,7 @@ const App = (() => {
       <h4>Phases</h4>
       <div class="list">${doc.phases.map((p, i) => `<div class="pi" data-i="${i}"><div class="li"><input type="color" class="p_color" value="${esc(p.color)}"><input type="text" class="p_title" value="${esc(p.title)}" placeholder="Title"><button type="button" class="p_del" title="Remove this phase"${doc.phases.length > 1 ? '' : ' disabled'}>×</button></div><input type="text" class="p_sub" value="${esc(p.subtitle)}" placeholder="Subtitle"></div>`).join('')}</div>
       <p class="muted">To start a phase, right-click a card and choose "Start a new phase here".</p>
+      ${timingPanel()}
       <h4>Swimlane</h4>
       ${field('Font size', `<span><input type="range" id="m_fs" min="70" max="140" step="5" value="${Math.round(ui.fs * 100)}"> <b id="m_fsv">${Math.round(ui.fs * 100)}%</b></span>`)}
       <p class="muted">${pinned ? `${pinned} of ${doc.nodes.length} boxes are pinned to a column.` : 'Boxes are arranged automatically.'}</p>
@@ -1809,6 +2540,11 @@ const App = (() => {
       on('i_lane', 'change', ev => { let v = ev.target.value; if (v === '+') { v = addLanePrompt(); if (!v) { drawInspector(); return; } } change(() => { node(id).lane = v; }); });
       on('i_text', 'change', ev => change(() => { node(id).text = ev.target.value.replace(/\s+/g, ' ').trim(); }));
       on('i_note', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) node(id).note = v; else delete node(id).note; }));
+      on('i_cutoff', 'change', ev => { const v = cutoffText(ev.target.value); if (v === null) { ev.target.value = node(id).cutoff || ''; status('That doesn\u2019t read as a time of day. Try 3pm, 11:30am or 15:00.', true); return; } change(() => { if (v) node(id).cutoff = v; else delete node(id).cutoff; }); });
+      on('i_cutoffStd', 'click', () => change(() => { node(id).cutoff = CUTOFF; }));
+      on('i_link', 'change', ev => { const v = ev.target.value.trim(); if (v && !safeLink(v)) { ev.target.setCustomValidity('Use a web address, starting https://'); ev.target.reportValidity(); return; } ev.target.setCustomValidity(''); change(() => { if (v) node(id).link = safeLink(v); else delete node(id).link; }); });
+      on('i_broken', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) node(id).broken = v; else delete node(id).broken; }));
+      on('i_time', 'change', ev => { const v = ev.target.value.trim(); if (v && !Engine.parseTime(v)) { g('i_timeinfo').textContent = 'That doesn\u2019t read as a time. Try "1 hour", "2 days" or "4-5 weeks".'; return; } change(() => { if (v) node(id).time = v; else delete node(id).time; }); });
       ['x', 'y'].forEach(k => on('i_' + k, 'change', ev => { const v = Math.round(+ev.target.value); if (isFinite(v)) change(() => { node(id).sketch[k] = v; }); }));
       on('i_phase', 'change', ev => { const v = ev.target.value; if (v === '+') { startPhaseAt(id); return; } change(() => { node(id).phase = v || null; }); });
       on('i_w', 'input', ev => { g('i_wv').textContent = ev.target.value; }); on('i_w', 'change', ev => style({ w: +ev.target.value }));
@@ -1828,6 +2564,7 @@ const App = (() => {
       el.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => set('style', { color: sw.dataset.c })));
       on('i_dash', 'change', ev => set('style', { dash: ev.target.value === 'solid' ? null : ev.target.value }));
       on('i_width', 'change', ev => set('style', { width: +ev.target.value === 2.8 ? null : +ev.target.value }));
+      on('i_insert', 'click', () => insertAfterSelection('step')); on('i_insertDec', 'click', () => insertAfterSelection('decision'));
       on('i_exit', 'change', ev => set('route', { exit: ev.target.value, nudge: null })); on('i_enter', 'change', ev => set('route', { enter: ev.target.value, nudge: null }));
       on('i_swing', 'change', ev => set('route', { swing: +ev.target.value || null, nudge: null }));
       on('i_unnudge', 'click', () => set('route', { nudge: null }));
@@ -1934,7 +2671,7 @@ const App = (() => {
     out.board = Object.assign({}, out.board, { bounds: isFinite(x0) ? { x0, y0, x1, y1 } : { x0: 0, y0: 0, x1: 0, y1: 0 } });
     return JSON.stringify(out, null, 2);
   }
-  function saveFile() { download(fileName(), mapJson()); status('Saved ' + fileName() + ' to your downloads. Open it again with Open file.'); }
+  function saveFile() { download(fileName(), mapJson()); status('Exported ' + fileName() + ' to your downloads.'); }
   function openFile(file) {
     const reader = new FileReader();
     reader.onload = () => { const problem = loadJson(reader.result, file.name); if (problem) status(problem, true); };
@@ -1945,7 +2682,7 @@ const App = (() => {
     let json; try { json = JSON.parse(text); } catch (error) { return 'That is not valid JSON. If Arcweave gave you a zip, unzip it and use project_settings.json.'; }
     if (json && json.elements && json.connections) { openArcweave(json); return ''; }
     if (json && Array.isArray(json.nodes)) { setDoc(json, `Loaded "${json.title || name || 'map'}".`); return ''; }
-    return 'That is neither a Freestyle map nor an Arcweave project.';
+    return 'That is neither a Swimlane Creator map nor an Arcweave project.';
   }
   const fileName = () => (doc.title || 'process').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.map.json';
   function openJsonBox() {
@@ -2003,8 +2740,9 @@ const App = (() => {
   const ICON_SIDE = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg>';
   const ICON_STACK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M1.5 8h13"/></svg>';
   function syncStack() {
-    document.body.dataset.stack = ui.stack ? '1' : '0';
-    const b = $('#bStack'); b.hidden = ui.view !== 'split'; b.innerHTML = ui.stack ? ICON_SIDE + 'Side by side' : ICON_STACK + 'Stacked';
+    document.body.dataset.stack = ui.stack ? '1' : '0'; document.body.dataset.panel = ui.panel === false ? '0' : '1';
+    $('#bPanel').setAttribute('aria-pressed', String(ui.panel !== false));
+    const b = $('#bStack'); b.hidden = ui.view !== 'split'; b.innerHTML = ui.stack ? ICON_SIDE : ICON_STACK; b.title = ui.stack ? 'Put the board and the swimlane side by side' : 'Put one above the other (top and bottom)';
   }
   function setView(v) {
     ui.view = v; document.body.dataset.view = v; syncStack(); save();
@@ -2017,6 +2755,7 @@ const App = (() => {
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
       if (ev.code === 'Space' && !typing) { spaceDown = true; boardEl().classList.add('can-pan'); if (ev.target === document.body) ev.preventDefault(); }
       if (typing) return;
+      if (VIEWER) { if (ev.key === 'Escape') { closeMenu(); clearSelection(); } return; }
       const mod = ev.ctrlKey || ev.metaKey;
       if (mod && ev.key.toLowerCase() === 'z') { ev.preventDefault(); if (ev.shiftKey) redo(); else undo(); }
       else if (mod && ev.key.toLowerCase() === 'y') { ev.preventDefault(); redo(); }
@@ -2035,14 +2774,21 @@ const App = (() => {
   function start() {
     load();
     const on = (id, fn) => $(id).addEventListener('click', fn);
-    on('#bStep', () => { const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode('step', p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30)); });
-    on('#bDecision', () => { const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode('decision', p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30)); });
-    on('#bUndo', undo); on('#bRedo', redo); on('#bFitBoard', fitBoard); on('#bFitSwim', fitSwim);
+    const addFromButton = type => {
+      if (insertAfterSelection(type)) return;                 // a step or an arrow is selected: the new box goes in the line there
+      const r = boardEl().getBoundingClientRect(), p = toWorld(r.left + r.width / 2, r.top + r.height / 2); addNode(type, p.x - CARD_W / 2 + (Math.random() * 60 - 30), p.y - 40 + (Math.random() * 60 - 30));
+    };
+    on('#bStep', () => addFromButton('step')); on('#bDecision', () => addFromButton('decision'));
+    on('#bUndo', undo); on('#bRedo', redo); on('#bFlags', () => { ui.flags = !ui.flags; drawBoard(); drawSwimlane(); drawInspector(); flagButton(); });
+    $('#inspector').addEventListener('click', ev => { const b = ev.target.closest('[data-flag]'); if (b) select('nodes', b.dataset.flag); });   // a box in the "missing an arrow" list
+    on('#bFitBoard', fitBoard); on('#bFitSwim', fitSwim);
     on('#bNew', () => { if (confirm('Start an empty map? The current one stays in Undo, and you can export it first.')) setDoc({ title: 'New process', lanes: [], phases: [], nodes: [], edges: [] }, 'Empty map. Double-click the board to add your first step.'); });
     on('#bExample', () => { if (confirm('Load the coffee shop example? The current map stays in Undo.')) setDoc(SAMPLE_MAP, 'Loaded the example.'); });
     on('#bSave', saveFile); on('#bOpen', () => $('#file').click()); on('#bJson', openJsonBox); on('#bOwners', openOwners);
     $('#file').addEventListener('change', ev => { if (ev.target.files[0]) openFile(ev.target.files[0]); ev.target.value = ''; });
     on('#bStack', () => { ui.stack = !ui.stack; setView(ui.view); });
+
+    on('#bPanel', () => { ui.panel = ui.panel === false; setView(ui.view); });
     on('#bHelp', () => { $('#help').hidden = false; }); on('#helpClose', () => { $('#help').hidden = true; });
     document.querySelectorAll('#viewTabs button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
     boardEl().addEventListener('dragover', ev => ev.preventDefault());
@@ -2050,6 +2796,15 @@ const App = (() => {
     boardEvents(); swimEvents(); keys();
     Exporter.start({ get L() { return L; }, get ui() { return ui; }, save, status });
     Pdf.start({ title: () => doc.title, fileName: () => fileName().replace(/\.map\.json$/, '.pdf'), status });
+    // Opens this map to look at, in a new tab. The viewer reads the map this browser keeps, so it shows the map as it is now.
+    on('#bViewMode', () => { save(); const u = new URL(location.href); u.search = '?mode=view'; window.open(u.href, '_blank', 'noopener'); });
+    if (VIEWER) {
+      document.body.dataset.mode = 'view'; $('#viewChip').hidden = false; if (EMBED) {
+        document.body.dataset.embed = '1'; ui.panel = false; ui.stack = false;
+      }
+      $('#boardPane .pane-hint').textContent = 'View only · click a box for its details · drag to move around · scroll to zoom';
+      const show = PARAMS.get('show'); ui.view = ['board', 'swim', 'split'].includes(show) ? show : 'swim';
+    }
     recompute(); document.body.dataset.view = ui.view; drawBoard(); setView(ui.view); drawInspector();
     addEventListener('resize', () => { sv.fitted = false; drawSwimlane(); });
   }
