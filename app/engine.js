@@ -367,5 +367,71 @@ const Engine = (() => {
     return search(e => e.k !== 'no' && e.k !== 'loop') || search(() => true) || {};
   }
 
-  return { importArcweave, normalize, centerSketch, layout, classifyLabel, htmlToText, laneColors, LANE_COLORS, PHASE_COLORS };
+  // ------------------------------------------------------------------ time stamps
+  // A step can say how long it takes: "1 hour", "~2 days", "4-5 weeks". Times are counted in working hours
+  // (a day is 8 hours, a week 5 days, a month 21 days), and a range is kept as its low and high ends.
+  const HOURS = { min: 1 / 60, minute: 1 / 60, h: 1, hr: 1, hour: 1, d: 8, day: 8, w: 40, wk: 40, week: 40, mo: 168, month: 168 };
+  function parseTime(text) {
+    const m = String(text || '').toLowerCase().replace(/~|≈|\babout\b|\baround\b/g, ' ').match(/(\d+(?:\.\d+)?)\s*(?:(?:-|–|to)\s*(\d+(?:\.\d+)?))?\s*(min(?:ute)?s?|h(?:ou)?rs?|h|days?|d|w(?:ee)?ks?|w|mo(?:nth)?s?)\b/);
+    if (!m) return null;
+    const unit = m[3].replace(/s$/, '').replace(/^hr$/, 'hr'), per = HOURS[unit] ?? HOURS[unit.replace(/ute$/, '')] ?? (unit.startsWith('w') ? 40 : unit.startsWith('mo') ? 168 : unit.startsWith('d') ? 8 : unit.startsWith('min') ? 1 / 60 : 1);
+    const lo = +m[1] * per, hi = (m[2] ? +m[2] : +m[1]) * per;
+    return { lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
+  }
+  // Working hours written out exactly, so the times entered visibly add up: "1 week 2 days 3 hours" (a week is
+  // 5 working days of 8 hours). Nothing is rounded but minutes.
+  function exactTime(hours) {
+    let m = Math.round((hours || 0) * 60); if (m <= 0) return '0 hours';
+    const parts = [], take = (size, name) => { const n = Math.floor(m / size); if (n) { parts.push(`${n} ${name}${n === 1 ? '' : 's'}`); m -= n * size; } };
+    take(40 * 60, 'week'); take(8 * 60, 'day'); take(60, 'hour'); take(1, 'minute');
+    return parts.join(' ');
+  }
+  // "3 days" or "2 days to 1 week 1 day": from the shortest to the longest.
+  function formatTime(lo, hi) {
+    if (!(hi > 0)) return '';
+    return Math.abs(hi - lo) < 1 / 120 ? exactTime(hi) : `${exactTime(lo)} to ${exactTime(hi)}`;
+  }
+  // How long the process takes, along its longest path (an arrow that loops back to an earlier step is left out),
+  // and for each step how long it takes to reach it and how long from it to the end. Steps without a time count as
+  // nothing. Loops are found from the arrows themselves, not from where boxes sit, so two steps in one column are fine.
+  function durations(L) {
+    const own = {}, ins = {}, outs = {}, next = {}; let timed = 0;
+    L.nodes.forEach(n => { const t = parseTime(n.time); own[n.id] = t || { lo: 0, hi: 0 }; if (t) timed++; ins[n.id] = []; outs[n.id] = []; next[n.id] = []; });
+    L.edges.forEach(e => { if (e.from !== e.to && own[e.from] && own[e.to]) next[e.from].push(e.to); });
+    const state = {}, loop = new Set(), dfs = id => { state[id] = 1; next[id].forEach(to => { if (state[to] === 1) loop.add(id + '>' + to); else if (!state[to]) dfs(to); }); state[id] = 2; };
+    const hasIn = new Set(L.edges.map(e => e.to)); L.nodes.filter(n => !hasIn.has(n.id)).concat(L.nodes).forEach(n => { if (!state[n.id]) dfs(n.id); });
+    L.nodes.forEach(n => next[n.id].forEach(to => { if (!loop.has(n.id + '>' + to)) { outs[n.id].push(to); ins[to].push(n.id); } }));
+    const order = [], seen = {}, visit = id => { if (seen[id]) return; seen[id] = 1; ins[id].forEach(visit); order.push(id); };
+    L.nodes.forEach(n => visit(n.id));
+    const before = {}, after = {};
+    order.forEach(id => { before[id] = ins[id].reduce((m, p) => ({ lo: Math.max(m.lo, before[p].lo + own[p].lo), hi: Math.max(m.hi, before[p].hi + own[p].hi) }), { lo: 0, hi: 0 }); });
+    order.slice().reverse().forEach(id => { const tail = outs[id].reduce((m, q) => ({ lo: Math.max(m.lo, after[q].lo), hi: Math.max(m.hi, after[q].hi) }), { lo: 0, hi: 0 }); after[id] = { lo: own[id].lo + tail.lo, hi: own[id].hi + tail.hi }; });
+    const total = L.nodes.reduce((m, n) => ({ lo: Math.max(m.lo, before[n.id].lo + after[n.id].lo), hi: Math.max(m.hi, before[n.id].hi + after[n.id].hi) }), { lo: 0, hi: 0 });
+    // The ideal path (the glowing one) at the shortest end of each time, and the longest way through, every branch
+    // and No path included, at the longest end. Loops back are not counted: each time round adds its steps again.
+    const idealIds = new Set(); L.edges.forEach(e => { if (e.isIdeal) { idealIds.add(e.from); idealIds.add(e.to); } });
+    const colOf = {}; L.nodes.forEach(n => { colOf[n.id] = n.layout ? n.layout.col : 0; });
+    const shortest = ids => {   // with no ideal path marked: the quickest way from a start to the last step (the right-most end)
+      const best = {}, ends = [];
+      order.forEach(id => { if (!ids.has(id)) return; const from = ins[id].filter(p => ids.has(p)); best[id] = own[id].lo + (from.length ? Math.min(...from.map(p => best[p])) : 0); if (!outs[id].some(q => ids.has(q))) ends.push(id); });
+      if (!ends.length) return 0;
+      const last = ends.reduce((m, id) => colOf[id] > colOf[m] || (colOf[id] === colOf[m] && best[id] > best[m]) ? id : m, ends[0]);
+      return best[last];
+    };
+    const longest = ids => {
+      const best = {}; let out = 0;
+      order.forEach(id => { if (!ids.has(id)) return; best[id] = own[id].hi + Math.max(0, ...ins[id].filter(p => ids.has(p)).map(p => best[p])); out = Math.max(out, best[id]); });
+      return out;
+    };
+    const span = ids => {
+      const onIdeal = [...ids].filter(id => idealIds.has(id));
+      const lo = onIdeal.length ? onIdeal.reduce((sum, id) => sum + own[id].lo, 0) : shortest(ids);
+      return { lo, hi: longest(ids), timed: [...ids].filter(id => own[id].hi).length, idealTimed: onIdeal.length ? onIdeal.filter(id => own[id].hi).length : lo > 0 ? 1 : 0 };
+    };
+    const all = new Set(L.nodes.map(n => n.id)), whole = span(all);
+    const phases = (L.phases || []).map(p => Object.assign({ id: p.id, title: p.title }, span(new Set(L.nodes.filter(n => n.inPhase === p.id).map(n => n.id)))));
+    return { own, before, after, total, timed, steps: L.nodes.length, ideal: whole.lo, longest: whole.hi, idealTimed: whole.idealTimed, phases, loops: loop.size };
+  }
+
+  return { importArcweave, normalize, centerSketch, layout, classifyLabel, htmlToText, laneColors, parseTime, formatTime, exactTime, durations, LANE_COLORS, PHASE_COLORS };
 })();

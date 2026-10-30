@@ -10,6 +10,9 @@
  *            fs: font scale 0.7 to 1.4              hc: high contrast (exports only)
  *            aligned: phase export keeps the full diagram's rows and positions
  *            selNodes, selEdges: Sets of selected ids      onNode, onEdge, onLane: click handlers (screen mode)
+ *            onNodeDown(id, ev): a box is pressed (to drag it)  onEnd({id, end, box}, ev): an arrow's end is pressed
+ *            onInsert(edgeId): the "+" on the selected arrow is pressed (a new step goes on that arrow)
+ *            flags: { id: 'none' | 'in' | 'out' } boxes to outline as missing an arrow
  *
  * build() is a pure function of (L, options). Screen, print and images all call it.
  */
@@ -78,7 +81,13 @@ const Render = (() => {
     const SLOTS = (PHASE && !O.aligned) ? (usedSlot1(ids) ? 2 : 1) : 0;
     const slotsOf = () => SLOTS || 2;
     const HB = Math.round(84 * Math.max(1, FS)), TMv = 62 + HB + 6;
-    const lanes = L.lanes.map(l => Object.assign({}, laneBy[l.id])); let acc = TMv;
+    // A phase page leaves out the lanes with nothing in that phase (keeping a lane a "from/to another phase" box sits in)
+    let inPage = null;
+    if (PHASE && !O.aligned) {
+      const inS = new Set(ids); inPage = new Set(ids.map(id => ND[id].lane));
+      L.edges.forEach(e => { if (eff(e).hide) return; const ai = inS.has(e.from), bi = inS.has(e.to); if (ai !== bi) inPage.add(ND[ai ? e.to : e.from].lane); });
+    }
+    const lanes = L.lanes.filter(l => !inPage || inPage.has(l.id)).map(l => Object.assign({}, laneBy[l.id])); let acc = TMv;
     lanes.forEach(l => { l.top = acc; l.h = slotsOf() * SH; acc += l.h; });
     const laneTop = {}; lanes.forEach(l => { laneTop[l.id] = l.top; });
     const bottom = acc;
@@ -111,12 +120,12 @@ const Render = (() => {
       for (let c = phs.s; c <= phs.e; c++) { if (c > phs.s) x += colW[c - 1] + gap(c); CX[c] = x; }
       CX[phs.s - 1] = LM + 24; CX[phs.e + 1] = CX[phs.e] + colW[phs.e] + GP; w = CX[phs.e] + colW[phs.e] + (hasOut ? GP + GW : 0) + 30;
     }
-    const h = bottom + 30;
+    let h = bottom + 30;
     const usesS1 = {}; for (const id of (O.aligned ? L.nodes.map(n => n.id) : ids)) { if (slotOf(id) === 1) usesS1[ND[id].lane] = 1; }
     const rowY = (ln, sl) => usesS1[ln] ? laneTop[ln] + sl * SH + SH / 2 : laneTop[ln] + slotsOf() * SH / 2;
 
     const P = {};
-    for (const id of ids) { const n = ND[id], d = isDia(id), yc = rowY(n.lane, slotOf(id)), hh = HT[id], c = colOf(id); P[id] = { id, ln: n.lane, sl: slotOf(id), c, t: TXT[id], num: d ? null : n.number, letter: n.letter, dia: d, note: n.note || '', x: CX[c] + (colW[c] - WD[id]) / 2, yc, y: yc - hh / 2, w: WD[id], h: hh }; }
+    for (const id of ids) { const n = ND[id], d = isDia(id), yc = rowY(n.lane, slotOf(id)), hh = HT[id], c = colOf(id); P[id] = { id, ln: n.lane, sl: slotOf(id), c, t: TXT[id], num: d ? null : n.number, letter: n.letter, dia: d, note: n.note || '', time: n.time || '', broken: n.broken || '', link: n.link || '', cutoff: n.cutoff || '', x: CX[c] + (colW[c] - WD[id]) / 2, yc, y: yc - hh / 2, w: WD[id], h: hh }; }
     const label = id => isDia(id) ? ND[id].letter : ND[id].number;
     for (const gid in ghosts) {
       const g = ghosts[gid], r = ND[g.ref], yc = rowY(r.lane, slotOf(g.ref));
@@ -274,6 +283,47 @@ const Render = (() => {
 
     for (const e of vis) { const r = pathHit(e.pts, [e.a, e.b]); if (r && P[r] && !P[r].ghost) warns.push('The arrow ' + nm(e.raw.from) + ' to ' + nm(e.raw.to) + ' crosses box ' + nm(r)); }
 
+    // ---- the keys: what is listed under a printed swimlane, and the whole process's time
+    const KEYED = { broken: Object.keys(P).filter(id => !P[id].ghost && P[id].broken), note: Object.keys(P).filter(id => !P[id].ghost && P[id].note) };
+    const timing = Engine.durations(L), TOTAL = timing.timed ? `Whole process: ${timing.idealTimed ? `${Engine.exactTime(timing.ideal)} on the ideal path to ` : 'up to '}${Engine.exactTime(timing.longest)} on the longest (${timing.timed} of ${timing.steps} steps have a time${timing.loops ? '; each loop back adds its steps again' : ''})` : '';
+    const phaseTime = id => { const p = timing.phases.find(q => q.id === id); return !p || !p.timed ? '' : p.idealTimed ? Engine.formatTime(p.lo, p.hi) : `up to ${Engine.exactTime(p.hi)}`; };
+    let listH = 0;
+    // The key list under a printed swimlane: as many characters a line as its column has room for, a word too long
+    // for a line broken, and each of several notes on a step ("a · b") starting a line of its own.
+    const listChars = broken => { const both = KEYED.broken.length && KEYED.note.length, room = both ? Math.max(560, w / 2) - 40 : w - LM - 20; return Math.max(40, Math.min(110, Math.floor(room / 6.1))); };
+    const listLines = (text, n) => String(text).split(/\s+·\s+/).flatMap((para, i) => wrap(para.split(' ').map(word => word.length > n ? word.match(new RegExp(`.{1,${n - 1}}`, 'g')).join('- ') : word).join(' '), n).map((t, j) => (i && !j ? '• ' : '') + t));
+    if (!UI) {
+      const tall = ids => ids.reduce((sum, id) => sum + listLines(P[id][ids === KEYED.broken ? 'broken' : 'note'], listChars(ids === KEYED.broken)).length * 15 + 8, 30);
+      listH = Math.max(KEYED.broken.length ? tall(KEYED.broken) : 0, KEYED.note.length ? tall(KEYED.note) : 0) + (TOTAL ? 30 : 0);
+      if (listH) h += listH + 20;
+    }
+    function timeTag(parent, x, y, text, legend) {
+      const tw = Math.max(34, String(text).length * 6.4 + 14) * FS, g = add(parent, 'g', { transform: `rotate(-12 ${x + tw / 2} ${y})`, 'pointer-events': 'none' });
+      add(g, 'rect', { x, y: y - 9 * FS, width: tw, height: 18 * FS, rx: 3, fill: '#c9e7b8', stroke: '#4f8a34', 'stroke-width': 1.2 });
+      add(g, 'text', { x: x + tw / 2, y: y + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 10.5, 'font-weight': 700, fill: '#2f5d1e' }, text);
+      return g;
+    }
+    function brokenMark(parent, x, y, text) {             // a broken heart; on paper its number sits on a small badge
+      const g = add(parent, 'g', { 'class': 'key-mark', style: UI ? 'cursor:help' : '' });
+      const h = add(g, 'g', { transform: `translate(${x - 12} ${y - 12.5})` });
+      add(h, 'path', { d: 'M12 21s-7.4-4.5-9.6-9.1C.9 8.6 2.6 4.7 6.3 4.3c2.2-.2 3.8.9 5.7 2.9 1.9-2 3.5-3.1 5.7-2.9 3.7.4 5.4 4.3 3.9 7.6C19.4 16.5 12 21 12 21z', fill: '#d64545', stroke: '#fff', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+      add(h, 'path', { d: 'M12.2 7.6 10.4 11l2.5 1.7-1.9 3.7', fill: 'none', stroke: '#fff', 'stroke-width': 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      if (text && text !== '!') { add(g, 'circle', { cx: x + 9, cy: y - 9, r: 7, fill: '#7d1f1f', stroke: '#fff', 'stroke-width': 1.4 }); add(g, 'text', { x: x + 9, y: y - 8.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 9, 'font-weight': 800, fill: '#fff' }, text); }
+      return g;
+    }
+    function alarmMark(parent, cx, cy, text) {            // the cutoff time: an alarm clock with the time on its face
+      const g = add(parent, 'g', { 'class': 'key-mark', 'pointer-events': 'none' });
+      const c = add(g, 'g', { transform: `translate(${cx - 16} ${cy - 17})` }); c.innerHTML = `<path d='M9.5 27.5 7 30.5M22.5 27.5 25 30.5' stroke='#c26a12' stroke-width='2.2' stroke-linecap='round' fill='none'/><path d='M4.2 10.2a5.6 5.6 0 0 1 6.6-6.6M27.8 10.2a5.6 5.6 0 0 0-6.6-6.6' stroke='#c26a12' stroke-width='3.2' stroke-linecap='round' fill='none'/><circle cx='16' cy='17' r='11.4' fill='#fff7e8' stroke='#c26a12' stroke-width='2'/>`;
+      const t = String(text || ''); add(g, 'text', { x: cx, y: cy + 0.6, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': t.length <= 3 ? 8.6 : t.length <= 5 ? 7 : 5.8, 'font-weight': 800, fill: '#8a4b0f', 'letter-spacing': -0.2 }, t);
+      return g;
+    }
+    function cloudMark(parent, x, y, text) {             // a small whole cloud; on paper its number sits inside
+      const g = add(parent, 'g', { 'class': 'key-mark', style: UI ? 'cursor:help' : '' });
+      add(add(g, 'g', { transform: `translate(${x - 9} ${y - 12.5})` }), 'path', { d: 'M7.2 16.6a3.8 3.8 0 0 1-1.6-7.3 5.3 5.3 0 0 1 10-2.9 4.2 4.2 0 0 1 6.5 3.3 3.6 3.6 0 0 1-.8 6.9 3.1 3.1 0 0 1-4.6.4 3.6 3.6 0 0 1-5.3.2 3 3 0 0 1-4.2-.6z', fill: '#ffe6fa', stroke: '#b4589b', 'stroke-width': 1.4, 'stroke-linejoin': 'round' });
+      if (text) add(g, 'text', { x: x + 3.5, y: y - 1.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 9.5, 'font-weight': 800, fill: '#7d2e67' }, text);
+      return g;
+    }
+
     // ---- drawing
     const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('xmlns', NS); svg.setAttribute('font-family', 'Segoe UI, Arial, sans-serif');
     const defs = add(svg, 'defs', {}), mk = {};
@@ -287,6 +337,12 @@ const Render = (() => {
         add(svg, 'line', { x1: lx, x2: lx + 28, y1: 48, y2: 48, stroke: KC[k] || OTHER, 'stroke-width': 2.8 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, t); lx += 34 + t.length * 6.6 * FS + 22;
       });
       add(svg, 'path', { d: `M${lx + 9} 48 l9 -8 l9 8 l-9 8 z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 1.5 }); add(svg, 'text', { x: lx + 34, y: 52, 'font-size': 12, fill: '#444' }, 'Decision');
+      // the three keys, shown only when the map uses them
+      lx += 34 + 8 * 6.6 * FS + 22;
+      if (L.nodes.some(n => n.time)) { timeTag(svg, lx + 4, 48, '2 days', true); add(svg, 'text', { x: lx + 64, y: 52, 'font-size': 12, fill: '#444' }, 'Time'); lx += 64 + 4 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.broken)) { brokenMark(svg, lx + 10, 48, '!'); add(svg, 'text', { x: lx + 26, y: 52, 'font-size': 12, fill: '#444' }, 'Something broken'); lx += 26 + 16 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.note)) { cloudMark(svg, lx + 12, 48, ''); add(svg, 'text', { x: lx + 30, y: 52, 'font-size': 12, fill: '#444' }, 'Note'); lx += 30 + 4 * 6.6 * FS + 22; }
+      if (L.nodes.some(n => n.cutoff)) { alarmMark(svg, lx + 12, 47, '3pm'); add(svg, 'text', { x: lx + 32, y: 52, 'font-size': 12, fill: '#444' }, 'Cutoff time'); }
     }
     lanes.forEach((l, i) => {
       add(svg, 'rect', { x: 0, y: l.top, width: w, height: l.h, fill: i % 2 ? '#fff' : '#f6f6f2', 'data-lane-row': l.id });
@@ -300,12 +356,15 @@ const Render = (() => {
       });
     });
     add(svg, 'line', { x1: 0, x2: w, y1: bottom, y2: bottom, stroke: '#cfcfc8' });
+    const spans = [];
     (PHASE ? [phs] : PH).forEach(ph => {
       const x0 = (ph.s === 0 || PHASE) ? LM - 30 : CX[ph.s] - 45, x1 = (ph.e === NCOL - 1 || PHASE) ? w : CX[ph.e] + colW[ph.e] + 45;
+      spans.push({ x0, x1, title: ph.title, subtitle: ph.subtitle || '', color: ph.color, time: phaseTime(ph.id) });
       add(svg, 'rect', { x: x0, y: TMv, width: x1 - x0, height: bottom - TMv, fill: ph.color, 'fill-opacity': .07 });
       add(svg, 'rect', { x: x0, y: 62, width: x1 - x0, height: HB, fill: ph.color });
       add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.41, 'font-size': 36, 'font-weight': 700, 'dominant-baseline': 'central', fill: '#fff' }, ph.title);
       add(svg, 'text', { x: x0 + 20, y: 62 + HB * 0.80, 'font-size': 17, 'dominant-baseline': 'central', fill: '#fff', 'fill-opacity': .95 }, ph.subtitle || '');
+      if (phaseTime(ph.id) && !UI) add(svg, 'text', { x: x1 - 20, y: 62 + HB * 0.41, 'font-size': 20, 'font-weight': 700, 'text-anchor': 'end', 'dominant-baseline': 'central', fill: '#fff' }, '\u23F1 ' + phaseTime(ph.id));
       if (ph.s > 0 && !PHASE) add(svg, 'line', { x1: x0, x2: x0, y1: 62, y2: bottom, stroke: ph.color, 'stroke-width': 3, 'stroke-dasharray': '10 6' });
     });
     const glowG = add(svg, 'g', {}), sub = add(svg, 'g', {});
@@ -325,14 +384,22 @@ const Render = (() => {
       if (n.dia) {
         const cxn = n.x + n.w / 2; add(box, 'path', { d: `M${n.x} ${n.yc} L${cxn} ${n.y} L${n.x + n.w} ${n.yc} L${cxn} ${n.y + n.h} Z`, fill: '#fff6d6', stroke: '#7a5c00', 'stroke-width': 2 });
         const ls = wrap(n.t, Math.max(8, Math.floor(17 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: cxn, y: n.yc - (ls.length - 1) * 7 * FS + i * 14 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, fill: '#4a3a00' }, t));
-        add(box, 'circle', { cx: n.x + 14, cy: n.y + 10, r: 10, fill: '#7a5c00' }); add(box, 'text', { x: n.x + 14, y: n.y + 11, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, n.letter);
+        const bx = n.x + n.w * 0.25, by = n.y + n.h * 0.25;          // on the upper-left edge
+        add(box, 'circle', { cx: bx, cy: by, r: 10, fill: '#7a5c00', stroke: '#fff', 'stroke-width': 1.5 }); add(box, 'text', { x: bx, y: by + 1, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, n.letter);
       } else {
         add(box, 'rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 6, fill: l.f, stroke: l.s, 'stroke-width': 1.6 });
         const ls = wrap(n.t, Math.max(10, Math.floor(27 * n.w / W / FS))); ls.forEach((t, i) => add(box, 'text', { x: n.x + n.w / 2, y: n.yc - (ls.length - 1) * 7.25 * FS + i * 14.5 * FS, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12.5, fill: '#222' }, t));
         add(box, 'circle', { cx: n.x + 4, cy: n.y + 2, r: 11, fill: '#fff', stroke: l.s, 'stroke-width': 1.6 }); add(box, 'text', { x: n.x + 4, y: n.y + 3, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 11, 'font-weight': 700, fill: l.s, 'data-lane': 1 }, String(n.num));
       }
       if (UI && O.onNode) {
-        const ov = add(svg, 'rect', { 'class': 'uionly', x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent', style: 'cursor:pointer' }); ov.addEventListener('mousedown', ev => ev.stopPropagation()); ov.addEventListener('click', ev => { ev.stopPropagation(); O.onNode(id, ev); });
+        const flag = O.flags && O.flags[id];
+        if (flag) {                                         // missing an arrow: red with none at all, amber with no way in or no way out
+          const c = flag === 'none' ? '#d64545' : '#e0a100', pad = 7;
+          if (n.dia) add(svg, 'path', { 'class': 'uionly flag-ring', d: `M${n.x - pad * 1.6} ${n.yc} L${n.x + n.w / 2} ${n.y - pad} L${n.x + n.w + pad * 1.6} ${n.yc} L${n.x + n.w / 2} ${n.y + n.h + pad} Z`, fill: c, 'fill-opacity': .12, stroke: c, 'stroke-width': 3, 'stroke-dasharray': '7 4', 'pointer-events': 'none' });
+          else add(svg, 'rect', { 'class': 'uionly flag-ring', x: n.x - pad, y: n.y - pad, width: n.w + pad * 2, height: n.h + pad * 2, rx: 10, fill: c, 'fill-opacity': .12, stroke: c, 'stroke-width': 3, 'stroke-dasharray': '7 4', 'pointer-events': 'none' });
+        }
+        const ov = add(svg, 'rect', { 'class': 'uionly', x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent', style: O.onNodeDown ? 'cursor:grab' : 'cursor:pointer' });
+        ov.addEventListener('mousedown', ev => { ev.stopPropagation(); if (O.onNodeDown && ev.button === 0) O.onNodeDown(id, ev); }); ov.addEventListener('click', ev => { ev.stopPropagation(); O.onNode(id, ev); });
         if (selNodes.has(id)) add(svg, 'rect', { 'class': 'uionly', x: n.x - 6, y: n.y - 6, width: n.w + 12, height: n.h + 12, rx: 9, fill: 'none', stroke: '#a855f7', 'stroke-width': 3, 'stroke-dasharray': '8 5', 'pointer-events': 'none' });
       }
     }
@@ -382,15 +449,57 @@ const Render = (() => {
         grip.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); O.onSeg({ id: e.id, seg: i, axis: hz ? 1 : 0, n: e.pts.length }, ev); });
         grip.addEventListener('click', ev => ev.stopPropagation());
       }
+      if (e && e.a !== e.b && !ghosts[e.id] && O.onInsert) {     // on its longest piece, beside that piece's grip
+        let best = 0, len = -1; for (let i = 0; i < e.pts.length - 1; i++) { const l = Math.hypot(e.pts[i + 1][0] - e.pts[i][0], e.pts[i + 1][1] - e.pts[i][1]); if (l > len) { len = l; best = i; } }
+        const a = e.pts[best], b = e.pts[best + 1], k = len > 80 ? Math.min(0.5, 30 / len) : 0, px = (a[0] + b[0]) / 2 + (b[0] - a[0]) * k, py = (a[1] + b[1]) / 2 + (b[1] - a[1]) * k;
+        const plus = add(svg, 'g', { 'class': 'uionly add-grip', transform: `translate(${px} ${py})`, style: 'cursor:copy' });
+        add(plus, 'title', {}, 'Add a step on this arrow');
+        add(plus, 'circle', { r: 12, fill: '#a855f7', stroke: '#fff', 'stroke-width': 2.5 }); add(plus, 'path', { d: 'M-5 0H5M0 -5V5', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+        plus.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); }); plus.addEventListener('click', ev => { ev.stopPropagation(); O.onInsert(e.id); });
+      }
+      if (e && e.a !== e.b && !ghosts[e.id] && O.onEnd) [['a', e.pts[0], e.a], ['b', e.pts[e.pts.length - 1], e.b]].forEach(([end, p, box]) => {
+        const h = add(svg, 'g', { 'class': 'uionly end-grip', transform: `translate(${p[0]} ${p[1]})`, style: 'cursor:move' });
+        add(h, 'title', {}, end === 'a' ? 'Drag to choose the side this arrow leaves from' : 'Drag to choose the side this arrow goes in');
+        add(h, 'circle', { r: 8, fill: '#fff', stroke: '#a855f7', 'stroke-width': 2.6 }); add(h, 'circle', { r: 3, fill: '#a855f7' });
+        h.addEventListener('mousedown', ev => { ev.stopPropagation(); ev.preventDefault(); O.onEnd({ id: e.id, end, box }, ev); });
+        h.addEventListener('click', ev => ev.stopPropagation());
+      });
     }
 
-    // ---- notes: a dashed card above its box
+    // ---- the keys on each box: a time tag on the top right, a problem mark on the bottom right, a small note cloud
+    //      on the bottom left. On screen the mark and the cloud open when pointed at; on paper they carry a number
+    //      that the list under the swimlane explains.
     for (const id in P) {
-      const n = P[id]; if (!n.note) continue;
-      const lines = wrap(n.note, HC ? 38 : 34), nw = 210 * FS, nh = (lines.length * 15 + 19) * FS, nx = n.x - 14, ny = n.y - nh - 26;
-      add(svg, 'line', { x1: n.x + n.w / 2, y1: ny + nh, x2: n.x + n.w / 2, y2: n.y - 2, stroke: '#6b7a8c', 'stroke-dasharray': '3 3', 'stroke-width': 1.5 });
-      add(svg, 'rect', { x: nx, y: ny, width: nw, height: nh, rx: 6, fill: '#eef3f8', stroke: '#6b7a8c', 'stroke-dasharray': '5 3' });
-      lines.forEach((t, i) => add(svg, 'text', { x: nx + 10, y: ny + 18 * FS + i * 15 * FS, 'font-size': 11.5, fill: '#2b3b4d' }, t));
+      const n = P[id]; if (n.ghost) continue;
+      const on = n.dia ? { time: [n.x + n.w * 0.75 - 12, n.y + n.h * 0.25 - 6], broken: [n.x + n.w * 0.75, n.y + n.h * 0.75], note: [n.x + n.w * 0.25 - 5, n.y + n.h * 0.75 + 3], link: [n.x + n.w / 2 + 14, n.y - 17], cutoff: [n.x + n.w / 2, n.y - 6] }
+        : { time: [n.x + n.w - 34, n.y - 4], broken: [n.x + n.w - 2, n.y + n.h - 2], note: [n.x + 4, n.y + n.h - 2], link: [n.x + 20, n.y - 9], cutoff: [n.x + n.w / 2, n.y - 6] };
+      if (n.cutoff) alarmMark(svg, on.cutoff[0], on.cutoff[1], n.cutoff);
+      if (n.time) timeTag(svg, on.time[0], on.time[1], n.time, false);
+      if (/^https?:\/\//i.test(n.link)) {                  // a link: on screen it opens; on paper it is just the icon
+        const holder = UI ? add(svg, 'a', { href: n.link, target: '_blank', rel: 'noopener', 'class': 'key-link' }) : svg, g = add(holder, 'g', { transform: `translate(${on.link[0]} ${on.link[1]})`, style: UI ? 'cursor:pointer' : '' });
+        if (UI) add(g, 'title', {}, 'Open the link');
+        add(g, 'circle', { cx: 9, cy: 9, r: 9.5, fill: '#fff', stroke: '#2f6fb3', 'stroke-width': 1.6 });
+        add(g, 'path', { d: 'M7.8 10.2a2.4 2.4 0 0 0 3.4 0l1.8-1.8a2.4 2.4 0 0 0-3.4-3.4l-.8.8M10.2 7.8a2.4 2.4 0 0 0-3.4 0L5 9.6a2.4 2.4 0 0 0 3.4 3.4l.8-.8', fill: 'none', stroke: '#2f6fb3', 'stroke-width': 1.5, 'stroke-linecap': 'round' });
+        if (UI) holder.addEventListener('mousedown', ev => ev.stopPropagation());
+      }
+      if (n.broken) { const k = KEYED.broken.indexOf(id) + 1, g = brokenMark(svg, on.broken[0], on.broken[1], UI ? '!' : String(k)); if (UI) { g.setAttribute('data-pop', n.broken); g.setAttribute('data-pop-kind', 'broken'); } }
+      if (n.note) { const k = KEYED.note.indexOf(id) + 1, g = cloudMark(svg, on.note[0], on.note[1], UI ? '' : String(k)); if (UI) { g.setAttribute('data-pop', n.note); g.setAttribute('data-pop-kind', 'note'); } }
+    }
+    if (!UI && listH) {
+      let y = bottom + 34; const col = (x, title, items, mark) => { let yy = y; add(svg, 'text', { x, y: yy, 'font-size': 13, 'font-weight': 700, fill: '#222' }, title); yy += 22;
+        const n = listChars(title !== 'Notes');
+        items.forEach(([k, text]) => { mark(x + 9, yy - 4, k); const ls = listLines(text, n); ls.forEach((t, i) => { add(svg, 'text', { x: x + 28, y: yy + i * 15, 'font-size': 11.5, fill: '#333' }, t); }); yy += ls.length * 15 + 8; }); };
+      if (TOTAL) add(svg, 'text', { x: LM - 10, y: y - 6, 'font-size': 13, 'font-weight': 700, fill: '#2f5d1e' }, TOTAL);
+      if (KEYED.broken.length) col(LM - 10, 'Something broken', KEYED.broken.map((id, i) => [String(i + 1), P[id].broken]), (x, yy, k) => brokenMark(svg, x, yy, k));
+      if (KEYED.note.length) col(KEYED.broken.length ? LM - 10 + Math.max(560, w / 2) : LM - 10, 'Notes', KEYED.note.map((id, i) => [String(i + 1), P[id].note]), (x, yy, k) => cloudMark(svg, x, yy, k));
+    }
+    // On screen the app draws the phases along the top and the lane names down the left itself, pinned in place
+    // while the swimlane moves under them (like tracks in a video editor), so the drawing starts below and right of them.
+    if (UI && !PHASE) {
+      const X0 = LM - 30, Y0 = TMv;
+      svg.setAttribute('viewBox', `${X0} ${Y0} ${w - X0} ${h - Y0}`); svg.setAttribute('width', w - X0); svg.setAttribute('height', h - Y0);
+      return { svg, warns, edges, nm, w: w - X0, h: h - Y0, bottom, P, geo: { CX, colW, NCOL, lanes: lanes.map(l => ({ id: l.id, top: l.top, h: l.h })) },
+        tracks: lanes.map(l => ({ id: l.id, name: l.n, color: l.s, fill: l.f, top: l.top - Y0, h: l.h })), spans: spans.map(q => Object.assign(q, { x0: q.x0 - X0, x1: q.x1 - X0 })) };
     }
     return { svg, warns, edges, nm, w, h, bottom, P };
   }

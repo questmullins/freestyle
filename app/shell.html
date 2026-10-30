@@ -26,13 +26,10 @@
     .xh-mark{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--mint-cream);text-decoration:none}
     .xh-mark svg{width:30px;height:30px;flex:none}
     .xh-mark b{color:var(--sunflower-gold);font-weight:800}
-    .xh-tag{color:var(--lavender-grey);font-size:13px;font-weight:600}
-    :root[data-theme="dark"] .xh-tag{color:#a9adc6}
     .xh-grow{flex:1}
     #bTheme{height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(241,255,250,.28);border-radius:999px;background:none;color:var(--mint-cream);font-size:13px;font-weight:600;cursor:pointer}
     #bTheme:hover{border-color:var(--sunflower-gold);color:var(--sunflower-gold)}
     #bTheme svg{width:15px;height:15px}
-    @media(max-width:640px){.xh-tag{display:none}}
     button,input,select,textarea{font:inherit;color:inherit}
     input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--sunflower-gold)}
     [hidden]{display:none!important}
@@ -196,8 +193,153 @@
     .pgf{height:.3in;font-size:8pt;color:#444;display:flex;gap:16px;align-items:center}
     .pgf i{display:inline-block;width:22px;border-top:3px solid;vertical-align:middle;margin-right:5px}
     .wide{overflow:hidden}
+
+    /* ---- The Swimlane Creator settings, in the Freestyle colours: menus in the header, a quiet toolbar with
+       the side panel and unlinked-box switches, a swimlane whose phases and lane names stay put, flat cards,
+       decisions drawn as diamonds on the board, and the keys on each step (time, cutoff, something broken, note, link). */
+    /* Swimlane frame */
+    #swim{position:absolute;inset:36px 0 0 0;--gut:150px;--rul:76px;background:var(--x-soft);overflow:hidden}
+    #swimView{position:absolute;left:var(--gut);top:var(--rul);right:0;bottom:0;overflow:hidden;background:var(--x-board);cursor:grab}
+    #swimView.panning{cursor:grabbing}
+    /* the frame: phases along the top and lane names down the left stay put while the swimlane moves */
+    #swimPane::before{content:'';position:absolute;left:0;right:0;top:0;height:36px;z-index:2;border-bottom:1px solid var(--x-line);background:var(--x-paper)}
+    #swimLegend{position:absolute;left:112px;right:64px;top:0;height:36px;z-index:3;display:flex;align-items:center;gap:6px 14px;overflow:hidden;white-space:nowrap;color:var(--x-muted);font-size:12px;font-weight:600}
+    #swimLegend span{display:inline-flex;align-items:center;gap:5px}
+    #swimLegend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--c);border-radius:2px}
+    #swimLegend i.glow{box-shadow:0 0 0 4px rgba(47,124,246,.3)}
+    #swimLegend b.dia{width:11px;height:11px;border:1.4px solid #7a5c00;background:#fff6d6;transform:rotate(45deg)}
+    #swimLegend b.k-cutoff{width:17px;height:17px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.5 27.5 7 30.5M22.5 27.5 25 30.5' stroke='%23c26a12' stroke-width='2.2' stroke-linecap='round' fill='none'/%3E%3Cpath d='M4.2 10.2a5.6 5.6 0 0 1 6.6-6.6M27.8 10.2a5.6 5.6 0 0 0-6.6-6.6' stroke='%23c26a12' stroke-width='3.2' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='16' cy='17' r='11.4' fill='%23fff7e8' stroke='%23c26a12' stroke-width='2'/%3E%3Cpath d='M16 11v6l4 2' stroke='%23c26a12' stroke-width='1.8' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") center/contain no-repeat}
+    #swimLegend b.k-time{width:20px;height:11px;border:1.2px solid #4f8a34;border-radius:2px;background:#c9e7b8;transform:rotate(-12deg)}
+    #swimLegend b.k-broken{width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-7.4-4.5-9.6-9.1C.9 8.6 2.6 4.7 6.3 4.3c2.2-.2 3.8.9 5.7 2.9 1.9-2 3.5-3.1 5.7-2.9 3.7.4 5.4 4.3 3.9 7.6C19.4 16.5 12 21 12 21z' fill='%23d64545' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12.2 7.6 10.4 11l2.5 1.7-1.9 3.7' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+    #swimLegend b.k-note{width:22px;height:15px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 18'%3E%3Cpath d='M7.2 16.6a3.8 3.8 0 0 1-1.6-7.3 5.3 5.3 0 0 1 10-2.9 4.2 4.2 0 0 1 6.5 3.3 3.6 3.6 0 0 1-.8 6.9 3.1 3.1 0 0 1-4.6.4 3.6 3.6 0 0 1-5.3.2 3 3 0 0 1-4.2-.6z' fill='%23ffe6fa' stroke='%23b4589b' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+    #ruler{position:absolute;left:var(--gut);right:0;top:0;height:var(--rul);z-index:2;overflow:hidden;background:var(--x-paper);border-bottom:1px solid var(--x-line-strong)}
+    #ruler .seg{position:absolute;top:0;bottom:0;overflow:hidden;color:#fff;box-shadow:inset -2px 0 0 #fff}
+    #ruler .seg>div{display:flex;flex-direction:column;justify-content:center;gap:3px;height:100%;padding:8px 16px;white-space:nowrap}   /* room between the phase name, its description and its time */
+    #ruler .seg .seg-time{font-weight:700;opacity:1}
+    .time-table{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:13px}.time-table th,.time-table td{padding:4px 6px;border-bottom:1px solid var(--x-line);text-align:left;vertical-align:top}
+    .time-table tr:first-child th{color:var(--x-muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.time-table tr:last-child th,.time-table tr:last-child td{font-weight:800;border-bottom:0}
+    #ruler .seg b{font-size:16.2px;line-height:1.2;letter-spacing:.005em}#ruler .seg small{font-size:14.2px;line-height:1.2;opacity:.92}
+    #corner{position:absolute;left:0;top:0;z-index:3;width:var(--gut);height:var(--rul);display:flex;align-items:center;padding:0 12px;background:var(--x-paper);border-right:1px solid var(--x-line-strong);border-bottom:1px solid var(--x-line-strong);color:var(--x-muted);font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+    #tracks{position:absolute;left:0;top:var(--rul);bottom:0;z-index:2;width:var(--gut);overflow:hidden;background:var(--x-paper);border-right:1px solid var(--x-line-strong)}
+    .track{position:absolute;left:0;right:0;display:flex;align-items:center;gap:6px;padding:5px 8px 5px 8px;overflow:hidden;border-bottom:1px solid #d5d7e0;background:var(--tint);box-shadow:inset 4px 0 0 var(--lane)}
+    .track .nm{flex:1;min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;color:var(--lane);font-size:13px;font-weight:800;line-height:1.15;white-space:normal;overflow-wrap:normal}   /* a long name gets smaller and wraps, rather than being cut off */
+    .track .grip{flex:none;display:grid;place-items:center;width:16px;height:28px;margin-left:2px;border-radius:4px;color:var(--lane);opacity:.55;cursor:grab}
+    .track .grip svg{width:8px;height:14px;fill:currentColor}.track .grip:hover{opacity:1;background:rgba(255,255,255,.7)}
+    #tracks.dragging,#tracks.dragging .grip{cursor:grabbing}#tracks.dragging .track:not(.ghost){transition:transform .15s ease}
+    .track.lifting{opacity:.25}
+    .track.ghost{z-index:5;opacity:.95;box-shadow:inset 4px 0 0 var(--lane),0 8px 22px rgba(3,61,75,.28);outline:2px solid var(--lane);pointer-events:none}
+    body[data-mode="view"] .track .grip,body[data-mode="view"] .edit-only{display:none}
+    #swim.panning{cursor:grabbing}
+    #bFlags b{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:9px;font-size:11px;line-height:18px}#bFlags.has b{background:#d64545;color:#fff}#bFlags b:empty{display:none}
+    #bFlags[aria-pressed="true"]{border-color:#d64545;box-shadow:inset 0 0 0 1px #d64545}
+    .card.flag-none{box-shadow:0 0 0 3px #fff,0 0 0 6px #d64545!important}.card.flag-in,.card.flag-out{box-shadow:0 0 0 3px #fff,0 0 0 6px #e0a100!important}
+    .card.decision.flag-none,.card.decision.flag-in,.card.decision.flag-out{box-shadow:none!important;filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 4px #d64545)}
+    .flag-list{margin:0 0 12px;padding:0;list-style:none;display:grid;gap:4px}.flag-list button{width:100%;padding:6px 8px;border:1px solid var(--x-line);border-left:4px solid #d64545;border-radius:6px;background:var(--x-paper);text-align:left;font:inherit;font-size:12.5px;cursor:pointer}
+    .flag-list .flag-in button,.flag-list .flag-out button{border-left-color:#e0a100}.flag-list small{display:block;color:var(--x-muted)}
+    #swimView.dragging-box,#swimView.dragging-box *{cursor:grabbing!important}
+    .drag-ghost{opacity:.85;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(3,61,75,.35))}
+    .seat-mark{fill:rgba(168,85,247,.08);stroke:#a855f7;stroke-width:2.5;stroke-dasharray:8 5;pointer-events:none}
+    .side-mark{fill:#a855f7;fill-opacity:.25;stroke:#a855f7;stroke-width:2.5;pointer-events:none}
+    /* Menus in the header */
+    #menubar{display:flex;gap:2px;margin-left:10px}
+    .menu{position:relative}
+    .menu-top{height:32px;padding:0 11px;border:0;border-radius:6px;background:none;color:var(--mint-cream);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .menu-top:hover,.menu-top[aria-expanded="true"]{background:rgba(255,255,255,.14)}
+    .menu-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:60;min-width:250px;padding:6px;border:1px solid var(--x-line);border-radius:var(--x-radius-inner);background:var(--x-paper);color:var(--x-ink);box-shadow:var(--x-shadow-pop)}
+    .menu-pop button{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:32px;padding:6px 10px;border:0;border-radius:6px;background:none;color:var(--x-ink);font:inherit;font-size:13.5px;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer}
+    .menu-pop button:hover{background:var(--x-soft)}
+    .menu-pop button.strong{font-weight:700}
+    .menu-pop kbd{font:11.5px ui-monospace,Consolas,monospace;color:var(--x-muted)}
+    .menu-pop hr{margin:5px 4px;border:0;border-top:1px solid var(--x-line)}
+    .menu-check{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:13.5px;cursor:pointer}
+    .xh #status{color:#a9adc6;max-width:52ch;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .xh #status.bad{color:#ff9b92;font-weight:700}.xh #status.warn{color:var(--golden-pollen)}
+    @media(max-width:900px){.xh #status{display:none}}
+    /* A quiet toolbar */
+    #bar{padding-top:6px;padding-bottom:6px}
+    #bar button{border-color:transparent;background:none}
+    #bar button:hover:not(:disabled){border-color:transparent;background:var(--x-soft)}
+    #bar button.primary{border-color:var(--x-brand);background:var(--x-brand);color:var(--x-on-brand)}
+    #bar button.primary:hover:not(:disabled){border-color:var(--x-brand-hover);background:var(--x-brand-hover)}
+    #bar button.icon{width:32px;padding:0;justify-content:center}
+    #bar button.icon svg{width:16px;height:16px}
+    #bPanel[aria-pressed="false"]{color:var(--x-muted)}
+    #viewTabs{background:none;gap:4px}
+    #viewTabs button{border-radius:0;box-shadow:none!important;background:none!important;border-bottom:2px solid transparent!important}
+    #viewTabs button[aria-pressed="true"]{border-bottom-color:var(--x-brand)!important}
+    .pane-tag{background:none;letter-spacing:.16em}
+    body[data-panel="0"] #inspector{display:none}
+    /* Flat cards; decisions are diamonds */
+    .card{border:1px solid var(--lane);border-radius:4px;box-shadow:none}
+    .card-head{flex-wrap:wrap;align-content:center;gap:5px 7px;min-height:54px;padding:7px 9px;border-radius:3px 3px 0 0;font-size:12.5px;line-height:1.2;cursor:pointer}
+    .card-head .badge{min-width:22px;height:22px;border-radius:3px;font-size:11.5px}
+    .card-head .owner{flex:1 1 calc(100% - 30px);min-width:0;overflow-wrap:anywhere}
+    .card-head .kind{padding:2px 7px;border-radius:3px}
+    .card-head .kind:first-of-type{margin-left:29px}
+    .card-body{border-radius:0 0 3px 3px}
+    .card.decision{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:168px;padding:34px 46px;border:0;border-radius:0;text-align:center;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 1 99 50 50 99 1 50z' fill='%23fff6d6' stroke='%237a5c00' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+    .card.decision .card-head{min-height:0;padding:0 0 4px;justify-content:center;background:none;color:#7a5c00;font-size:11px}
+    .card.decision .card-body{color:#4a3a00}
+    .card.decision .card-head .owner{flex:0 1 auto}
+    .card.decision .card-head .badge{min-width:20px;height:20px;background:#7a5c00;color:#fff}
+    .card.decision .card-head .kind{margin-left:0;display:none}
+    .card.decision .card-head .kind.phase{display:inline-block;background:rgba(122,92,0,.16);color:#4a3a00}
+    .card.decision .card-body{min-height:0;padding:0;background:none;color:#4a3a00;font-size:12.5px;font-weight:600}
+    .card.decision.sel{box-shadow:none;outline:0;filter:drop-shadow(0 0 2px var(--x-select)) drop-shadow(0 0 4px var(--x-select))}
+    .card.decision .card-edit{border-radius:3px;min-height:44px;text-align:center}
+    .card.decision .card-note{margin-top:6px;border:1px dashed #6b7a8c;border-radius:3px}
+    .card.decision .owner-pick{flex:0 1 120px}
+    /* on a diamond an arrow attaches at a point, so that is what lights up */
+    .card.decision.face-T::before,.card.decision.face-B::before{left:calc(50% - 10px);right:auto;width:20px;height:20px;border-radius:50%}
+    .card.decision.face-T::before{top:-10px}.card.decision.face-B::before{bottom:-10px}
+    .card.decision.face-L::before,.card.decision.face-R::before{top:calc(50% - 10px);bottom:auto;width:20px;height:20px;border-radius:50%}
+    .card.decision.face-L::before{left:-10px}.card.decision.face-R::before{right:-10px}
+    .card.decision.face-all::before{inset:8px;border-radius:50%}
+    #inspector input[type=text],#inspector input[type=number],#inspector select,#inspector textarea{height:30px;border:1px solid transparent;border-radius:4px;background:var(--x-soft)}
+    #inspector textarea{height:auto}
+    #inspector input[type=text]:hover,#inspector input[type=number]:hover,#inspector select:hover,#inspector textarea:hover{border-color:var(--x-line-strong)}
+    #inspector h3{font-size:15px}
+    /* The keys: time, something broken, note. The note is a small cloud that pops open when pointed at. */
+    .key-cutoff{position:absolute;left:50%;top:-19px;z-index:3;width:30px;height:30px;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.18))}.key-cutoff svg{width:100%;height:100%}
+    .cutoff-row{display:flex;gap:6px}#inspector .cutoff-row input{flex:none;width:118px;min-width:0}
+    .insert-row{display:flex;gap:6px;margin:4px 0 8px}
+    #wires .wire.drop-target path:not(.hit){stroke-width:6!important;stroke:#a855f7!important}
+    .card.dropping{outline:3px dashed #a855f7;outline-offset:4px}
+    .drop-line{fill:none;stroke:#a855f7;stroke-width:9;stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+    .ctl.add{cursor:copy}
+    .key-time{position:absolute;right:-12px;top:-13px;z-index:3;padding:2px 8px;border:1.2px solid #4f8a34;border-radius:3px;background:#c9e7b8;color:#2f5d1e;font-size:11px;font-weight:700;white-space:nowrap;transform:rotate(-8deg);pointer-events:none}
+    .card-keys{position:absolute;right:-9px;bottom:-11px;z-index:3;display:flex;gap:5px}
+    .key-pop{position:relative;width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;cursor:help;outline:0}
+    .key-broken{border-radius:0}.key-broken>svg{width:22px;height:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+    .key-note{width:26px}.key-note svg{width:26px;height:18px;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}.key-note:hover svg,.key-note:focus svg{transform:scale(1.2)}
+    .key-pop .pop{position:absolute;left:50%;bottom:calc(100% + 8px);z-index:20;width:max-content;max-width:min(320px,70vw);overflow-wrap:anywhere;text-wrap:pretty;padding:9px 13px;border-radius:16px;background:#fff;color:#2b3b4d;font-size:12.5px;font-weight:500;line-height:1.35;text-align:left;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transform:translateX(-50%) scale(.3);transform-origin:50% 100%;transition:opacity .15s,transform .25s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
+    .key-pop .pop b{display:block;margin-bottom:2px;color:#b03030;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+    .key-note .pop{border:1.5px solid #e3a6d2;background:#fff4fc;border-radius:22px}
+    .key-pop:hover .pop,.key-pop:focus .pop{opacity:1;transform:translateX(-50%) scale(1)}
+    .pop-p{display:block}.pop-p+.pop-p{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(180,88,155,.35)}
+    #keyPop{position:absolute;z-index:6;width:max-content;max-width:min(340px,80vw);overflow-wrap:anywhere;text-wrap:pretty;padding:9px 13px;border-radius:16px;background:#fff;color:#2b3b4d;font-size:12.5px;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:none;transform:translate(-50%,calc(-100% - 10px)) scale(.3);transform-origin:50% 100%;opacity:0;transition:opacity .15s,transform .25s cubic-bezier(.3,1.5,.5,1)}
+    #keyPop.on{opacity:1;transform:translate(-50%,calc(-100% - 10px)) scale(1)}
+    #keyPop.note{border:1.5px solid #e3a6d2;background:#fff4fc;border-radius:22px}
+    #keyPop b{display:block;margin-bottom:2px;color:#b03030;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+    #keyPop.note b,.key-note .pop b{color:#a0397f}
+    /* A link on a step */
+    .card-link{position:absolute;left:-10px;top:-12px;z-index:3;width:22px;height:22px;display:grid;place-items:center;border:1.6px solid #2f6fb3;border-radius:50%;background:#fff;color:#2f6fb3}
+    .card-link svg{width:13px;height:13px}.card-link:hover{background:#2f6fb3;color:#fff}
+    /* View only and embedded */
+    .view-chip{padding:3px 10px;border-radius:99px;background:var(--sunflower-gold);color:var(--shadow-grey);font-size:12px;font-weight:800;letter-spacing:.04em}
+    /* View only: everything that changes the map is hidden */
+    .view-chip{padding:3px 10px;border-radius:99px;background:#f2b84b;color:#3b2a00;font-size:12px;font-weight:800;letter-spacing:.04em}
+    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
+    body[data-mode="view"] #bNew,body[data-mode="view"] #bQbSave,body[data-mode="view"] #bOpen,body[data-mode="view"] #bJson,body[data-mode="view"] #bExample,body[data-mode="view"] #bOwners,
+    body[data-mode="view"] #menubar .menu:nth-child(2),body[data-mode="view"] .handle,body[data-mode="view"] #wireCtl{display:none!important}
+    body[data-mode="view"] .card{cursor:pointer}
+    /* Embed: only the swimlane, filling the page */
+    body[data-embed="1"] .xh,body[data-embed="1"] #bar,body[data-embed="1"] #inspector,body[data-embed="1"] .pane-tag,body[data-embed="1"] .pane-hint,body[data-embed="1"] #help{display:none!important}
+    body[data-embed="1"] .pane-tools{top:8px;right:8px}
+    #inspector .view-note{display:inline-block;margin:0 0 10px;padding:2px 9px;border-radius:99px;background:#fff3d6;color:#7a5c00;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    #inspector .vrow{display:grid;gap:2px;margin:9px 0}#inspector .vrow>span{color:var(--x-muted);font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}#inspector .vrow a{color:#2f6fb3;overflow-wrap:anywhere}
     @media print{.uionly{display:none!important}}
-    @media(max-width:900px){#inspector{width:270px}#status{display:none}}
+    @media(max-width:900px){#inspector{width:270px}#bar #status{display:none}}
   </style>
 </head>
 <body data-view="split">
@@ -206,36 +348,62 @@
       <a class="xh-mark" href="#" aria-label="Freestyle">
         <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#ffbf46"/><path d="M6 21c4-9 7 5 11-4s5-6 9-7" fill="none" stroke="#2d2a32" stroke-width="3.2" stroke-linecap="round"/></svg>
         <span>Free<b>style</b></span></a>
-      <span class="xh-tag">Sketch a process. Get a swimlane.</span>
+      <nav id="menubar" aria-label="Menu">
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">File</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bNew">New</button>
+            <button type="button" id="bOpen" class="strong" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file&hellip;</button>
+            <button type="button" id="bSave" class="strong" title="Save this map to your computer as a .map.json file">Save file<kbd>Ctrl+S</kbd></button>
+            <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy or paste JSON&hellip;</button>
+            <hr>
+            <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print, one page per phase&hellip;</button>
+            <button type="button" id="bPdf" title="The whole process on one wide page">Print on one wide page&hellip;</button>
+            <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
+            <button type="button" id="bImages">Images&hellip;</button>
+            <hr>
+            <button type="button" id="bExample">Open the example</button>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">Edit</button>
+          <div class="menu-pop" hidden>
+            <button type="button" data-proxy="#bUndo">Undo<kbd>Ctrl+Z</kbd></button>
+            <button type="button" data-proxy="#bRedo">Redo<kbd>Ctrl+Y</kbd></button>
+            <hr>
+            <button type="button" data-proxy="#bStep">Add a step</button>
+            <button type="button" data-proxy="#bDecision">Add a decision</button>
+            <hr>
+            <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners&hellip;</button>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">View</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bViewMode" class="edit-only" title="Open this map the way a viewer sees it, in a new tab">Open in viewer mode</button>
+            <hr class="edit-only">
+            <label class="menu-check"><input type="checkbox" id="hcChk"> High contrast swimlane</label>
+          </div></div>
+        <div class="menu"><button type="button" class="menu-top" aria-haspopup="true" aria-expanded="false">Help</button>
+          <div class="menu-pop" hidden>
+            <button type="button" id="bHelp">How it works</button>
+          </div></div>
+      </nav>
+      <span class="view-chip" id="viewChip" hidden>View only</span>
       <span class="xh-grow"></span>
+      <span id="status"></span>
       <button type="button" id="bTheme" title="Switch between light and dark"></button>
     </div>
   </header>
 
   <div id="bar">
-    <button type="button" id="bNew">New</button>
-    <button type="button" id="bOpen" title="Open a map you saved earlier (a .map.json file), or an Arcweave project_settings.json">Open file</button>
-    <button type="button" id="bSave" title="Save this map to your computer as a .map.json file (Ctrl+S)">Save file</button>
-    <button type="button" id="bJson" title="See, copy or paste the map as JSON text">Copy / paste JSON</button>
-    <button type="button" id="bExample">Example</button>
-    <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners</button>
-    <input type="file" id="file" accept=".json,application/json" hidden>
+    <button type="button" id="bStep" class="primary" title="Add a step. With a step or arrow selected, it goes straight after it, joined in">+ Step</button>
+    <button type="button" id="bDecision" title="Add a decision. With a step or arrow selected, it goes straight after it, joined in">+ Decision</button>
     <span class="sep"></span>
-    <button type="button" id="bStep" class="primary">+ Step</button>
-    <button type="button" id="bDecision">+ Decision</button>
     <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
     <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
-    <span class="sep"></span>
-    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
-    <button type="button" id="bStack" title="Switch between the two views side by side and one above the other"></button>
+    <span class="sep edit-only"></span>
+    <button type="button" id="bFlags" class="edit-only" aria-pressed="false" title="Outline boxes that are missing an arrow">Unlinked <b id="flagCount"></b></button>
     <span class="grow"></span>
-    <span id="status"></span>
-    <label class="tool"><input type="checkbox" id="hcChk"> High contrast</label>
-    <button type="button" id="bPrintPhases" title="One US Letter landscape page per phase">Print phases</button>
-    <button type="button" id="bPdf" title="The whole process on one wide page">One wide page</button>
-    <button type="button" id="bPdfFile" title="Download a PDF with one page per phase, without the print window">Download PDF</button>
-    <button type="button" id="bImages">Images</button>
-    <button type="button" id="bHelp">Help</button>
+    <div id="viewTabs" role="group" aria-label="View"><button type="button" data-view="board" aria-pressed="false">Board</button><button type="button" data-view="split" aria-pressed="true">Both</button><button type="button" data-view="swim" aria-pressed="false">Swimlane</button></div>
+    <button type="button" id="bStack" class="icon"></button>
+    <button type="button" id="bPanel" class="icon" aria-pressed="true" title="Show or hide the side panel" aria-label="Show or hide the side panel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M10.5 2.5v11"/></svg></button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
   </div>
 
   <div id="main">
@@ -249,8 +417,9 @@
     <section class="pane" id="swimPane">
       <span class="pane-tag">Swimlane</span>
       <div class="pane-tools"><button type="button" id="bFitSwim">Fit</button></div>
-      <div id="swim"><div id="stage"></div></div>
-      <span class="pane-hint">Click a box or line to adjust it &middot; drag to move &middot; scroll to zoom &middot; double-click to fit</span>
+      <div id="swimLegend" aria-label="Legend"></div>
+      <div id="swim"><div id="corner">Lanes</div><div id="ruler"></div><div id="tracks"></div><div id="swimView"><div id="stage"></div></div><div id="keyPop" hidden></div></div>
+      <span class="pane-hint">Click a box or line to adjust it &middot; drag a box to move it &middot; double-click empty space to add a step &middot; scroll to zoom</span>
     </section>
    </div>
     <aside id="inspector"></aside>
@@ -264,15 +433,19 @@
       <p class="muted">Draw the process on the Board the way you would in Arcweave. The Swimlane beside it is the same map, arranged for you.</p>
       <h3>On the board</h3>
       <ul>
-        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision.</li>
+        <li><b>Add a card:</b> double-click empty space, or use + Step and + Decision (also under Edit).</li>
         <li><b>Write in it:</b> double-click the card. Enter finishes, Shift+Enter adds a line, Esc cancels.</li>
         <li><b>Connect:</b> drag from a gold dot on a card to another card. Drop on empty space to make the next card. The arrow leaves from the dot you dragged.</li>
         <li><b>Shape an arrow:</b> click it. Drag an end dot round its card to change the side it leaves or arrives on (or onto another card). Drag the middle dot to bend it; double-click that dot to straighten. While you drag, the side it will attach to lights up in gold.</li>
-        <li><b>Owners:</b> set them all up with the Owners button. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Owners:</b> set them all up with Edit, Owners. Double-click a card's coloured header to pick its owner.</li>
+        <li><b>Links:</b> give a step a Link and a link icon appears on its box; click it to open the page.</li>
+        <li><b>Keys:</b> select a step and give it a <b>time</b> ("2 days", "4-5 weeks"): the Map panel adds up how long the whole process takes, and each step shows how long from it to the end. <b>Something broken</b> records a problem at that step (a red mark). A <b>note</b> is a small cloud on the box that opens when you point at it. Printed swimlanes list the problems and notes underneath.</li>
         <li><b>Label an arrow:</b> double-click it, or select it and type in the panel.</li>
         <li><b>One at a time:</b> click a card or an arrow and it is the only thing that responds; the rest fade a little. Click empty space to let go of it.</li>
         <li><b>Select several:</b> drag a box around them, or Shift-click. Drag one to move them all.</li>
-        <li><b>Both views:</b> with Both chosen, the button beside it switches between side by side and stacked (board above, swimlane below).</li>
+        <li><b>Both views:</b> the toolbar shows the board, the swimlane or both, side by side or top and bottom, and hides or shows the side panel.</li>
+        <li><b>Look only:</b> View, Open in viewer mode opens this map in a new tab where nothing can be changed: for showing it to someone on your screen.</li>
+        <li><b>Lanes:</b> drag a lane by the dotted grip beside its name to move it up or down.</li>
         <li><b>Move around:</b> hold Space and drag (or drag with the right mouse button). Scroll to zoom.</li>
         <li><kbd>Delete</kbd> removes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, arrow keys nudge.</li>
       </ul>
@@ -293,10 +466,9 @@
       </ul>
       <h3>Getting it out</h3>
       <ul>
-        <li><b>Print phases:</b> one letter-landscape page per phase. Choose "Save as PDF" in the print window.</li>
+        <li><b>File, Print:</b> one letter-landscape page per phase, or the whole process on one wide page. Choose "Save as PDF" in the print window. <b>Download PDF</b> gives the phase pages as a file, with no print window.</li>
         <li><b>Images:</b> a PNG of each phase and of the whole process, to copy or download.</li>
-        <li><b>Download PDF:</b> the same phase pages as a PDF file, with no print window.</li>
-        <li><b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy / paste JSON</b> shows the same thing as text, to send to someone.</li>
+        <li>Under File, <b>Save file</b> downloads the map to your computer as a <b>.map.json</b> file, and <b>Open file</b> loads one back (or drop the file on the board). <b>Copy or paste JSON</b> shows the same thing as text, to send to someone.</li>
         <li><b>Nothing is uploaded.</b> Freestyle runs in your browser. The map on screen is also remembered in this browser between visits, but the file you save is the copy to keep.</li>
       </ul>
       <p><button type="button" id="helpClose">Close</button></p>
@@ -321,6 +493,27 @@
     </div>
   </div>
   <div id="printRoot"></div>
+
+  <script>
+    /* Menus in the header. An item with data-proxy presses the toolbar button it names. */
+    (function () {
+      var bar = document.getElementById('menubar'), open = null;
+      function close() { if (!open) return; open.querySelector('.menu-pop').hidden = true; open.querySelector('.menu-top').setAttribute('aria-expanded', 'false'); open = null; }
+      function show(menu) { close(); open = menu; menu.querySelector('.menu-pop').hidden = false; menu.querySelector('.menu-top').setAttribute('aria-expanded', 'true'); }
+      bar.querySelectorAll('.menu').forEach(function (menu) {
+        var top = menu.querySelector('.menu-top');
+        top.addEventListener('click', function (ev) { ev.stopPropagation(); if (open === menu) close(); else show(menu); });
+        top.addEventListener('mouseenter', function () { if (open && open !== menu) show(menu); });
+        menu.querySelector('.menu-pop').addEventListener('click', function (ev) {
+          var item = ev.target.closest('button'); if (!item) return;
+          if (item.dataset.proxy) { var target = document.querySelector(item.dataset.proxy); if (target && !target.disabled) target.click(); }
+          close();
+        });
+      });
+      document.addEventListener('mousedown', function (ev) { if (open && !(ev.target.closest && ev.target.closest('#menubar'))) close(); });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
+    })();
+  </script>
 
   <script>
     /* Theme: follows the system until you choose, then remembers the choice in this browser. */

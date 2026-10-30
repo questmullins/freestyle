@@ -13,13 +13,24 @@ It is one HTML file. It runs in your browser, and nothing you draw is uploaded a
 Open `index.html` in a browser. That is all; there is nothing to install and no account.
 
 - **Draw:** double-click the board to add a card, drag a gold dot to connect two cards, and pick each card's owner.
-  The swimlane beside the board follows as you go.
+  The swimlane beside the board follows as you go. With a step or an arrow selected, **+ Step** and **+ Decision**
+  put the new box straight after it, joined in.
+- **Menus:** File (new, open, save, JSON, print, PDF, images, the example), Edit (undo, redo, add, owners), View
+  (viewer mode, high contrast) and Help sit in the header. The toolbar keeps the everyday buttons, the Board / Both /
+  Swimlane tabs, the stacked layout and a switch to hide the side panel.
+- **Unlinked:** outlines every box that is missing an arrow in or out, and lists them in the side panel.
+- **Keys on a step:** a time it takes ("2 days", "4-5 weeks"), a cutoff time, something broken, a note (a small cloud
+  that opens when you point at it) and a link. The Map panel adds the times up for each phase and the whole process.
+- **The swimlane:** phase names and lane names stay put while you move around. Drag a lane by its grip to reorder,
+  drag a box to move it, and double-click empty space to add a step there.
 - **Save and open:** **Save file** downloads the map to your computer as a `.map.json` file. **Open file** loads one
-  back, and so does dropping the file on the board. **Copy / paste JSON** shows the same thing as text.
+  back, and so does dropping the file on the board. **Copy or paste JSON** shows the same thing as text.
 - **Get it out:** print one page per phase, print the whole process on one wide page, download a PDF, or copy PNG
-  images.
+  images. Printed pages list the problems and notes under the swimlane.
+- **Look only:** View, Open in viewer mode opens the map in a new tab where nothing can be changed (`?mode=view`;
+  `?mode=embed` shows just the swimlane).
 - **Light and dark:** the button in the top right switches. It follows your system until you choose.
-- **Help** in the toolbar lists every convention (decisions, Yes / No labels, phases, the ideal path).
+- **Help** lists every convention (decisions, Yes / No labels, phases, the ideal path, the keys).
 
 The map on screen is also remembered in your browser between visits, but the file you save is the copy to keep.
 
