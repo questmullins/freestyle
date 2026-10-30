@@ -210,7 +210,10 @@ const Engine = (() => {
       while (queue.length) { const n = queue.shift(); out[n.id].forEach(e => { if (dist[e.to] === undefined) { dist[e.to] = dist[n.id] + 1; queue.push(byId[e.to]); } }); }
     };
     reach(nodes.filter(n => inc[n.id].length === 0).sort((a, b) => sx(a) - sx(b) || sy(a) - sy(b)));
-    nodes.slice().sort((a, b) => sy(a) - sy(b) || sx(a) - sx(b)).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    // A loop with no way in (every box has an arrow into it) starts in the first lane the map lists, at its top card.
+    const laneAt = {}; (map.lanes || []).forEach((l, i) => { laneAt[l.id] = i; });
+    const laneOf = n => laneAt[n.lane] === undefined ? 1e9 : laneAt[n.lane];
+    nodes.slice().sort((a, b) => laneOf(a) - laneOf(b) || sy(a) - sy(b) || sx(a) - sx(b)).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
     edges.forEach(e => {
       if (e.selfLoop) { e.back = false; return; }
       const a = byId[e.from], b = byId[e.to], pa = pin(a), pb = pin(b);

@@ -13,13 +13,13 @@
     { "id": "p3", "title": "Phase 3", "subtitle": "Order Delivery", "color": "#2f8a63" }
   ],
   "nodes": [
-    { "id": "n518vq", "lane": "Customer", "type": "step", "text": "Creates Order", "sketch": { "x": 20, "y": -350 } },
-    { "id": "nhmdaa", "lane": "App", "type": "step", "text": "Order Enters Application", "sketch": { "x": 290, "y": -50 }, "phase": "p4" },
-    { "id": "n5erwa", "lane": "App", "type": "decision", "text": "Do we have stock for order?", "sketch": { "x": -520, "y": -50 }, "phase": "p4" },
-    { "id": "ngq9jh", "lane": "App", "type": "step", "text": "Confirm order and pass to Barista", "sketch": { "x": -250, "y": -50 }, "phase": "p2" },
-    { "id": "n607ws", "lane": "App", "type": "step", "text": "Inform customer item is unavailable and trigger a reorder", "sketch": { "x": -250, "y": 90 }, "phase": "p4" },
-    { "id": "n0b1ek", "lane": "Barista", "type": "step", "text": "Receives order from application and confirms details", "sketch": { "x": 20, "y": 250 }, "phase": "p2" },
-    { "id": "nmx51s", "lane": "Barista", "type": "step", "text": "Puts together customer order and passes it to Customer", "sketch": { "x": 290, "y": 250 }, "phase": "p3" }
+    { "id": "n518vq", "lane": "Customer", "type": "step", "text": "Creates Order", "sketch": { "x": -1040, "y": -10 } },
+    { "id": "nhmdaa", "lane": "App", "type": "step", "text": "Order Enters Application", "sketch": { "x": -640, "y": -10 }, "phase": "p4" },
+    { "id": "n5erwa", "lane": "App", "type": "decision", "text": "Do we have stock for order?", "sketch": { "x": -230, "y": -50 }, "phase": "p4" },
+    { "id": "ngq9jh", "lane": "App", "type": "step", "text": "Confirm order and pass to Barista", "sketch": { "x": 90, "y": 10 }, "phase": "p2" },
+    { "id": "n607ws", "lane": "App", "type": "step", "text": "Inform customer item is unavailable and trigger a reorder", "sketch": { "x": -250, "y": 240 }, "phase": "p4" },
+    { "id": "n0b1ek", "lane": "Barista", "type": "step", "text": "Receives order from application and confirms details", "sketch": { "x": 460, "y": 10 }, "phase": "p2" },
+    { "id": "nmx51s", "lane": "Barista", "type": "step", "text": "Puts together customer order and passes it to Customer", "sketch": { "x": 890, "y": -10 }, "phase": "p3" }
   ],
   "edges": [
     { "id": "eazcn4", "from": "n518vq", "to": "nhmdaa", "sketch": { "a": "R" } },
