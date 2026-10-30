@@ -287,11 +287,30 @@ const Engine = (() => {
     let maxCol = 0; nodes.forEach(n => { maxCol = Math.max(maxCol, col[n.id]); });
     const phaseDefs = map.phases.map(p => Object.assign({}, p)), phaseIndex = {};
     phaseDefs.forEach((p, i) => { phaseIndex[p.id] = i; });
-    const colPhase = []; let carry = 0;
+    let colPhase = []; let carry = 0;
     for (let c = 0; c <= maxCol; c++) {
       let best = carry;
       nodes.forEach(n => { if (col[n.id] === c && n.phase && phaseIndex[n.phase] > best) best = phaseIndex[n.phase]; });
       colPhase[c] = best; carry = best;
+    }
+    // A box set to a phase belongs in it, even where the columns around it are already in a later phase. A box with
+    // no phase of its own takes the latest phase of the boxes leading into it (or of its column, if that is later).
+    // When a box ends up in a column of a different phase, the columns are put back in phase order: each phase's
+    // boxes keep their order among themselves, and the phases follow one another.
+    const eff = {};
+    nodes.slice().sort((a, b) => col[a.id] - col[b.id]).forEach(n => {
+      if (n.phase && phaseIndex[n.phase] !== undefined) { eff[n.id] = phaseIndex[n.phase]; return; }
+      eff[n.id] = inc[n.id].reduce((m, e) => e.back || eff[e.from] === undefined ? m : Math.max(m, eff[e.from]), colPhase[col[n.id]]);
+    });
+    const span = {}; nodes.forEach(n => { const s = span[eff[n.id]] = span[eff[n.id]] || [Infinity, -Infinity]; s[0] = Math.min(s[0], col[n.id]); s[1] = Math.max(s[1], col[n.id]); });
+    const order = Object.keys(span).map(Number).sort((a, b) => a - b);
+    if (order.some((p, i) => i && span[order[i - 1]][1] >= span[p][0])) {
+      const seats = [...new Set(nodes.map(n => eff[n.id] + '|' + col[n.id]))].sort((a, b) => { const [pa, ca] = a.split('|').map(Number), [pb, cb] = b.split('|').map(Number); return pa - pb || ca - cb; });
+      const to = {}; seats.forEach((k, i) => { to[k] = i; });
+      const next = {}; nodes.forEach(n => { next[n.id] = to[eff[n.id] + '|' + col[n.id]]; });
+      col = next; maxCol = seats.length - 1;
+      edges.forEach(e => { if (!e.selfLoop && !e.back && col[e.to] <= col[e.from]) e.back = true; });   // now runs back in time
+      colPhase = []; nodes.forEach(n => { colPhase[col[n.id]] = eff[n.id]; });
     }
     phaseDefs.forEach((p, i) => {
       const cs = []; colPhase.forEach((pi, c) => { if (pi === i) cs.push(c); });

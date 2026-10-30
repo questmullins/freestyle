@@ -329,7 +329,7 @@
     .view-chip{padding:3px 10px;border-radius:99px;background:var(--sunflower-gold);color:var(--shadow-grey);font-size:12px;font-weight:800;letter-spacing:.04em}
     /* View only: everything that changes the map is hidden */
     .view-chip{padding:3px 10px;border-radius:99px;background:#f2b84b;color:#3b2a00;font-size:12px;font-weight:800;letter-spacing:.04em}
-    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
+    body[data-mode="view"] #bStep,body[data-mode="view"] #bDecision,body[data-mode="view"] #bPhase,body[data-mode="view"] #bUndo,body[data-mode="view"] #bRedo,body[data-mode="view"] #bar .sep,
     body[data-mode="view"] #bNew,body[data-mode="view"] #bQbSave,body[data-mode="view"] #bOpen,body[data-mode="view"] #bJson,body[data-mode="view"] #bExample,body[data-mode="view"] #bOwners,
     body[data-mode="view"] #menubar .menu:nth-child(2),body[data-mode="view"] .handle,body[data-mode="view"] #wireCtl{display:none!important}
     body[data-mode="view"] .card{cursor:pointer}
@@ -370,6 +370,7 @@
             <hr>
             <button type="button" data-proxy="#bStep">Add a step</button>
             <button type="button" data-proxy="#bDecision">Add a decision</button>
+            <button type="button" data-proxy="#bPhase">Add a phase</button>
             <hr>
             <button type="button" id="bOwners" title="List everyone who owns a step, before or while you draw">Owners&hellip;</button>
           </div></div>
@@ -394,6 +395,7 @@
   <div id="bar">
     <button type="button" id="bStep" class="primary" title="Add a step. With a step or arrow selected, it goes straight after it, joined in">+ Step</button>
     <button type="button" id="bDecision" title="Add a decision. With a step or arrow selected, it goes straight after it, joined in">+ Decision</button>
+    <button type="button" id="bPhase" title="Add a phase. With boxes selected, they become the new phase">+ Phase</button>
     <span class="sep"></span>
     <button type="button" id="bUndo" title="Undo (Ctrl+Z)" disabled>Undo</button>
     <button type="button" id="bRedo" title="Redo (Ctrl+Y)" disabled>Redo</button>
@@ -455,7 +457,7 @@
         <li><b>A question is a decision.</b> End the text with "?" or choose Decision; it becomes a diamond.</li>
         <li><b>Start labels with Yes or No.</b> Yes arrows are green and No arrows red. An arrow that goes back to an earlier step is a loop, in yellow.</li>
         <li><b>The ideal path</b> is the shortest way through over plain and Yes arrows. It gets the blue glow. You can force it on or off per arrow.</li>
-        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or right-click the first card of a phase and choose "Start a new phase here". Name phases in the Map panel (click empty space to see it).</li>
+        <li><b>Phases:</b> select the cards of a phase (drag a box round them), then choose "Phase for all" in the panel or right-click one of them. Or select them and press <b>+ Phase</b> to make a new phase of them. Change a box's phase under Phase in the side panel and the swimlane moves it into that phase. Name phases in the Map panel (click empty space to see it).</li>
         <li><b>Order in time</b> follows the arrows. Where two cards could go either way, the one further left on the board comes first.</li>
       </ul>
       <h3>From Arcweave</h3>

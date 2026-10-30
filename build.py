@@ -13,7 +13,7 @@ MODULES = ["engine.js", "render.js", "export.js", "pdf.js", "app.js"]
 
 
 def main():
-    sample = json.loads((HERE / "examples" / "coffee-shop.map.json").read_text(encoding="utf-8"))
+    sample = json.loads((HERE / "examples" / "coffee-orders.map.json").read_text(encoding="utf-8"))
     script = "const SAMPLE_MAP = " + json.dumps(sample, ensure_ascii=True, separators=(",", ":")) + ";\n\n"
     script += "\n\n".join((HERE / "app" / name).read_text(encoding="utf-8").rstrip() for name in MODULES) + "\n"
     assert "</script" not in script.lower(), "a module contains a closing script tag"
