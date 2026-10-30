@@ -138,6 +138,7 @@ const Engine = (() => {
       n.lane = n.lane || (map.lanes[0] && map.lanes[0].id) || 'Unassigned';
       if (!map.lanes.some(l => l.id === n.lane)) { const c = laneColors(n.lane, map.lanes.length); map.lanes.push({ id: n.lane, name: n.lane, color: c[0], fill: c[1] }); }
       if (n.phase && !map.phases.some(p => p.id === n.phase)) n.phase = null;
+      if (n.flag !== 'start' && n.flag !== 'end') delete n.flag;
     });
     map.lanes.forEach((l, i) => { const c = laneColors(l.name || l.id, i); l.name = l.name || l.id; l.color = l.color || c[0]; l.fill = l.fill || c[1]; });
     if (!map.lanes.length) { const c = LANE_COLORS[0]; map.lanes.push({ id: 'Lane 1', name: 'Lane 1', color: c[0], fill: c[1] }); }
@@ -198,27 +199,36 @@ const Engine = (() => {
     nodes.forEach(n => { out[n.id] = []; inc[n.id] = []; });
     edges.forEach(e => { if (e.from !== e.to) { out[e.from].push(e); inc[e.to].push(e); } else e.selfLoop = true; });
 
-    // 1. Loop returns. Inside a cycle, the arrow that leads back to a step nearer the start is the return.
-    //    "Nearer the start" is counted in arrows from the first card, so it does not matter which way the
-    //    board happens to be drawn (Arcweave boards often run down the page, not across).
+    // 1. Loop returns. The swimlane follows the board as it is drawn: inside a cycle, the arrow that runs back
+    //    against the way the board reads (leftward on a board that runs across, upward on one that runs down the
+    //    page) is the return. A box flagged as the start or the end settles it outright: arrows into the start
+    //    and out of the end are the returns.
     const scc = sccOf(nodes, edges), sccCount = {};
     nodes.forEach(n => { sccCount[scc[n.id]] = (sccCount[scc[n.id]] || 0) + 1; });
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    nodes.forEach(n => { x0 = Math.min(x0, sx(n)); x1 = Math.max(x1, sx(n)); y0 = Math.min(y0, sy(n)); y1 = Math.max(y1, sy(n)); });
+    const across = !nodes.length || x1 - x0 >= y1 - y0;
+    const along = n => across ? sx(n) : sy(n), beside = n => across ? sy(n) : sx(n);
+    const SLACK = across ? 90 : 60;   // about half a box: a box drawn a little behind the one before it is not a loop back
     const dist = {};
     const reach = starts => {
       const queue = starts.filter(n => dist[n.id] === undefined);
       queue.forEach(n => { dist[n.id] = 0; });
       while (queue.length) { const n = queue.shift(); out[n.id].forEach(e => { if (dist[e.to] === undefined) { dist[e.to] = dist[n.id] + 1; queue.push(byId[e.to]); } }); }
     };
-    reach(nodes.filter(n => inc[n.id].length === 0).sort((a, b) => sx(a) - sx(b) || sy(a) - sy(b)));
-    // A loop with no way in (every box has an arrow into it) starts in the first lane the map lists, at its top card.
-    const laneAt = {}; (map.lanes || []).forEach((l, i) => { laneAt[l.id] = i; });
-    const laneOf = n => laneAt[n.lane] === undefined ? 1e9 : laneAt[n.lane];
-    nodes.slice().sort((a, b) => laneOf(a) - laneOf(b) || sy(a) - sy(b) || sx(a) - sx(b)).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    const boardOrder = (a, b) => along(a) - along(b) || beside(a) - beside(b);
+    reach(nodes.filter(n => n.flag === 'start').sort(boardOrder));
+    reach(nodes.filter(n => inc[n.id].length === 0).sort(boardOrder));
+    nodes.slice().sort(boardOrder).forEach(n => { if (dist[n.id] === undefined) reach([n]); });
+    const flagged = {}; nodes.forEach(n => { if (n.flag) flagged[scc[n.id]] = true; });
     edges.forEach(e => {
       if (e.selfLoop) { e.back = false; return; }
       const a = byId[e.from], b = byId[e.to], pa = pin(a), pb = pin(b);
+      const cyc = scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1;
       if (pa && pb) e.back = pb.col <= pa.col;                       // both placed by hand: the columns decide
-      else e.back = scc[e.from] === scc[e.to] && sccCount[scc[e.from]] > 1 && dist[b.id] < dist[a.id];
+      else if (!cyc) e.back = false;
+      else if (flagged[scc[e.from]]) e.back = b.flag === 'start' || a.flag === 'end';   // the flags alone decide this loop
+      else e.back = along(b) < along(a) - SLACK;
     });
 
     // 2. Columns: one more than the furthest-right box feeding this one. Pinned boxes stay where they are.

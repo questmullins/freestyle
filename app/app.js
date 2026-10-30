@@ -145,7 +145,7 @@ const App = (() => {
     if (!sel.nodes.size) return;
     change(() => {
       const copies = {};
-      [...sel.nodes].forEach(id => { const n = node(id), c = JSON.parse(JSON.stringify(n)); c.id = newId('n'); c.sketch = { x: n.sketch.x + 30, y: n.sketch.y + 30 }; delete c.layout; delete c.phase; copies[id] = c.id; doc.nodes.push(c); });
+      [...sel.nodes].forEach(id => { const n = node(id), c = JSON.parse(JSON.stringify(n)); c.id = newId('n'); c.sketch = { x: n.sketch.x + 30, y: n.sketch.y + 30 }; delete c.layout; delete c.phase; delete c.flag; copies[id] = c.id; doc.nodes.push(c); });
       doc.edges.filter(e => copies[e.from] && copies[e.to]).forEach(e => { const c = JSON.parse(JSON.stringify(e)); c.id = newId('e'); c.from = copies[e.from]; c.to = copies[e.to]; doc.edges.push(c); });
       sel.nodes.clear(); sel.edges.clear(); Object.values(copies).forEach(id => sel.nodes.add(id));
     });
@@ -176,7 +176,7 @@ const App = (() => {
       const ln = lane(n.lane), decision = n.type === 'decision', picked = sel.nodes.has(n.id);
       const flag = ui.flags && !VIEWER ? flags[n.id] : '';
       return `<div class="card ${decision ? 'decision' : 'step'}${picked ? ' sel' : ''}${flag ? ' flag-' + flag : ''}" data-id="${esc(n.id)}" style="left:${n.sketch.x}px;top:${n.sketch.y}px;width:${CARD_W}px;--lane:${esc(ln.color)};--tint:${esc(ln.fill)}">
-        <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}</div>
+        <div class="card-head"><span class="badge">${decision ? esc(n.letter) : n.number}</span><span class="owner">${esc(ln.name)}</span>${decision ? '<span class="kind">Decision</span>' : ''}${phaseStart[n.id] ? '<span class="kind phase" title="A phase starts here">Phase start</span>' : ''}${node(n.id).flag ? `<span class="kind phase" title="Marked as the ${node(n.id).flag} of the process">${node(n.id).flag === 'start' ? 'Start' : 'End'}</span>` : ''}</div>
         <div class="card-body">${esc(n.text) || '<i>Double-click to write</i>'}</div>
         ${safeLink(n.link) ? `<a class="card-link" href="${esc(safeLink(n.link))}" target="_blank" rel="noopener" title="Open the link: ${esc(safeLink(n.link))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-1 1M9.4 6.6a3 3 0 0 0-4.2 0L2.9 8.9a3 3 0 0 0 4.2 4.2l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>` : ''}
         ${n.time ? `<span class="key-time" title="How long this step takes">${esc(n.time)}</span>` : ''}
@@ -776,6 +776,7 @@ const App = (() => {
         ${field('Owner (lane)', `<select id="i_lane">${options(doc.lanes.map(l => [l.id, l.name]).concat([['+', 'New owner…']]), n.lane)}</select>`)}
         <label class="f col"><span>Text</span><textarea id="i_text" rows="4">${esc(n.text)}</textarea></label>
         ${field('Phase', `<select id="i_phase">${options([['', 'Same as the box before it']].concat(doc.phases.map(p => [p.id, p.title])).concat([['+', 'A new phase…']]), n.phase || '')}</select>`)}
+        ${field('Start or end', `<select id="i_flag">${options([['', 'Neither'], ['start', 'Start of the process'], ['end', 'End of the process']], n.flag || '')}</select>`)}
         <h4>Keys</h4>
         ${field('Time it takes', `<input type="text" id="i_time" value="${esc(n.time || '')}" placeholder="e.g. 2 days">`)}
         ${field('Cutoff time', `<span class="cutoff-row"><input type="text" id="i_cutoff" value="${esc(n.cutoff || '')}" placeholder="none"><button type="button" id="i_cutoffStd" title="The standard cutoff">3pm</button></span>`)}
@@ -882,6 +883,7 @@ const App = (() => {
       on('i_broken', 'change', ev => change(() => { const v = ev.target.value.trim(); if (v) node(id).broken = v; else delete node(id).broken; }));
       on('i_time', 'change', ev => { const v = ev.target.value.trim(); if (v && !Engine.parseTime(v)) { g('i_timeinfo').textContent = 'That doesn\u2019t read as a time. Try "1 hour", "2 days" or "4-5 weeks".'; return; } change(() => { if (v) node(id).time = v; else delete node(id).time; }); });
       ['x', 'y'].forEach(k => on('i_' + k, 'change', ev => { const v = Math.round(+ev.target.value); if (isFinite(v)) change(() => { node(id).sketch[k] = v; }); }));
+      on('i_flag', 'change', ev => change(() => { const x = node(id); if (ev.target.value) x.flag = ev.target.value; else delete x.flag; }));
       on('i_phase', 'change', ev => { const v = ev.target.value; if (v === '+') { startPhaseAt(id); return; } change(() => { node(id).phase = v || null; }); });
       on('i_w', 'input', ev => { g('i_wv').textContent = ev.target.value; }); on('i_w', 'change', ev => style({ w: +ev.target.value }));
       on('i_hauto', 'change', ev => { style({ h: ev.target.checked ? null : +g('i_h').value }); drawInspector(); });
